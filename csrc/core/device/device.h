@@ -9,26 +9,33 @@
 
 #include <stdexcept>
 
-namespace DEVICE {
+namespace device {
 
 struct BaseDevice{
+    BaseDevice();
+    virtual ~BaseDevice();
+
     virtual bool is_cpu();
     virtual bool is_gpu();
 };
 
 
 struct CPU: public BaseDevice {
+    ~CPU() override;
+
     bool is_cpu() override;
     bool is_gpu() override;
 };
 
 struct GPU: public BaseDevice {
+    ~GPU() override;
+
     bool is_cpu() override;
     bool is_gpu() override;
 };
 
-constexpr DEVICE::CPU* cpu_device {};
-constexpr DEVICE::GPU* gpu_device {};
+constexpr CPU* cpu_device {};
+constexpr GPU* gpu_device {};
 
 }
 

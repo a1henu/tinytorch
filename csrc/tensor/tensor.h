@@ -5,16 +5,16 @@
 #include <stdexcept>
 #include <vector>
 
-#include "csrc/core/device/device.h"
+#include "core/device/device.h"
 
 namespace tensor {
 
 template <typename Tp = double>
 class Tensor {
 public:
-    Tensor(const std::vector<int>& shape, const DEVICE::BaseDevice* device);
+    Tensor(const std::vector<int>& shape, const device::BaseDevice* device);
 
-    Tensor(const std::vector<int>& shape, const DEVICE::BaseDevice* device, const std::vector<Tp>& data);
+    Tensor(const std::vector<int>& shape, const device::BaseDevice* device, const std::vector<Tp>& data);
 
     Tensor(const Tensor& other);
 
@@ -29,7 +29,7 @@ public:
 
 private:
     std::vector<int> shape;
-    DEVICE::BaseDevice* device;
+    device::BaseDevice* device;
 
     Tp* p_data;
 };

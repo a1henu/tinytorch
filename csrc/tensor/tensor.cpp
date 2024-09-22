@@ -1,10 +1,11 @@
 /**
- * @file tensor.cu
+ * @file tensor.cpp
  * @brief Tensor class implementation
  */
 
 #include <vector>
 
+#include "core/memory/memory.h"
 #include "tensor.h"
 
 namespace tensor {
@@ -12,13 +13,11 @@ namespace tensor {
 template<typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    const DEVICE::BaseDevice* device
+    const device::BaseDevice* device
 ) : shape(shape), device(device) {
     int tol_size = get_tol_size();
-    if (device->is_cpu()) {
-        p_data = new Tp[tol_size];
-    } else if (device->is_gpu()) {
-        cudaMalloc(&p_data, tol_size * sizeof(Tp));
+    if (device->is_cpu() || device->is_gpu()) {
+        memory::malloc_mem_op(device, p_data, tol_size);
     } else (
         throw std::runtime_error("Unknown device type")
     )
@@ -27,19 +26,13 @@ Tensor<Tp>::Tensor(
 template<typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    const DEVICE::BaseDevice* device,
-    const std::vector<Tp>& data
+    const device::BaseDevice* device,
+    const std::vector<Tp>& vec
 ) : shape(shape), device(device) {
     int tol_size = get_tol_size();
-    if (device->is_cpu()) {
-        p_data = new Tp[tol_size];
-        std::copy(data.begin(), data.begin() + std::min(tol_size, data.size()), p_data);
-    } else if (device->is_gpu()) {
-        Tp* tmp_data = new Tp[tol_size];
-        std::copy(data.begin(), data.begin() + std::min(tol_size, data.size()), tmp_data);
-        cudaMalloc(&p_data, tol_size * sizeof(Tp));
-        cudaMemcpy(p_data, tmp_data, tol_size * sizeof(Tp), cudaMemcpyHostToDevice);
-        delete[] tmp_data;
+    if (device->is_cpu() || device->is_gpu()) {
+        memory::malloc_mem_op(device, p_data, tol_size);
+        memory::copy_mem_op(device, device::cpu_device, p_data, vec.data(), std::min(tol_size, data.size()));
     } else (
         throw std::runtime_error("Unknown device type")
     )
@@ -54,10 +47,8 @@ Tensor<Tp>::Tensor(Tensor<Tp>&& other) : shape(std::move(other.shape)) {
 
 template<typename Tp>
 Tensor<Tp>::~Tensor() {
-    if (device->is_gpu()) {
-        cudaFree(p_data);
-    } else if (device->is_cpu()) {
-        delete[] p_data;
+    if (device->is_cpu() || device->is_gpu()) {
+        memory::free_mem_op(device, p_data);
     } else {
         throw std::runtime_error("Unknown device type");
     }
@@ -69,10 +60,15 @@ inline Tensor<Tp>& Tensor<Tp>::cpu() {
         return *this;
     } else if (device->is_gpu()) {
         int tol_size = get_tol_size();
-        Tp* tmp_data = new Tp[tol_size];
-        cudaMemcpy(tmp_data, p_data, tol_size * sizeof(Tp), cudaMemcpyDeviceToHost);
-        cudaFree(p_data);
-        p_data = tmp_data;
+        Tp* tmp_data;
+
+        memory::malloc_mem_op(device::cpu_device, tmp_data, tol_size);
+        memory::copy_mem_op(device::cpu_device, device, tmp_data, p_data, tol_size);
+        memory::free_mem_op(device, p_data);
+        memory::malloc_mem_op(device::cpu_device, p_data, tol_size);
+        memory::copy_mem_op(device::cpu_device, device::cpu_device, p_data, tmp_data, tol_size);
+        memory::free_mem_op(device::cpu_device, tmp_data);
+        
         device = DEVICE::cpu_device;
         return *this;
     } else {
@@ -86,13 +82,17 @@ inline Tensor<Tp>& Tensor<Tp>::gpu() {
         return *this;
     } else if (device->is_cpu()) {
         int tol_size = get_tol_size();
-        Tp* tmp_data = nullptr;
-        cudaMalloc(&tmp_data, tol_size * sizeof(Tp));
-        cudaMemcpy(tmp_data, p_data, tol_size * sizeof(Tp), cudaMemcpyHostToDevice);
-        delete p_data;
-        p_data = tmp_data;
+        Tp* tmp_data;
+
+        memory::malloc_mem_op(device::gpu_device, tmp_data, tol_size);
+        memory::copy_mem_op(device::gpu_device, device, tmp_data, p_data, tol_size);
+        memory::free_mem_op(device, p_data);
+        memory::malloc_mem_op(device::gpu_device, p_data, tol_size);
+        memory::copy_mem_op(device::gpu_device, device::gpu_device, p_data, tmp_data, tol_size);
+        memory::free_mem_op(device::gpu_device, tmp_data);
+        
         device = DEVICE::gpu_device;
-        return *this
+        return *this;
     } else {
         throw std::runtime_error("Unknown device type");
     }

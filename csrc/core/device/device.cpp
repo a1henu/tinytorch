@@ -6,18 +6,34 @@
 
 #include "device.h"
 
-bool DEVICE::BaseDevice::is_cpu(){
-    return false;
+device::BaseDevice::BaseDevice() {}
+
+device::BaseDevice::~BaseDevice() {}
+
+bool device::BaseDevice::is_cpu() {
+    throw std::runtime_error("Not implemented");
 }
 
-bool DEVICE::BaseDevice::is_gpu(){
-    return false;
+bool device::BaseDevice::is_gpu() {
+    throw std::runtime_error("Not implemented");
 }
 
-bool DEVICE::CPU::is_cpu(){
+device::CPU::~CPU() {}
+
+bool device::CPU::is_cpu(){
     return true;
 }
 
-bool DEVICE::GPU::is_gpu(){
+bool device::CPU::is_gpu(){
+    return false;
+}
+
+device::GPU::~GPU() {}
+
+bool device::GPU::is_gpu(){
     return true;
+}
+
+bool device::GPU::is_cpu(){
+    return false;
 }
