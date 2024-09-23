@@ -71,6 +71,7 @@
         "variant": "cpp",
         "any": "cpp",
         "csignal": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "core": "cpp"
     }
 }

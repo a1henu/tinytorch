@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "core/device/device.h"
 #include "memory.h"
 
@@ -81,4 +83,27 @@ struct copy_mem_op<Tp, device::GPU, device::GPU> {
     }
 };
 
-}
+template <typename Tp>
+struct set_mem_op<Tp, device::CPU> {
+    void operator()(
+        const device::CPU* device, 
+        Tp* p_data, 
+        const Tp value, 
+        const size_t size
+    ) {
+        memset(p_data, value, size * sizeof(Tp));
+    }
+};
+
+template <typename Tp>
+struct set_mem_op<Tp, device::GPU> {
+    void operator()(
+        const device::GPU* device, 
+        Tp* p_data, 
+        const Tp value, 
+        const size_t size
+    ) {
+    }
+};
+
+} // namespace memory

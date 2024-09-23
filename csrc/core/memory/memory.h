@@ -45,6 +45,18 @@ struct copy_mem_op {
     );
 };
 
-}
+template <typename Tp, typename Device>
+struct set_mem_op {
+    /// @brief memory set operator for multi-device
+    ///
+    /// Inputs:
+    /// @param device  : the type of device
+    /// @param p_data  : the input pointer
+    /// @param value   : the value to set
+    /// @param size    : the size of the memory
+    void operator()(const Device* device, Tp* p_data, const Tp value, const size_t size);
+};
+
+} // namespace memory
 
 #endif
