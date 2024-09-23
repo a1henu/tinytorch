@@ -33,7 +33,7 @@ mkdir build
 cd build
 cmake -DTEST=ON -DCUDA=OFF ..
 make
-ctest
+ctest --verbose --output-on-failure -C Debug -T test
 ```
 
 **Testing CUDA Code**
@@ -45,5 +45,5 @@ mkdir build
 cd build
 cmake -DTEST=ON -DCUDA=ON ..
 make
-ctest
+ctest --verbose --output-on-failure -C Debug -T test
 ```
