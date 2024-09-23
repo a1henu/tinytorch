@@ -26,6 +26,6 @@ jobs:
         make
 
 
-    - name: Run tests with CTest
+    - name: Run tests
       run: ctest --output-on-failure -C Debug -T test
       working-directory: build
