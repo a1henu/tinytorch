@@ -1,4 +1,4 @@
-name: CI-CPU
+name: CI
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test-cpu:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
