@@ -1,39 +1,20 @@
-/**
+/**  
  * @file device.cpp
- * @brief The implementation of device.h
+ * @brief This implementations of the device classes.
  * 
  */
 
-#include "device.h"
+#include "core/device/device.h"
 
-device::BaseDevice::BaseDevice() {}
+namespace device {
 
-device::BaseDevice::~BaseDevice() {}
+bool CPU::is_cpu() const { return true; }
+bool CPU::is_gpu() const { return false; }
 
-bool device::BaseDevice::is_cpu() {
-    throw std::runtime_error("Not implemented");
-}
 
-bool device::BaseDevice::is_gpu() {
-    throw std::runtime_error("Not implemented");
-}
+bool GPU::is_cpu() const { return false; }
+bool GPU::is_gpu() const { return true; }
 
-device::CPU::~CPU() {}
 
-bool device::CPU::is_cpu(){
-    return true;
-}
 
-bool device::CPU::is_gpu(){
-    return false;
-}
-
-device::GPU::~GPU() {}
-
-bool device::GPU::is_gpu(){
-    return true;
-}
-
-bool device::GPU::is_cpu(){
-    return false;
-}
+} // namespace device

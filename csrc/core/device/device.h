@@ -11,32 +11,22 @@
 
 namespace device {
 
-struct BaseDevice{
-    BaseDevice();
-    virtual ~BaseDevice();
+struct BaseDevice {
+    virtual bool is_cpu() const = 0;
+    virtual bool is_gpu() const = 0;
+};
 
-    virtual bool is_cpu();
-    virtual bool is_gpu();
+struct CPU : public BaseDevice {
+    bool is_cpu() const override;
+    bool is_gpu() const override;
+};
+
+struct GPU : public BaseDevice {
+    bool is_cpu() const override;
+    bool is_gpu() const override;
 };
 
 
-struct CPU: public BaseDevice {
-    ~CPU() override;
-
-    bool is_cpu() override;
-    bool is_gpu() override;
-};
-
-struct GPU: public BaseDevice {
-    ~GPU() override;
-
-    bool is_cpu() override;
-    bool is_gpu() override;
-};
-
-constexpr CPU* cpu_device {};
-constexpr GPU* gpu_device {};
-
-}
+} // namespace device
 
 #endif
