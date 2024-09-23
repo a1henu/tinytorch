@@ -17,15 +17,13 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        submodules: true
 
-    - name: Install Git and Ccache
+    - name: Install Ccache
       run: |
         apt-get update
-        apt-get install -y git ccache
-
-    - name: Initialize submodules
-      run: |
-        git submodule update --init --recursive
+        apt-get install -y ccache
 
     - name: Build
       run: |
