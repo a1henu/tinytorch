@@ -18,7 +18,7 @@ Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
     const device::BaseDevice* device
 ) : shape(shape), device(device) {
-    int tol_size = get_tol_size();
+    size_t tol_size = get_tol_size();
     if (device->is_cpu() || device->is_gpu()) {
         memory::malloc_mem_op(device, p_data, tol_size);
     } else {
@@ -32,7 +32,7 @@ Tensor<Tp>::Tensor(
     const device::BaseDevice* device,
     const std::vector<Tp>& vec
 ) : shape(shape), device(device) {
-    int tol_size = get_tol_size();
+    size_t tol_size = get_tol_size();
     if (device->is_cpu() || device->is_gpu()) {
         memory::malloc_mem_op(device, p_data, tol_size);
         memory::copy_mem_op(device, device::cpu_device, p_data, vec.data(), std::min(tol_size, vec.size()));
@@ -62,7 +62,7 @@ inline Tensor<Tp>& Tensor<Tp>::cpu() {
     if (device->is_cpu()) {
         return *this;
     } else if (device->is_gpu()) {
-        int tol_size = get_tol_size();
+        size_t tol_size = get_tol_size();
         Tp* tmp_data;
 
         memory::malloc_mem_op(device::cpu_device, tmp_data, tol_size);
@@ -84,7 +84,7 @@ inline Tensor<Tp>& Tensor<Tp>::gpu() {
     if (device->is_gpu()) {
         return *this;
     } else if (device->is_cpu()) {
-        int tol_size = get_tol_size();
+        size_t tol_size = get_tol_size();
         Tp* tmp_data;
 
         memory::malloc_mem_op(device::gpu_device, tmp_data, tol_size);
@@ -103,8 +103,8 @@ inline Tensor<Tp>& Tensor<Tp>::gpu() {
 
 
 template<typename Tp>
-int Tensor<Tp>::get_tol_size() const {
-    int s = 1;
+size_t Tensor<Tp>::get_tol_size() const {
+    size_t s = 1;
     for (auto& i : shape) {
         s *= i;
     }

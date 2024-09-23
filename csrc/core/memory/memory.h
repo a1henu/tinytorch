@@ -2,6 +2,8 @@
  * @file memory.h
  * @brief  Memory operator declarations for multi-device.
  * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #ifndef CSRC_CORE_MEMORY_MEMORY_H

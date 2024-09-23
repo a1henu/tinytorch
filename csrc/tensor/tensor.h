@@ -25,8 +25,8 @@ public:
     Tensor<Tp>& cpu();
     Tensor<Tp>& gpu();
 
-    int get_tol_size() const;
-
+    size_t get_tol_size() const;
+    
 private:
     std::vector<int> shape;
     device::BaseDevice* device;

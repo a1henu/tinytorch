@@ -1,6 +1,9 @@
 /**
  * @file memory.cpp
  * @brief Memory operator implementations for CPU.
+ * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #include <cstring>

@@ -2,6 +2,8 @@
  * @file device.h
  * @brief Devices class for multi-device.
  * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #ifndef CSRC_CORE_DEVICE_DEVICE_H

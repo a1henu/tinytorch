@@ -2,6 +2,8 @@
  * @file device.cpp
  * @brief Implementations of devices class for multi-device.
  * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #include "core/device/device.h"

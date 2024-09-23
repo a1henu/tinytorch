@@ -1,6 +1,9 @@
 /**
  * @file memory.cu
  * @brief Memory operator implementations for GPU.
+ * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #include "core/device/device.h"

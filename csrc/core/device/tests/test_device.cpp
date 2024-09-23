@@ -2,6 +2,8 @@
  * @file device.cpp
  * @brief Test cases for devices class.
  * 
+ * @copyright Copyright (c) 2024 chenxu bai
+ * Licensed under the MIT License.
  */
 
 #include <gtest/gtest.h>
