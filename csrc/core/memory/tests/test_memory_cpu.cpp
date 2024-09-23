@@ -50,8 +50,8 @@ protected:
     using free_gpu_op = memory::free_mem_op<double, device::GPU>;
 
     using copy_c2c_op = memory::copy_mem_op<double, device::CPU, device::CPU>;
-    using copy_c2g_op = memory::copy_mem_op<double, device::CPU, device::GPU>;
-    using copy_g2c_op = memory::copy_mem_op<double, device::GPU, device::CPU>;
+    using copy_c2g_op = memory::copy_mem_op<double, device::GPU, device::CPU>;
+    using copy_g2c_op = memory::copy_mem_op<double, device::CPU, device::GPU>;
     using copy_g2g_op = memory::copy_mem_op<double, device::GPU, device::GPU>;
 
     using set_cpu_op = memory::set_mem_op<double, device::CPU>;
@@ -87,16 +87,6 @@ TEST_F(TestMemory, free_GPU_exception) {
     }, error::DeviceError);
 }
 
-TEST_F(TestMemory, memcpy_CPU) {
-    double* p_data = nullptr;
-    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
-    copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, v_test.data(), vt_dim);
-    for (int i = 0; i < vt_dim; i++) {
-        EXPECT_EQ(p_data[i], v_test[i]);
-    }
-    free_cpu_op()(device::cpu_device, p_data);
-}
-
 TEST_F(TestMemory, memset_CPU) {
     double* p_data = nullptr;
     malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
@@ -118,6 +108,71 @@ TEST_F(TestMemory, memset_GPU_exception) {
     EXPECT_THROW({
         free_gpu_op()(device::gpu_device, p_data);
     }, error::DeviceError);
+}
+
+TEST_F(TestMemory, memcpy_c2c) {
+    double* p_data = nullptr;
+    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
+    copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, v_test.data(), vt_dim);
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_EQ(p_data[i], v_test[i]);
+    }
+    free_cpu_op()(device::cpu_device, p_data);
+}
+
+TEST_F(TestMemory, memcpy_c2g) {
+    double* pt_g = nullptr;
+    EXPECT_THROW({
+        malloc_gpu_op()(device::gpu_device, pt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        copy_c2g_op()(device::gpu_device, device::cpu_device, pt_g, v_test.data(), vt_dim);
+    }, error::DeviceError);
+    double* pt_h = new double[vt_dim];
+    EXPECT_THROW({
+        copy_g2c_op()(device::cpu_device, device::gpu_device, pt_h, pt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        free_gpu_op()(device::gpu_device, pt_g);
+    }, error::DeviceError);
+    delete[] pt_h;
+}
+
+TEST_F(TestMemory, memcpy_g2c) {
+    double* pt_h = nullptr;
+    malloc_cpu_op()(device::cpu_device, pt_h, vt_dim);
+    double* vt_g = nullptr;
+    EXPECT_THROW({
+        malloc_gpu_op()(device::gpu_device, vt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        copy_g2c_op()(device::cpu_device, device::gpu_device, pt_h, vt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        free_gpu_op()(device::gpu_device, vt_g);
+    }, error::DeviceError);
+}
+
+TEST_F(TestMemory, memcpy_g2g) {
+    double* pt_g = nullptr;
+    EXPECT_THROW({
+        malloc_gpu_op()(device::gpu_device, pt_g, vt_dim);
+    }, error::DeviceError);
+    double* vt_g = nullptr;
+    EXPECT_THROW({
+        malloc_gpu_op()(device::gpu_device, vt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        copy_g2g_op()(device::gpu_device, device::gpu_device, pt_g, vt_g, vt_dim);
+    }, error::DeviceError);
+    double* pt_h = new double[vt_dim];
+    EXPECT_THROW({
+        copy_g2c_op()(device::cpu_device, device::gpu_device, pt_h, pt_g, vt_dim);
+    }, error::DeviceError);
+    EXPECT_THROW({
+        free_gpu_op()(device::gpu_device, vt_g);
+    }, error::DeviceError);
+    delete[] pt_h;
 }
 
 int main(int argc, char **argv) {

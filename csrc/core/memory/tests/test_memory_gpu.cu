@@ -32,14 +32,19 @@ class TestMemory : public ::testing::Test
 {
 protected:
     std::vector<double> v_test;
+    double* vt_g;
 
     int vt_dim;
 
     void SetUp() override {
-        v_test = generate_random_vector(100, 0.0, 1.0); 
+        v_test = generate_random_vector(100, 0.0, 1.0);
         vt_dim = v_test.size();
+
+        cudaMalloc(&vt_g, vt_dim * sizeof(double));
+        cudaMemcpy(vt_g, v_test.data(), vt_dim * sizeof(double), cudaMemcpyHostToDevice);
     }
     void TearDown() override {
+        cudaFree(vt_g);
     }
 
     using malloc_cpu_op = memory::malloc_mem_op<double, device::CPU>;
@@ -49,8 +54,8 @@ protected:
     using free_gpu_op = memory::free_mem_op<double, device::GPU>;
 
     using copy_c2c_op = memory::copy_mem_op<double, device::CPU, device::CPU>;
-    using copy_c2g_op = memory::copy_mem_op<double, device::CPU, device::GPU>;
-    using copy_g2c_op = memory::copy_mem_op<double, device::GPU, device::CPU>;
+    using copy_c2g_op = memory::copy_mem_op<double, device::GPU, device::CPU>;
+    using copy_g2c_op = memory::copy_mem_op<double, device::CPU, device::GPU>;
     using copy_g2g_op = memory::copy_mem_op<double, device::GPU, device::GPU>;
 
     using set_cpu_op = memory::set_mem_op<double, device::CPU>;
@@ -104,7 +109,7 @@ TEST_F(TestMemory, memset_CPU) {
     double* p_data = nullptr;
     malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
     set_cpu_op()(device::cpu_device, p_data, 0, vt_dim);
-    for (int i = 0; i < vt_dim; i++) {
+    for (int i = 0; i < vt_dim; ++i) {
         EXPECT_EQ(p_data[i], 0);
     }
     free_cpu_op()(device::cpu_device, p_data);
@@ -116,6 +121,52 @@ TEST_F(TestMemory, memset_GPU) {
     set_gpu_op()(device::gpu_device, p_data, 0, vt_dim);
     assert_arr_eq_val(p_data, 0, vt_dim);
     free_gpu_op()(device::gpu_device, p_data);
+}
+
+TEST_F(TestMemory, memcpy_c2c) {
+    double* p_data = nullptr;
+    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
+    copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, v_test.data(), vt_dim);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(p_data[i], v_test[i]);
+    }
+    free_cpu_op()(device::cpu_device, p_data);
+}
+
+TEST_F(TestMemory, memcpy_c2g) {
+    double* pt_g = nullptr;
+    malloc_gpu_op()(device::gpu_device, pt_g, vt_dim);
+    copy_c2g_op()(device::gpu_device, device::cpu_device, pt_g, v_test.data(), vt_dim);
+    double* pt_h = new double[vt_dim];
+    cudaMemcpy(pt_h, pt_g, vt_dim * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(pt_h[i], v_test[i]);
+    }
+    free_gpu_op()(device::gpu_device, pt_g);
+    delete[] pt_h;
+}
+
+TEST_F(TestMemory, memcpy_g2c) {
+    double* pt_h = nullptr;
+    malloc_cpu_op()(device::cpu_device, pt_h, vt_dim);
+    copy_g2c_op()(device::cpu_device, device::gpu_device, pt_h, vt_g, vt_dim);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(pt_h[i], v_test[i]);
+    }
+    free_gpu_op()(device::gpu_device, pt_h);
+}
+
+TEST_F(TestMemory, memcpy_g2g) {
+    double* pt_g = nullptr;
+    malloc_gpu_op()(device::gpu_device, pt_g, vt_dim);
+    copy_g2g_op()(device::gpu_device, device::gpu_device, pt_g, vt_g, vt_dim);
+    double* pt_h = new double[vt_dim];
+    cudaMemcpy(pt_h, pt_g, vt_dim * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(pt_h[i], v_test[i]);
+    }
+    free_gpu_op()(device::gpu_device, pt_g);
+    delete[] pt_h;
 }
 
 int main(int argc, char **argv) {
