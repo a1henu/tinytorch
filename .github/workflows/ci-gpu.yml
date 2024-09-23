@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: Jimver/cuda-toolkit@v0.2.8
-      id: cuda-toolkit
+    - name: cuda-toolkit
+      uses: Jimver/cuda-toolkit@v0.2.17
       with:
         cuda: '11.7.0'
         linux-local-args: '["--toolkit"]'  
