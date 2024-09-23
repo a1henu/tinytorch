@@ -11,10 +11,10 @@
 
 # include <cstddef>
 
-template <typename Tp>
-void relu_forward(Tp* output, Tp* input, size_t size);
+template <typename Tp, typename Device>
+void relu_forward(Device* device, Tp* output, Tp* input, size_t size);
 
-template <typename Tp>
-void relu_backward(Tp* output, Tp* input, Tp* grad, size_t size);
+template <typename Tp, typename Device>
+void relu_backward(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
 
 #endif

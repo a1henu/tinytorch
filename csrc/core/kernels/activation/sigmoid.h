@@ -9,12 +9,14 @@
 #ifndef CSRC_CORE_KERNELS_ACTIVATION_SIGMOID_H
 #define CSRC_CORE_KERNELS_ACTIVATION_SIGMOID_H
 
-# include <cstddef>
+#include <cstddef>
 
-template <typename Tp>
-void sigmoid_forward(Tp* output, Tp* input, size_t size);
+#include "core/device/device.h"
 
-template <typename Tp>
-void sigmoid_backward(Tp* output, Tp* input, Tp* grad, size_t size);
+template <typename Tp, typename Device>
+void sigmoid_forward(Device* device, Tp* output, Tp* input, size_t size);
+
+template <typename Tp, typename Device>
+void sigmoid_backward(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
 
 #endif

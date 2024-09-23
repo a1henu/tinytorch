@@ -35,7 +35,6 @@ protected:
 
     int vt_dim;
 
-
     void SetUp() override {
         v_test = generate_random_vector(10, 0.0, 1.0); 
         vt_dim = v_test.size();
@@ -43,12 +42,19 @@ protected:
     void TearDown() override {
     }
 
-    using malloc_op = memory::malloc_mem_op<double, device::GPU>;
-    using free_op = memory::free_mem_op<double, device::GPU>;
+    using malloc_cpu_op = memory::malloc_mem_op<double, device::CPU>;
+    using malloc_gpu_op = memory::malloc_mem_op<double, device::GPU>;
+
+    using free_cpu_op = memory::free_mem_op<double, device::CPU>;
+    using free_gpu_op = memory::free_mem_op<double, device::GPU>;
+
+    using copy_c2c_op = memory::copy_mem_op<double, device::CPU, device::CPU>;
     using copy_c2g_op = memory::copy_mem_op<double, device::CPU, device::GPU>;
     using copy_g2c_op = memory::copy_mem_op<double, device::GPU, device::CPU>;
     using copy_g2g_op = memory::copy_mem_op<double, device::GPU, device::GPU>;
-    using set_op = memory::set_mem_op<double, device::GPU>;
+
+    using set_cpu_op = memory::set_mem_op<double, device::CPU>;
+    using set_gpu_op = memory::set_mem_op<double, device::GPU>;
 };
 
 __global__ void 
@@ -72,23 +78,44 @@ void assert_arr_eq_val(double* p_data, double val, size_t size) {
     ASSERT_TRUE(h_result);
 }
 
+TEST_F(TestMemory, malloc_CPU) {
+    double* p_data = nullptr;
+    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
+}
+
 TEST_F(TestMemory, malloc_GPU) {
     double* p_data = nullptr;
-    malloc_op()(device::gpu_device, p_data, vt_dim);
+    malloc_gpu_op()(device::gpu_device, p_data, vt_dim);
+}
+
+TEST_F(TestMemory, free_CPU) {
+    double* p_data = nullptr;
+    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
+    free_cpu_op()(device::cpu_device, p_data);
 }
 
 TEST_F(TestMemory, free_GPU) {
     double* p_data = nullptr;
-    malloc_op()(device::gpu_device, p_data, vt_dim);
-    free_op()(device::gpu_device, p_data);
+    malloc_gpu_op()(device::gpu_device, p_data, vt_dim);
+    free_gpu_op()(device::gpu_device, p_data);
 }
 
-TEST_F(TestMemory, set_op) {
+TEST_F(TestMemory, memset_CPU) {
     double* p_data = nullptr;
-    malloc_op()(device::gpu_device, p_data, vt_dim);
-    set_op()(device::gpu_device, p_data, 0, vt_dim);
+    malloc_cpu_op()(device::cpu_device, p_data, vt_dim);
+    set_cpu_op()(device::cpu_device, p_data, 0, vt_dim);
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_EQ(p_data[i], 0);
+    }
+    free_cpu_op()(device::cpu_device, p_data);
+}
+
+TEST_F(TestMemory, memset_GPU) {
+    double* p_data = nullptr;
+    malloc_gpu_op()(device::gpu_device, p_data, vt_dim);
+    set_gpu_op()(device::gpu_device, p_data, 0, vt_dim);
     assert_arr_eq_val(p_data, 0, vt_dim);
-    free_op()(device::gpu_device, p_data);
+    free_gpu_op()(device::gpu_device, p_data);
 }
 
 int main(int argc, char **argv) {

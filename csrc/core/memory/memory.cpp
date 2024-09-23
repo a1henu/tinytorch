@@ -26,21 +26,9 @@ struct malloc_mem_op<Tp, device::CPU> {
 };
 
 template <typename Tp>
-struct malloc_mem_op<Tp, device::GPU> {
-    void operator()(const device::GPU* device, Tp*& p_data, const size_t size) {
-    }
-};
-
-template <typename Tp>
 struct free_mem_op<Tp, device::CPU> {
     void operator()(const device::CPU* device, Tp*& p_data) {
         free(p_data);
-    }
-};
-
-template <typename Tp>
-struct free_mem_op<Tp, device::GPU> {
-    void operator()(const device::GPU* device, Tp*& p_data) {
     }
 };
 
@@ -58,14 +46,30 @@ struct copy_mem_op<Tp, device::CPU, device::CPU> {
 };
 
 template <typename Tp>
-struct copy_mem_op<Tp, device::CPU, device::GPU> {
+struct set_mem_op<Tp, device::CPU> {
     void operator()(
-        const device::CPU* dev_dst, 
-        const device::GPU* dev_src, 
-        Tp* p_dst, 
-        const Tp* p_src, 
+        const device::CPU* device, 
+        Tp* p_data, 
+        const Tp value, 
         const size_t size
     ) {
+        memset(p_data, value, size * sizeof(Tp));
+    }
+};
+
+#ifndef __CUDA
+
+template <typename Tp>
+struct malloc_mem_op<Tp, device::GPU> {
+    void operator()(const device::GPU* device, Tp*& p_data, const size_t size) {
+        throw error::DeviceError("malloc_mem_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct free_mem_op<Tp, device::GPU> {
+    void operator()(const device::GPU* device, Tp*& p_data) {
+        throw error::DeviceError("free_mem_op<GPU> can not be called without CUDA support.");
     }
 };
 
@@ -78,6 +82,20 @@ struct copy_mem_op<Tp, device::GPU, device::CPU> {
         const Tp* p_src, 
         const size_t size
     ) {
+        throw error::DeviceError("copy_mem_op<GPU, CPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct copy_mem_op<Tp, device::CPU, device::GPU> {
+    void operator()(
+        const device::CPU* dev_dst, 
+        const device::GPU* dev_src, 
+        Tp* p_dst, 
+        const Tp* p_src, 
+        const size_t size
+    ) {
+        throw error::DeviceError("copy_mem_op<CPU, GPU> can not be called without CUDA support.");
     }
 };
 
@@ -90,18 +108,7 @@ struct copy_mem_op<Tp, device::GPU, device::GPU> {
         const Tp* p_src, 
         const size_t size
     ) {
-    }
-};
-
-template <typename Tp>
-struct set_mem_op<Tp, device::CPU> {
-    void operator()(
-        const device::CPU* device, 
-        Tp* p_data, 
-        const Tp value, 
-        const size_t size
-    ) {
-        memset(p_data, value, size * sizeof(Tp));
+        throw error::DeviceError("copy_mem_op<GPU, GPU> can not be called without CUDA support.");
     }
 };
 
@@ -113,8 +120,33 @@ struct set_mem_op<Tp, device::GPU> {
         const Tp value, 
         const size_t size
     ) {
+        throw error::DeviceError("set_mem_op<GPU> can not be called without CUDA support.");
     }
 };
+
+template struct malloc_mem_op<int, device::GPU>;
+template struct malloc_mem_op<float, device::GPU>;
+template struct malloc_mem_op<double, device::GPU>;
+
+template struct free_mem_op<int, device::GPU>;
+template struct free_mem_op<float, device::GPU>;
+template struct free_mem_op<double, device::GPU>;
+
+template struct copy_mem_op<int, device::GPU, device::CPU>;
+template struct copy_mem_op<float, device::GPU, device::CPU>;
+template struct copy_mem_op<double, device::GPU, device::CPU>;
+template struct copy_mem_op<int, device::CPU, device::GPU>;
+template struct copy_mem_op<float, device::CPU, device::GPU>;
+template struct copy_mem_op<double, device::CPU, device::GPU>;
+template struct copy_mem_op<int, device::GPU, device::GPU>;
+template struct copy_mem_op<float, device::GPU, device::GPU>;
+template struct copy_mem_op<double, device::GPU, device::GPU>;
+
+template struct set_mem_op<int, device::GPU>;
+template struct set_mem_op<float, device::GPU>;
+template struct set_mem_op<double, device::GPU>;
+
+#endif
 
 template struct malloc_mem_op<int, device::CPU>;
 template struct malloc_mem_op<float, device::CPU>;
