@@ -15,6 +15,4 @@ bool CPU::is_gpu() const { return false; }
 bool GPU::is_cpu() const { return false; }
 bool GPU::is_gpu() const { return true; }
 
-
-
 } // namespace device

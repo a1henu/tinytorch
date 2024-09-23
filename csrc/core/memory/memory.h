@@ -1,6 +1,8 @@
 #ifndef CSRC_CORE_MEMORY_MEMORY_H
 #define CSRC_CORE_MEMORY_MEMORY_H
 
+#include <cstddef>
+
 namespace memory {
 
 template <typename Tp, typename Device>
