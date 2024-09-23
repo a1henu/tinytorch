@@ -10,15 +10,11 @@ on:
 
 jobs:
   build-and-test-gpu:
-    runs-on: nvidia
-    container: 
-        image: nvidia/cuda:12.6.0-base-ubuntu22.04
+    runs-on: ubuntu-latest
+    container:
+      image: nvidia/cuda:latest
 
     steps:
-    - name: Update git
-      run: |
-        apt-get update
-        apt-get install -y git
 
     - name: Checkout repository
       uses: actions/checkout@v4
