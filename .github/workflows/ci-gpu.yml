@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test-gpu:
-    runs-on: ubuntu-latest
+    runs-on: nvidia
     container: 
         image: nvidia/cuda:12.6.0-base-ubuntu22.04
 
