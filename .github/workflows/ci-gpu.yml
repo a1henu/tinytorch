@@ -27,7 +27,6 @@ jobs:
 
     - name: Build
       run: |
-        nvidia-smi
         mkdir build
         cd build
         cmake -DTEST=ON -DCUDA=ON ..
