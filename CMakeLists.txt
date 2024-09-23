@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(TinyTorch LANGUAGES CXX CUDA)
+project(TinyTorch)
 
 option(TEST "Build all tests." OFF)
 option(CUDA "Build with CUDA support." OFF)

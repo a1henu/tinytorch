@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test-gpu:
-    runs-on: nvidia/gpu:latest
+    runs-on: nvidia
 
     steps:
     - name: Checkout repository
