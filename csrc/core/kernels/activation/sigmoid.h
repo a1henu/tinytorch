@@ -17,12 +17,12 @@ namespace activation {
 
 template <typename Tp, typename Device>
 struct sigmoid_forward {
-    void operator(Device* device, Tp* output, Tp* input, size_t size);
+    void operator()(Device* device, Tp* output, Tp* input, size_t size);
 };
 
 template <typename Tp, typename Device>
 struct sigmoid_backward {
-    void operator(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+    void operator()(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
 };
 
 } // namespace activation
