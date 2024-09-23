@@ -11,10 +11,18 @@
 
 # include <cstddef>
 
-template <typename Tp, typename Device>
-void relu_forward(Device* device, Tp* output, Tp* input, size_t size);
+namespace activation {
 
 template <typename Tp, typename Device>
-void relu_backward(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+struct relu_forward {
+    void operator()(Device* device, Tp* output, Tp* input, size_t size);
+};
+
+template <typename Tp, typename Device>
+struct relu_backward {
+    void operator()(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+};
+
+} // namespace activation
 
 #endif

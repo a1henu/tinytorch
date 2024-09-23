@@ -13,10 +13,18 @@
 
 #include "core/device/device.h"
 
-template <typename Tp, typename Device>
-void sigmoid_forward(Device* device, Tp* output, Tp* input, size_t size);
+namespace activation {
 
 template <typename Tp, typename Device>
-void sigmoid_backward(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+struct sigmoid_forward {
+    void operator(Device* device, Tp* output, Tp* input, size_t size);
+};
+
+template <typename Tp, typename Device>
+struct sigmoid_backward {
+    void operator(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+};
+
+} // namespace activation
 
 #endif

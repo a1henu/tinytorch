@@ -37,7 +37,7 @@ protected:
     int vt_dim;
 
     void SetUp() override {
-        v_test = generate_random_vector(10, 0.0, 1.0); 
+        v_test = generate_random_vector(100, 0.0, 1.0); 
         vt_dim = v_test.size();
     }
     void TearDown() override {
@@ -121,7 +121,7 @@ TEST_F(TestMemory, memset_GPU_exception) {
 }
 
 int main(int argc, char **argv) {
-    std::cout << "run test for CORE::MEMORY" << std::endl << std::endl;
+    std::cout << "run test for CORE::MEMORY:::CPU" << std::endl << std::endl;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
