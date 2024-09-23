@@ -7,6 +7,8 @@
 
 #include "core/device/device.h"
 #include "core/memory/memory.h"
+#include "error/error.h"
+
 #include "tensor.h"
 
 namespace tensor {
@@ -20,7 +22,7 @@ Tensor<Tp>::Tensor(
     if (device->is_cpu() || device->is_gpu()) {
         memory::malloc_mem_op(device, p_data, tol_size);
     } else {
-        throw std::runtime_error("Unknown device type");
+        throw error::DeviceError("Unknown device type");
     }
 }
 
@@ -35,7 +37,7 @@ Tensor<Tp>::Tensor(
         memory::malloc_mem_op(device, p_data, tol_size);
         memory::copy_mem_op(device, device::cpu_device, p_data, vec.data(), std::min(tol_size, vec.size()));
     } else {
-        throw std::runtime_error("Unknown device type");
+        throw error::DeviceError("Unknown device type");
     }
 }
 
@@ -51,7 +53,7 @@ Tensor<Tp>::~Tensor() {
     if (device->is_cpu() || device->is_gpu()) {
         memory::free_mem_op(device, p_data);
     } else {
-        throw std::runtime_error("Unknown device type");
+        throw error::DeviceError("Unknown device type");
     }
 }
 
@@ -73,7 +75,7 @@ inline Tensor<Tp>& Tensor<Tp>::cpu() {
         device = device::cpu_device;
         return *this;
     } else {
-        throw std::runtime_error("Unknown device type");
+        throw error::DeviceError("Unknown device type");
     }
 }
 
@@ -95,7 +97,7 @@ inline Tensor<Tp>& Tensor<Tp>::gpu() {
         device = device::gpu_device;
         return *this;
     } else {
-        throw std::runtime_error("Unknown device type");
+        throw error::DeviceError("Unknown device type");
     }
 }
 

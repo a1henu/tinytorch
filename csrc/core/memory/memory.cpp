@@ -6,7 +6,9 @@
 #include <cstring>
 
 #include "core/device/device.h"
-#include "memory.h"
+#include "core/memory/memory.h"
+
+#include "error/error.h"
 
 namespace memory{
 
