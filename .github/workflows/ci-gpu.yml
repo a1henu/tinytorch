@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test-gpu:
-    runs-on: ubuntu-latest
+    runs-on: nvidia/gpu:latest
 
     steps:
     - name: Checkout repository
@@ -18,13 +18,18 @@ jobs:
       with:
         submodules: true  
 
+    - name: Install Ccache
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ccache
+
     - name: Build
       run: |
+        nvidia-smi
         mkdir build
         cd build
         cmake -DTEST=ON -DCUDA=ON ..
         make
-
 
     - name: Run tests
       run: ctest --output-on-failure -C Debug -T test
