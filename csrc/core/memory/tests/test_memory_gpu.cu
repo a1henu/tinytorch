@@ -52,10 +52,24 @@ protected:
 };
 
 __global__ void 
-assert_arr_eq_val_kernel(double* p_data, double val, size_t dim) {
-    CUDA_KERNEL_LOOP(idx, dim) {
-        
+assert_arr_eq_val_kernel(bool* result, double* p_data, double val, size_t size) {
+    CUDA_KERNEL_LOOP(i, size) {
+        if (p_data[i] != val) {
+            *result = false;          
+        }
     }
+}
+
+void assert_arr_eq_val(double* p_data, double val, size_t size) {
+    bool* d_result;
+    bool h_result = true;
+    cudaMalloc(&d_result, sizeof(bool));
+    cudaMemcpy(d_result, &h_result, sizeof(bool), cudaMemcpyHostToDevice);
+    assert_arr_eq_val_kernel<<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(d_result, p_data, val, size);
+    cudaMemcpy(&h_result, d_result, sizeof(bool), cudaMemcpyDeviceToHost);
+    cudaFree(d_result);
+
+    ASSERT_TRUE(h_result);
 }
 
 TEST_F(TestMemory, malloc_GPU) {
@@ -73,7 +87,7 @@ TEST_F(TestMemory, set_op) {
     double* p_data = nullptr;
     malloc_op()(device::gpu_device, p_data, vt_dim);
     set_op()(device::gpu_device, p_data, 0, vt_dim);
-    assert_arr_eq_val_kernel<<<CUDA_GET_BLOCKS(vt_dim), CUDA_K_THREADS>>>(p_data, 0, vt_dim);
+    assert_arr_eq_val(p_data, 0, vt_dim);
     free_op()(device::gpu_device, p_data);
 }
 

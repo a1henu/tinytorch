@@ -18,6 +18,7 @@ jobs:
       with:
         cuda: '11.7.0'
         linux-local-args: '["--toolkit"]'
+        
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
