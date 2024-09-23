@@ -1,3 +1,9 @@
+/**
+ * @file memory.h
+ * @brief  Memory operator declarations for multi-device.
+ * 
+ */
+
 #ifndef CSRC_CORE_MEMORY_MEMORY_H
 #define CSRC_CORE_MEMORY_MEMORY_H
 

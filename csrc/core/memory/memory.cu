@@ -1,3 +1,8 @@
+/**
+ * @file memory.cu
+ * @brief Memory operator implementations for GPU.
+ */
+
 #include "core/device/device.h"
 #include "memory.h"
 

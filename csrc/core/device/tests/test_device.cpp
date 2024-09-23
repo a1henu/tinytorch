@@ -1,3 +1,9 @@
+/**  
+ * @file device.cpp
+ * @brief Test cases for devices class.
+ * 
+ */
+
 #include <gtest/gtest.h>
 #include <iostream>
 

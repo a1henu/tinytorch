@@ -1,6 +1,6 @@
 /**  
  * @file device.h
- * @brief This header defines the device classes.
+ * @brief Devices class for multi-device.
  * 
  */
 

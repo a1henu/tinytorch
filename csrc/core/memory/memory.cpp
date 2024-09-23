@@ -1,3 +1,8 @@
+/**
+ * @file memory.cpp
+ * @brief Memory operator implementations for CPU.
+ */
+
 #include <cstring>
 
 #include "core/device/device.h"

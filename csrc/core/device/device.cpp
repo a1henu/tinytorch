@@ -1,6 +1,6 @@
 /**  
  * @file device.cpp
- * @brief This implementations of the device classes.
+ * @brief Implementations of devices class for multi-device.
  * 
  */
 
