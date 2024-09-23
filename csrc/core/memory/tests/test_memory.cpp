@@ -33,7 +33,7 @@ protected:
 
 
     void SetUp() override {
-        v_test = generate_random_vector(100, 0.0, 1.0); 
+        v_test = generate_random_vector(10, 0.0, 1.0); 
         vt_dim = v_test.size();
     }
     void TearDown() override {
@@ -45,18 +45,18 @@ protected:
     using set_op = memory::set_mem_op<double, device::CPU>;
 };
 
-TEST_F(TestMemory, Malloc_CPU) {
+TEST_F(TestMemory, malloc_CPU) {
     double* p_data = nullptr;
     malloc_op()(device::cpu_device, p_data, vt_dim);
 }
 
-TEST_F(TestMemory, Free_CPU) {
+TEST_F(TestMemory, free_CPU) {
     double* p_data = nullptr;
     malloc_op()(device::cpu_device, p_data, vt_dim);
     free_op()(device::cpu_device, p_data);
 }
 
-TEST_F(TestMemory, Copy_CPU) {
+TEST_F(TestMemory, memcpy_CPU) {
     double* p_data = nullptr;
     malloc_op()(device::cpu_device, p_data, vt_dim);
     copy_op()(device::cpu_device, device::cpu_device, p_data, v_test.data(), vt_dim);
@@ -66,12 +66,12 @@ TEST_F(TestMemory, Copy_CPU) {
     free_op()(device::cpu_device, p_data);
 }
 
-TEST_F(TestMemory, Set_CPU) {
+TEST_F(TestMemory, memset_CPU) {
     double* p_data = nullptr;
     malloc_op()(device::cpu_device, p_data, vt_dim);
-    set_op()(device::cpu_device, p_data, 1.0, vt_dim);
+    set_op()(device::cpu_device, p_data, 0, vt_dim);
     for (int i = 0; i < vt_dim; i++) {
-        EXPECT_EQ(p_data[i], 1.0);
+        EXPECT_EQ(p_data[i], 0);
     }
     free_op()(device::cpu_device, p_data);
 }

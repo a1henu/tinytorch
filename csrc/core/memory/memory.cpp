@@ -113,4 +113,20 @@ struct set_mem_op<Tp, device::GPU> {
     }
 };
 
+template struct malloc_mem_op<int, device::CPU>;
+template struct malloc_mem_op<float, device::CPU>;
+template struct malloc_mem_op<double, device::CPU>;
+
+template struct free_mem_op<int, device::CPU>;
+template struct free_mem_op<float, device::CPU>;
+template struct free_mem_op<double, device::CPU>;
+
+template struct copy_mem_op<int, device::CPU, device::CPU>;
+template struct copy_mem_op<float, device::CPU, device::CPU>;
+template struct copy_mem_op<double, device::CPU, device::CPU>;
+
+template struct set_mem_op<int, device::CPU>;
+template struct set_mem_op<float, device::CPU>;
+template struct set_mem_op<double, device::CPU>;
+
 } // namespace memory
