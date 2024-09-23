@@ -16,7 +16,7 @@ namespace activation {
 
 template <typename Tp>
 struct sigmoid_forward<Tp, device::CPU> {
-    void operator(
+    void operator()(
         device::CPU* device, 
         Tp* output, 
         Tp* input, 
