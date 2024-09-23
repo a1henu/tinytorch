@@ -1,5 +1,5 @@
 /**
- * @file test_memory.cpp
+ * @file test_memory_cpu.cpp
  * @brief Memory operator test cases for CPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai

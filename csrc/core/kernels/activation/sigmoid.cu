@@ -12,14 +12,16 @@
 #include "macros.h"
 
 template <typename Tp>
-__global__ void kernel_sigmoid_f(Tp* output, Tp* input, size_t size) {
+__global__ void 
+kernel_sigmoid_f(Tp* output, Tp* input, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         output[i] = 1 / (1 + exp(-input[i]));
     }
 }
 
 template <typename Tp>
-__global__ void kernel_sigmoid_b(Tp* output, Tp* input, Tp* grad, size_t size) {
+__global__ void 
+kernel_sigmoid_b(Tp* output, Tp* input, Tp* grad, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         Tp sigmoid = 1 / (1 + exp(-input[i]));
         output[i] = sigmoid * (1 - sigmoid) * grad[i];
@@ -28,10 +30,10 @@ __global__ void kernel_sigmoid_b(Tp* output, Tp* input, Tp* grad, size_t size) {
 
 template <typename Tp>
 void sigmoid_forward(Tp* output, Tp* input, size_t size) {
-    kernel_sigmoid_f<Tp><<<CUDA_GET_BLOCKS(size), K_CUDA_THREADS>>>(output, input, size);
+    kernel_sigmoid_f<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input, size);
 }
 
 template <typename Tp>
 void sigmoid_backward(Tp* output, Tp* input, Tp* grad, size_t size) {
-    kernel_sigmoid_b<Tp><<<CUDA_GET_BLOCKS(size), K_CUDA_THREADS>>>(output, input, grad, size);
+    kernel_sigmoid_b<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input, grad, size);
 }

@@ -1,6 +1,10 @@
-set(MEMORY_SOURCES
-    memory.cpp
-)
+set(MEMORY_SOURCES)
+
+if(CUDA)
+    list(APPEND MEMORY_SOURCES memory.cu)
+else()
+    list(APPEND MEMORY_SOURCES memory.cpp)
+endif()
 
 # TODO: Add cuda support
 # maybe we need to add a flag to enable cuda support

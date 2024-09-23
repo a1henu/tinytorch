@@ -2,10 +2,10 @@
 #define CSRC_MACROS_H
 
 // Define the number of threads per block
-#define K_CUDA_THREADS 512
+#define CUDA_K_THREADS 512
 
 // Calculate the number of blocks
-#define CUDA_GET_BLOCKS(N) ((N + K_CUDA_THREADS - 1) / K_CUDA_THREADS)
+#define CUDA_GET_BLOCKS(N) ((N + CUDA_K_THREADS - 1) / CUDA_K_THREADS)
 
 //Define the grid stride looping
 #define CUDA_KERNEL_LOOP(i, n)                          \

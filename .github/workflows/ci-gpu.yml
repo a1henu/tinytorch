@@ -1,4 +1,4 @@
-name: CI
+name: CI-GPU
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-and-test-gpu:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +22,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DTEST=ON ..
+        cmake -DTEST=ON -DCUDA=ON ..
         make
 
 
