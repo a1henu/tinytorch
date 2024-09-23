@@ -4,7 +4,7 @@ project(TinyTorch)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-option(TEST "Build all tests." ON)
+option(TEST "Build all tests." OFF)
 
 if(TEST)
     add_subdirectory(third_party/googletest)
