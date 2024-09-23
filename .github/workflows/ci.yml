@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true  
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@v3
+
+    - name: Create build directory
+      run: mkdir build
+
+    - name: Configure with CMake
+      run: cmake -B build
+
+    - name: Build with Make
+      run: cmake --build build
+
+    - name: Run tests with CTest
+      run: ctest --output-on-failure -C Debug -T test
+      working-directory: build
