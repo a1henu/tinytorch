@@ -11,7 +11,8 @@ on:
 jobs:
   build-and-test-gpu:
     runs-on: ubuntu-latest
-    container: nvidia/cuda
+    container: 
+        image: nvidia/cuda:12.6.0-base-ubuntu22.04
 
     steps:
     - name: Checkout repository
