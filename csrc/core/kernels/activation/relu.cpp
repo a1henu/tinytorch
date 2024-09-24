@@ -11,7 +11,7 @@
 
 #include "error/error.h"
 
-namespace activation {
+namespace ops {
 
 template <typename Tp>
 struct relu_forward<Tp, device::CPU> {
@@ -83,4 +83,4 @@ template struct relu_forward<double, device::CPU>;
 template struct relu_backward<float, device::CPU>;
 template struct relu_backward<double, device::CPU>;
 
-} // namespace activation
+} // namespace ops

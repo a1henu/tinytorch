@@ -154,7 +154,7 @@ protected:
 TEST_F(TestReLU, forward) {
     double* vt_relu_f_g;
     cudaMalloc(&vt_relu_f_g, v_dim * sizeof(double));
-    activation::relu_forward<double, device::GPU>()(device::gpu_device, vt_relu_f_g, v_g, v_dim);
+    ops::relu_forward<double, device::GPU>()(device::gpu_device, vt_relu_f_g, v_g, v_dim);
 
     double* vt_relu_f = new double[v_dim];
     cudaMemcpy(vt_relu_f, vt_relu_f_g, v_dim * sizeof(double), cudaMemcpyDeviceToHost);
@@ -166,7 +166,7 @@ TEST_F(TestReLU, forward) {
 TEST_F(TestReLU, backward) {
     double* vt_relu_b_g;
     cudaMalloc(&vt_relu_b_g, v_dim * sizeof(double));
-    activation::relu_backward<double, device::GPU>()(device::gpu_device, vt_relu_b_g, v_g, g_g, v_dim);
+    ops::relu_backward<double, device::GPU>()(device::gpu_device, vt_relu_b_g, v_g, g_g, v_dim);
 
     double* vt_relu_b = new double[v_dim];
     cudaMemcpy(vt_relu_b, vt_relu_b_g, v_dim * sizeof(double), cudaMemcpyDeviceToHost);
@@ -178,7 +178,7 @@ TEST_F(TestReLU, backward) {
 TEST_F(TestSigmoid, forward) {
     double* xt_sigmoid_f_g;
     cudaMalloc(&xt_sigmoid_f_g, x_dim * sizeof(double));
-    activation::sigmoid_forward<double, device::GPU>()(device::gpu_device, xt_sigmoid_f_g, x_g, x_dim);
+    ops::sigmoid_forward<double, device::GPU>()(device::gpu_device, xt_sigmoid_f_g, x_g, x_dim);
 
     double* xt_sigmoid_f = new double[x_dim];
     cudaMemcpy(xt_sigmoid_f, xt_sigmoid_f_g, x_dim * sizeof(double), cudaMemcpyDeviceToHost);
@@ -190,7 +190,7 @@ TEST_F(TestSigmoid, forward) {
 TEST_F(TestSigmoid, backward) {
     double* xt_sigmoid_b_g;
     cudaMalloc(&xt_sigmoid_b_g, x_dim * sizeof(double));
-    activation::sigmoid_backward<double, device::GPU>()(device::gpu_device, xt_sigmoid_b_g, x_g, g_g, x_dim);
+    ops::sigmoid_backward<double, device::GPU>()(device::gpu_device, xt_sigmoid_b_g, x_g, g_g, x_dim);
 
     double* xt_sigmoid_b = new double[x_dim];
     cudaMemcpy(xt_sigmoid_b, xt_sigmoid_b_g, x_dim * sizeof(double), cudaMemcpyDeviceToHost);

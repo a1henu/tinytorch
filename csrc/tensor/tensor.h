@@ -48,7 +48,12 @@ public:
 
     // Tensor operators here
     // these operators are implemented in:
-    // 
+    // /tensor/operators/tensor_math_ops.cpp
+
+    Tensor<Tp>& operator+(const Tensor<Tp>& other);
+    Tensor<Tp>& operator-(const Tensor<Tp>& other);
+
+    Tensor<Tp>& operator==(const Tensor<Tp>& other);
 
 private:
     std::vector<int> shape;

@@ -24,7 +24,7 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         memory::malloc_mem_op<Tp, device::CPU>()(
             device::cpu_device, output, size
         );
-        activation::relu_forward<Tp, device::CPU>()(
+        ops::relu_forward<Tp, device::CPU>()(
             device::cpu_device, output, input.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -41,7 +41,7 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
         );
-        activation::relu_forward<Tp, device::GPU>()(
+        ops::relu_forward<Tp, device::GPU>()(
             device::gpu_device, output, input.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -66,7 +66,7 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         memory::malloc_mem_op<Tp, device::CPU>()(
             device::cpu_device, output, size
         );
-        activation::relu_backward<Tp, device::CPU>()(
+        ops::relu_backward<Tp, device::CPU>()(
             device::cpu_device, output, input.get_data(), grad.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -83,7 +83,7 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
         );
-        activation::relu_backward<Tp, device::GPU>()(
+        ops::relu_backward<Tp, device::GPU>()(
             device::gpu_device, output, input.get_data(), grad.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -108,7 +108,7 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         memory::malloc_mem_op<Tp, device::CPU>()(
             device::cpu_device, output, size
         );
-        activation::sigmoid_forward<Tp, device::CPU>()(
+        ops::sigmoid_forward<Tp, device::CPU>()(
             device::cpu_device, output, input.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -125,7 +125,7 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
         );
-        activation::sigmoid_forward<Tp, device::GPU>()(
+        ops::sigmoid_forward<Tp, device::GPU>()(
             device::gpu_device, output, input.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -150,7 +150,7 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         memory::malloc_mem_op<Tp, device::CPU>()(
             device::cpu_device, output, size
         );
-        activation::sigmoid_backward<Tp, device::CPU>()(
+        ops::sigmoid_backward<Tp, device::CPU>()(
             device::cpu_device, output, input.get_data(), grad.get_data(), size
         );
         tensor::Tensor<Tp> output_t(
@@ -167,7 +167,7 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
         );
-        activation::sigmoid_backward<Tp, device::GPU>()(
+        ops::sigmoid_backward<Tp, device::GPU>()(
             device::gpu_device, output, input.get_data(), grad.get_data(), size
         );
         tensor::Tensor<Tp> output_t(

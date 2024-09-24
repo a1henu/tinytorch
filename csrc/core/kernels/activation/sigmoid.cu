@@ -11,7 +11,7 @@
 #include "core/kernels/activation/sigmoid.h"
 #include "macros.h"
 
-namespace activation{
+namespace ops {
 
 template <typename Tp>
 __global__ void 
@@ -61,4 +61,4 @@ template struct sigmoid_forward<double, device::GPU>;
 template struct sigmoid_backward<float, device::GPU>;
 template struct sigmoid_backward<double, device::GPU>;
 
-} // namespace activation
+} // namespace ops

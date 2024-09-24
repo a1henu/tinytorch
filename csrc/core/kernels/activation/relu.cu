@@ -10,7 +10,7 @@
 #include "core/kernels/activation/relu.h"
 #include "macros.h"
 
-namespace activation{
+namespace ops {
 
 template <typename Tp>
 __global__ void 
@@ -58,4 +58,4 @@ template struct relu_forward<double, device::GPU>;
 
 template struct relu_backward<float, device::GPU>;
 template struct relu_backward<double, device::GPU>;
-} // namespace activation
+} // namespace ops

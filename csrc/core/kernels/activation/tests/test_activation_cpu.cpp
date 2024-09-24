@@ -115,7 +115,7 @@ protected:
 
 TEST_F(TestReLU, forward) {
     std::vector<double> vt_relu_f(v_dim);
-    activation::relu_forward<double, device::CPU>()(device::cpu_device, vt_relu_f.data(), v.data(), v_dim);
+    ops::relu_forward<double, device::CPU>()(device::cpu_device, vt_relu_f.data(), v.data(), v_dim);
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_f[i], v_relu_f[i], 1e-6);
     }
@@ -123,7 +123,7 @@ TEST_F(TestReLU, forward) {
 
 TEST_F(TestReLU, backward) {
     std::vector<double> vt_relu_b(v_dim);
-    activation::relu_backward<double, device::CPU>()(device::cpu_device, vt_relu_b.data(), v.data(), g.data(), v_dim);
+    ops::relu_backward<double, device::CPU>()(device::cpu_device, vt_relu_b.data(), v.data(), g.data(), v_dim);
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_b[i], v_relu_b[i], 1e-6);
     }
@@ -131,7 +131,7 @@ TEST_F(TestReLU, backward) {
 
 TEST_F(TestSigmoid, forward) {
     std::vector<double> xt_sigmoid_f(x_dim);
-    activation::sigmoid_forward<double, device::CPU>()(device::cpu_device, xt_sigmoid_f.data(), x.data(), x_dim);
+    ops::sigmoid_forward<double, device::CPU>()(device::cpu_device, xt_sigmoid_f.data(), x.data(), x_dim);
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_f[i], x_sigmoid_f[i], 1e-6);
     }
@@ -139,7 +139,7 @@ TEST_F(TestSigmoid, forward) {
 
 TEST_F(TestSigmoid, backward) {
     std::vector<double> xt_sigmoid_b(x_dim);
-    activation::sigmoid_backward<double, device::CPU>()(device::cpu_device, xt_sigmoid_b.data(), x.data(), g.data(), x_dim);
+    ops::sigmoid_backward<double, device::CPU>()(device::cpu_device, xt_sigmoid_b.data(), x.data(), g.data(), x_dim);
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_b[i], x_sigmoid_b[i], 1e-6);
     }

@@ -12,7 +12,7 @@
 
 #include "error/error.h"
 
-namespace activation {
+namespace ops {
 
 template <typename Tp>
 struct sigmoid_forward<Tp, device::CPU> {
@@ -85,4 +85,4 @@ template struct sigmoid_forward<double, device::CPU>;
 template struct sigmoid_backward<float, device::CPU>;
 template struct sigmoid_backward<double, device::CPU>;
 
-} // namespace activation
+} // namespace ops

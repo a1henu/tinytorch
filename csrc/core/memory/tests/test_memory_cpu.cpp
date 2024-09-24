@@ -29,8 +29,7 @@ std::vector<double> generate_random_vector(size_t size, double min_value, double
     return vec;
 }
 
-class TestMemory : public ::testing::Test
-{
+class TestMemory : public ::testing::Test {
 protected:
     std::vector<double> v_test;
 

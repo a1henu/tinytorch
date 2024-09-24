@@ -11,7 +11,7 @@
 
 # include <cstddef>
 
-namespace activation {
+namespace ops {
 
 template <typename Tp, typename Device>
 struct relu_forward {
@@ -38,6 +38,6 @@ struct relu_backward {
     void operator()(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
 };
 
-} // namespace activation
+} // namespace ops
 
 #endif

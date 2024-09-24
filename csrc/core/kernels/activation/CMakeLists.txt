@@ -1,4 +1,4 @@
-set(ACTIVATION_SOURCES)
+cmake_policy(SET CMP0076 NEW)
 
 list(APPEND ACTIVATION_SOURCES
     relu.cpp
@@ -12,8 +12,7 @@ if(CUDA)
     )
 endif()
 
-add_library(activation STATIC ${ACTIVATION_SOURCES})
-target_include_directories(activation PUBLIC ${CMAKE_SOURCE_DIR}/csrc)
+target_sources(kernels PRIVATE ${ACTIVATION_SOURCES})
 
 if(TEST)
     add_subdirectory(tests)

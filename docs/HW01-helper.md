@@ -240,7 +240,7 @@ struct relu_forward<Tp, device::CPU> {
 
 gpu实现：
 
-```cuda
+```cpp
 template <typename Tp>
 __global__ void 
 kernel_relu_f(Tp* output, Tp* input, size_t size) {

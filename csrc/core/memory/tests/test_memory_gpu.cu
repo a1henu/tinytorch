@@ -1,6 +1,6 @@
 /**
  * @file test_memory_gpu.cu
- * @brief Memory operator test cases for CPU
+ * @brief Memory operator test cases for GPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -28,8 +28,7 @@ std::vector<double> generate_random_vector(size_t size, double min_value, double
     return vec;
 }
 
-class TestMemory : public ::testing::Test
-{
+class TestMemory : public ::testing::Test {
 protected:
     std::vector<double> v_test;
     double* vt_g;
