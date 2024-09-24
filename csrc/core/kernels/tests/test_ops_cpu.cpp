@@ -91,12 +91,12 @@ TEST_F(TestMemory, TestEqualOp_1) {
 }
 
 TEST_F(TestMemory, TestEqualOp_2) {
-    double* vt_out_1;
-    double* vt_out_2;
-    add_cpu_op()(device::cpu_device, vt_out_1, vt_1.data(), vt_2.data(), vt_dim);
-    add_cpu_op()(device::cpu_device, vt_out_2, vt_2.data(), vt_1.data(), vt_dim);
+    std::vector<double> vt_out_1(vt_dim);
+    std::vector<double> vt_out_2(vt_dim);
+    add_cpu_op()(device::cpu_device, vt_out_1.data(), vt_1.data(), vt_2.data(), vt_dim);
+    add_cpu_op()(device::cpu_device, vt_out_2.data(), vt_2.data(), vt_1.data(), vt_dim);
     bool vt_out;
-    equal_cpu_op()(device::cpu_device, &vt_out, vt_out_1, vt_out_2, vt_dim);
+    equal_cpu_op()(device::cpu_device, &vt_out, vt_out_1.data(), vt_out_2.data(), vt_dim);
     EXPECT_TRUE(vt_out);
 }
 
