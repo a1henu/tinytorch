@@ -12,7 +12,7 @@
 #include "core/memory/memory.h"
 #include "error/error.h"
 
-#include "tensor.h"
+#include "tensor/tensor.h"
 
 namespace tensor {
 

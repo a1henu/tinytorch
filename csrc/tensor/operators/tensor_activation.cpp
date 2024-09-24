@@ -14,7 +14,7 @@
 #include "core/kernels/activation/relu.h"
 #include "core/kernels/activation/sigmoid.h"
 
-#include "tensor/operator/tensor_activation.h"
+#include "tensor/operators/tensor_activation.h"
 
 template <typename Tp>
 tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {

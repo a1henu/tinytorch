@@ -46,6 +46,10 @@ public:
 
     size_t get_tol_size() const;
 
+    // Tensor operators here
+    // these operators are implemented in:
+    // 
+
 private:
     std::vector<int> shape;
     device::BaseDevice* device;
