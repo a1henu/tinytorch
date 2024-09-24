@@ -5,3 +5,7 @@ set(TENSOR_SOURCES
 add_library(tensor ${TENSOR_SOURCES})
 target_include_directories(tensor PUBLIC ${CMAKE_SOURCE_DIR}/csrc/core/memory)
 target_link_libraries(tensor)
+
+if(TEST)
+    add_subdirectory(tests)
+endif()
