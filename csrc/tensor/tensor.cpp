@@ -16,7 +16,7 @@ namespace tensor {
 template<typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    const device::BaseDevice* device
+    device::BaseDevice* device
 ) : shape(shape), device(device) {
     size_t tol_size = get_tol_size();
     if (device->is_cpu() || device->is_gpu()) {
@@ -29,7 +29,7 @@ Tensor<Tp>::Tensor(
 template<typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    const device::BaseDevice* device,
+    device::BaseDevice* device,
     const std::vector<Tp>& vec
 ) : shape(shape), device(device) {
     size_t tol_size = get_tol_size();

@@ -12,9 +12,9 @@ namespace tensor {
 template <typename Tp = double>
 class Tensor {
 public:
-    Tensor(const std::vector<int>& shape, const device::BaseDevice* device);
+    Tensor(const std::vector<int>& shape, device::BaseDevice* device);
 
-    Tensor(const std::vector<int>& shape, const device::BaseDevice* device, const std::vector<Tp>& data);
+    Tensor(const std::vector<int>& shape, device::BaseDevice* device, const std::vector<Tp>& data);
 
     Tensor(const Tensor& other);
 
