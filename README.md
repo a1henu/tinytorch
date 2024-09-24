@@ -14,7 +14,7 @@ We purpose to implement a tiny deep learning framework, and we will use it to tr
 
 ## Unit Test
 
-tinytorch is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest). For Python source code, tinytorch uses ...
+tinytorch is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest) to implement unit tests. For Python source code, tinytorch uses ...
 
 ### C++/CUDA Part
 
