@@ -18,7 +18,7 @@ tinytorch is a C++ project binded with [pybind11](https://github.com/pybind/pybi
 
 ### C++/CUDA Part
 
-To test the C++/CUDA code, you need to install GoogleTest first. This module is included in `third_patry` folder. You can install it by running the following commands:
+To test the C++/CUDA code, you need to install [GoogleTest](https://github.com/google/googletest) first. This module is included in `third_party` folder. You can install it by running the following commands:
 
 ```bash
 git submodule update --init --recursive
