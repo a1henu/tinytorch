@@ -24,7 +24,7 @@ struct sigmoid_forward {
     /// @param output : the output array pointer
     /// @param input  : the input array pointer
     /// @param size   : the size of the array 
-    void operator()(Device* device, Tp* output, Tp* input, size_t size);
+    void operator()(Device* device, Tp* output, const Tp* input, size_t size);
 };
 
 template <typename Tp, typename Device>
@@ -37,7 +37,7 @@ struct sigmoid_backward {
     /// @param input  : the input array pointer
     /// @param grad   : the gradient array pointer
     /// @param size   : the size of the array 
-    void operator()(Device* device, Tp* output, Tp* input, Tp* grad, size_t size);
+    void operator()(Device* device, Tp* output, const Tp* input, const Tp* grad, size_t size);
 };
 
 } // namespace ops

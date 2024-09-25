@@ -14,22 +14,26 @@
 #include <vector>
 
 #include "core/device/device.h"
+#include "core/memory/memory.h"
 
 namespace tensor {
 
 template <typename Tp = double>
 class Tensor {
 public:
+    Tensor();
+    
     Tensor(const std::vector<int>& shape, device::BaseDevice* device);
 
     Tensor(
         const std::vector<int>& shape, 
-        Tp* data, 
-        device::BaseDevice* t_device, 
-        device::BaseDevice* d_device
+        device::BaseDevice* device,
+        Tp* data
     );
 
     Tensor(const Tensor& other);
+
+    Tensor& operator=(const Tensor& other);
 
     Tensor(Tensor&& other);
 
@@ -42,23 +46,29 @@ public:
     bool in_gpu() const;
 
     const std::vector<int> get_shape() const;
+
     const Tp* get_data() const;
+    void set_data(const Tp* data, device::BaseDevice* device_d) const;
 
     size_t get_tol_size() const;
 
     // Tensor operators here
     // these operators are implemented in:
     // /tensor/operators/tensor_math_ops.cpp
+    
+    template <typename T>
+    friend Tensor<T>& operator+(const Tensor<T>& a, const Tensor<T>& b);
 
-    Tensor<Tp>& operator+(const Tensor<Tp>& other);
-    Tensor<Tp>& operator-(const Tensor<Tp>& other);
+    template <typename T>
+    friend Tensor<T>& operator-(const Tensor<T>& a, const Tensor<T>& b);
 
-    Tensor<Tp>& operator==(const Tensor<Tp>& other);
+    template <typename T>
+    friend bool operator==(const Tensor<T>& a, const Tensor<T>& b);
 
 private:
     std::vector<int> shape;
-    device::BaseDevice* device;
-    Tp* p_data;
+    device::BaseDevice* device = nullptr;
+    Tp* p_data = nullptr;
 
     using malloc_cpu_op = memory::malloc_mem_op<Tp, device::CPU>;
     using malloc_gpu_op = memory::malloc_mem_op<Tp, device::GPU>;

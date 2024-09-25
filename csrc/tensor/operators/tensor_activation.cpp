@@ -29,9 +29,8 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::cpu_device, 
-            device::cpu_device
+            new device::CPU(), 
+            output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
 
@@ -46,9 +45,8 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::gpu_device, 
-            device::gpu_device
+            new device::GPU(),
+            output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
@@ -71,9 +69,8 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::cpu_device, 
-            device::cpu_device
+            new device::CPU(),
+            output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
 
@@ -88,9 +85,8 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::gpu_device, 
-            device::gpu_device
+            new device::GPU(),
+            output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
     
@@ -113,9 +109,8 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::cpu_device, 
-            device::cpu_device
+            new device::CPU(),
+            output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
 
@@ -130,9 +125,8 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::gpu_device, 
-            device::gpu_device
+            new device::GPU(),
+            output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
@@ -155,9 +149,8 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::cpu_device, 
-            device::cpu_device
+            new device::CPU(), 
+            output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
 
@@ -172,9 +165,8 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            output, 
-            device::gpu_device, 
-            device::gpu_device
+            new device::GPU(),
+            output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
@@ -183,3 +175,19 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         throw error::DeviceError("Unknown device type");
     }
 }
+
+template tensor::Tensor<int> t_relu_f(const tensor::Tensor<int>& input);
+template tensor::Tensor<float> t_relu_f(const tensor::Tensor<float>& input);
+template tensor::Tensor<double> t_relu_f(const tensor::Tensor<double>& input);
+
+template tensor::Tensor<int> t_relu_b(const tensor::Tensor<int>& input, const tensor::Tensor<int>& grad);
+template tensor::Tensor<float> t_relu_b(const tensor::Tensor<float>& input, const tensor::Tensor<float>& grad);
+template tensor::Tensor<double> t_relu_b(const tensor::Tensor<double>& input, const tensor::Tensor<double>& grad);
+
+template tensor::Tensor<int> t_sigmoid_f(const tensor::Tensor<int>& input);
+template tensor::Tensor<float> t_sigmoid_f(const tensor::Tensor<float>& input);
+template tensor::Tensor<double> t_sigmoid_f(const tensor::Tensor<double>& input);
+
+template tensor::Tensor<int> t_sigmoid_b(const tensor::Tensor<int>& input, const tensor::Tensor<int>& grad);
+template tensor::Tensor<float> t_sigmoid_b(const tensor::Tensor<float>& input, const tensor::Tensor<float>& grad);
+template tensor::Tensor<double> t_sigmoid_b(const tensor::Tensor<double>& input, const tensor::Tensor<double>& grad);

@@ -18,9 +18,6 @@ namespace memory{
 template <typename Tp>
 struct malloc_mem_op<Tp, device::CPU> {
     void operator()(const device::CPU* device, Tp*& p_data, const size_t size) {
-        if (p_data != nullptr) {
-            free(p_data);
-        }
         p_data = static_cast<Tp*>(malloc(size * sizeof(Tp)));
     }
 };
@@ -127,41 +124,51 @@ struct set_mem_op<Tp, device::GPU> {
 template struct malloc_mem_op<int, device::GPU>;
 template struct malloc_mem_op<float, device::GPU>;
 template struct malloc_mem_op<double, device::GPU>;
+template struct malloc_mem_op<bool, device::GPU>;
 
 template struct free_mem_op<int, device::GPU>;
 template struct free_mem_op<float, device::GPU>;
 template struct free_mem_op<double, device::GPU>;
+template struct free_mem_op<bool, device::GPU>;
 
 template struct copy_mem_op<int, device::GPU, device::CPU>;
 template struct copy_mem_op<float, device::GPU, device::CPU>;
 template struct copy_mem_op<double, device::GPU, device::CPU>;
+template struct copy_mem_op<bool, device::GPU, device::CPU>;
 template struct copy_mem_op<int, device::CPU, device::GPU>;
 template struct copy_mem_op<float, device::CPU, device::GPU>;
 template struct copy_mem_op<double, device::CPU, device::GPU>;
+template struct copy_mem_op<bool, device::CPU, device::GPU>;
 template struct copy_mem_op<int, device::GPU, device::GPU>;
 template struct copy_mem_op<float, device::GPU, device::GPU>;
 template struct copy_mem_op<double, device::GPU, device::GPU>;
+template struct copy_mem_op<bool, device::GPU, device::GPU>;
 
 template struct set_mem_op<int, device::GPU>;
 template struct set_mem_op<float, device::GPU>;
 template struct set_mem_op<double, device::GPU>;
+template struct set_mem_op<bool, device::GPU>;
 
 #endif
 
 template struct malloc_mem_op<int, device::CPU>;
 template struct malloc_mem_op<float, device::CPU>;
 template struct malloc_mem_op<double, device::CPU>;
+template struct malloc_mem_op<bool, device::CPU>;
 
 template struct free_mem_op<int, device::CPU>;
 template struct free_mem_op<float, device::CPU>;
 template struct free_mem_op<double, device::CPU>;
+template struct free_mem_op<bool, device::CPU>;
 
 template struct copy_mem_op<int, device::CPU, device::CPU>;
 template struct copy_mem_op<float, device::CPU, device::CPU>;
 template struct copy_mem_op<double, device::CPU, device::CPU>;
+template struct copy_mem_op<bool, device::CPU, device::CPU>;
 
 template struct set_mem_op<int, device::CPU>;
 template struct set_mem_op<float, device::CPU>;
 template struct set_mem_op<double, device::CPU>;
+template struct set_mem_op<bool, device::CPU>;
 
 } // namespace memory

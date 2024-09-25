@@ -14,9 +14,6 @@ namespace memory {
 template <typename Tp>
 struct malloc_mem_op<Tp, device::GPU> {
     void operator()(const device::GPU* device, Tp*& p_data, const size_t size) {
-        if (p_data != nullptr) {
-            cudaFree(p_data);
-        }
         cudaMalloc(&p_data, size * sizeof(Tp));
     }
 };
@@ -82,23 +79,29 @@ struct set_mem_op<Tp, device::GPU> {
 template struct malloc_mem_op<int, device::GPU>;
 template struct malloc_mem_op<float, device::GPU>;
 template struct malloc_mem_op<double, device::GPU>;
+template struct malloc_mem_op<bool, device::GPU>;
 
 template struct free_mem_op<int, device::GPU>;
 template struct free_mem_op<float, device::GPU>;
 template struct free_mem_op<double, device::GPU>;
+template struct free_mem_op<bool, device::GPU>;
 
 template struct copy_mem_op<int, device::GPU, device::CPU>;
-template struct copy_mem_op<int, device::CPU, device::GPU>;
-template struct copy_mem_op<int, device::GPU, device::GPU>;
 template struct copy_mem_op<float, device::GPU, device::CPU>;
-template struct copy_mem_op<float, device::CPU, device::GPU>;
-template struct copy_mem_op<float, device::GPU, device::GPU>;
 template struct copy_mem_op<double, device::GPU, device::CPU>;
+template struct copy_mem_op<bool, device::GPU, device::CPU>;
+template struct copy_mem_op<int, device::CPU, device::GPU>;
+template struct copy_mem_op<float, device::CPU, device::GPU>;
 template struct copy_mem_op<double, device::CPU, device::GPU>;
+template struct copy_mem_op<bool, device::CPU, device::GPU>;
+template struct copy_mem_op<int, device::GPU, device::GPU>;
+template struct copy_mem_op<float, device::GPU, device::GPU>;
 template struct copy_mem_op<double, device::GPU, device::GPU>;
+template struct copy_mem_op<bool, device::GPU, device::GPU>;
 
 template struct set_mem_op<int, device::GPU>;
 template struct set_mem_op<float, device::GPU>;
 template struct set_mem_op<double, device::GPU>;
+template struct set_mem_op<bool, device::GPU>;
 
 } // namespace memory

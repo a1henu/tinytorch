@@ -10,6 +10,9 @@
 
 namespace device {
 
+bool BaseDevice::is_cpu() const { return false; }
+bool BaseDevice::is_gpu() const { return false; }
+
 bool CPU::is_cpu() const { return true; }
 bool CPU::is_gpu() const { return false; }
 

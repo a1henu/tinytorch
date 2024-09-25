@@ -8,6 +8,8 @@
 
 #include "core/kernels/ops.h"
 
+#include "macros.h"
+
 namespace ops {
 
 template <typename Tp>
@@ -24,6 +26,11 @@ kernel_sub(Tp* output, Tp* input1, Tp* input2, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         output[i] = input1[i] - input2[i];
     }
+}
+
+__global__ void
+assign_to_true(bool* flag) {
+    *flag = true;
 }
 
 template <typename Tp>
@@ -71,11 +78,8 @@ struct equal_op<Tp, device::GPU> {
         Tp* input2, 
         size_t size
     ) {
-        bool flag = true;
-        kernel_eq<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(&flag, input1, input2, size);
-        cudaDeviceSynchronize();
-
-        *output = flag;
+        assign_to_true<<<1, 1>>>(output);
+        kernel_eq<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input1, input2, size);
     }
 };
 
@@ -86,5 +90,9 @@ template struct add_op<double, device::GPU>;
 template struct sub_op<int, device::GPU>;
 template struct sub_op<float, device::GPU>;
 template struct sub_op<double, device::GPU>;
+
+template struct equal_op<int, device::GPU>;
+template struct equal_op<float, device::GPU>;
+template struct equal_op<double, device::GPU>;
 
 } // namespace ops

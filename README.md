@@ -1,6 +1,6 @@
 # tinytorch
 
-This is a project for the course ["Programming in AI"](https://pkuprogramminginai.github.io/Labs-Documentation/#/) in Peking University.
+This is a project for the course "[Programming in AI](https://pkuprogramminginai.github.io/Labs-Documentation/#/)" in Peking University.
 
 We purpose to implement a tiny deep learning framework, and we will use it to train a simple neural network.
 

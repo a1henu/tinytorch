@@ -14,8 +14,8 @@
 namespace device {
 
 struct BaseDevice {
-    virtual bool is_cpu() const = 0;
-    virtual bool is_gpu() const = 0;
+    virtual bool is_cpu() const;
+    virtual bool is_gpu() const;
 };
 
 struct CPU : public BaseDevice {
@@ -28,8 +28,8 @@ struct GPU : public BaseDevice {
     bool is_gpu() const override;
 };
 
-constexpr CPU* cpu_device {};
-constexpr GPU* gpu_device {};
+constexpr CPU* cpu_device = {};
+constexpr GPU* gpu_device = {};
 
 } // namespace device
 

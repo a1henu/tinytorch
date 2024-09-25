@@ -15,7 +15,7 @@ namespace ops {
 
 template <typename Tp>
 __global__ void 
-kernel_sigmoid_f(Tp* output, Tp* input, size_t size) {
+kernel_sigmoid_f(Tp* output, const Tp* input, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         output[i] = 1 / (1 + exp(-input[i]));
     }
@@ -23,7 +23,7 @@ kernel_sigmoid_f(Tp* output, Tp* input, size_t size) {
 
 template <typename Tp>
 __global__ void 
-kernel_sigmoid_b(Tp* output, Tp* input, Tp* grad, size_t size) {
+kernel_sigmoid_b(Tp* output, const Tp* input, const Tp* grad, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         Tp sigmoid = 1 / (1 + exp(-input[i]));
         output[i] = sigmoid * (1 - sigmoid) * grad[i];
@@ -35,7 +35,7 @@ struct sigmoid_forward<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input, 
+        const Tp* input, 
         size_t size
     ) {
         kernel_sigmoid_f<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input, size);
@@ -47,17 +47,19 @@ struct sigmoid_backward<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input, 
-        Tp* grad, 
+        const Tp* input, 
+        const Tp* grad, 
         size_t size
     ) {
         kernel_sigmoid_b<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input, grad, size);
     }
 };
 
+template struct sigmoid_forward<int, device::GPU>;
 template struct sigmoid_forward<float, device::GPU>;
 template struct sigmoid_forward<double, device::GPU>;
 
+template struct sigmoid_backward<int, device::GPU>;
 template struct sigmoid_backward<float, device::GPU>;
 template struct sigmoid_backward<double, device::GPU>;
 
