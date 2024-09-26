@@ -29,10 +29,9 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::CPU(), 
+            tensor::DeviceType::CPU, 
             output
         );
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
 
         return output_t;
     } else if (input.in_gpu()) {
@@ -45,7 +44,7 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::GPU(),
+            tensor::DeviceType::GPU,
             output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
@@ -69,7 +68,7 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::CPU(),
+            tensor::DeviceType::CPU,
             output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
@@ -85,7 +84,7 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::GPU(),
+            tensor::DeviceType::GPU,
             output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
@@ -109,7 +108,7 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::CPU(),
+            tensor::DeviceType::CPU,
             output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
@@ -125,7 +124,7 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::GPU(),
+            tensor::DeviceType::GPU,
             output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
@@ -149,7 +148,7 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::CPU(), 
+            tensor::DeviceType::CPU, 
             output
         );
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
@@ -165,7 +164,7 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         );
         tensor::Tensor<Tp> output_t(
             input.get_shape(), 
-            new device::GPU(),
+            tensor::DeviceType::GPU,
             output
         );
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);

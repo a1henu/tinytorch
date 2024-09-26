@@ -18,24 +18,27 @@
 
 namespace tensor {
 
+enum class DeviceType {
+    CPU = 0,
+    GPU = 1,
+};
+
 template <typename Tp = double>
 class Tensor {
 public:
     Tensor();
     
-    Tensor(const std::vector<int>& shape, device::BaseDevice* device);
+    Tensor(const std::vector<int>& shape, DeviceType device);
 
     Tensor(
         const std::vector<int>& shape, 
-        device::BaseDevice* device,
+        DeviceType device,
         Tp* data
     );
 
     Tensor(const Tensor& other);
 
     Tensor& operator=(const Tensor& other);
-
-    Tensor(Tensor&& other);
 
     ~Tensor();
 
@@ -48,7 +51,7 @@ public:
     const std::vector<int> get_shape() const;
 
     const Tp* get_data() const;
-    void set_data(const Tp* data, device::BaseDevice* device_d) const;
+    void set_data(Tp* data, size_t size, DeviceType device_d) const;
 
     size_t get_tol_size() const;
 

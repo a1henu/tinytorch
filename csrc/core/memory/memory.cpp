@@ -24,7 +24,7 @@ struct malloc_mem_op<Tp, device::CPU> {
 
 template <typename Tp>
 struct free_mem_op<Tp, device::CPU> {
-    void operator()(const device::CPU* device, Tp*& p_data) {
+    void operator()(const device::CPU* device, Tp* p_data) {
         free(p_data);
     }
 };
@@ -65,7 +65,7 @@ struct malloc_mem_op<Tp, device::GPU> {
 
 template <typename Tp>
 struct free_mem_op<Tp, device::GPU> {
-    void operator()(const device::GPU* device, Tp*& p_data) {
+    void operator()(const device::GPU* device, Tp* p_data) {
         throw error::DeviceError("free_mem_op<GPU> can not be called without CUDA support.");
     }
 };

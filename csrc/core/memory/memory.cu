@@ -20,7 +20,7 @@ struct malloc_mem_op<Tp, device::GPU> {
 
 template <typename Tp>
 struct free_mem_op<Tp, device::GPU> {
-    void operator()(const device::GPU* device, Tp*& p_data) {
+    void operator()(const device::GPU* device, Tp* p_data) {
         cudaFree(p_data);
     }
 };

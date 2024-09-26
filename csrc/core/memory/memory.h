@@ -31,7 +31,7 @@ struct free_mem_op {
     /// Inputs:
     /// @param device  : the type of device
     /// @param p_data  : the input pointer
-    void operator()(const Device* device, Tp*& p_data);
+    void operator()(const Device* device, Tp* p_data);
 };
 
 template <typename Tp, typename Dev_dst, typename Dev_src>

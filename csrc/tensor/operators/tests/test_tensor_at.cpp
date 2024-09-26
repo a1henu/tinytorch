@@ -61,10 +61,10 @@ protected:
         v_dim = v_data.size();
         shape = {v_dim};
 
-        v = tensor::Tensor<double>({v_dim}, new device::CPU(), v_data.data());
-        g = tensor::Tensor<double>({v_dim}, new device::CPU(), g_data.data());
-        v_relu_f = tensor::Tensor<double>({v_dim}, new device::CPU(), v_relu_f_data.data());
-        v_relu_b = tensor::Tensor<double>({v_dim}, new device::CPU(), v_relu_b_data.data());
+        v = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_data.data());
+        g = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, g_data.data());
+        v_relu_f = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_relu_f_data.data());
+        v_relu_b = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_relu_b_data.data());
     }
 
     void TearDown() override {
@@ -117,10 +117,10 @@ protected:
 
         x_dim = x_data.size();
 
-        x = tensor::Tensor<double>({x_dim}, new device::CPU(), x_data.data());
-        g = tensor::Tensor<double>({x_dim}, new device::CPU(), g_data.data());
-        x_sigmoid_f = tensor::Tensor<double>({x_dim}, new device::CPU(), x_sigmoid_f_data.data());
-        x_sigmoid_b = tensor::Tensor<double>({x_dim}, new device::CPU(), x_sigmoid_b_data.data());
+        x = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_data.data());
+        g = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, g_data.data());
+        x_sigmoid_f = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_sigmoid_f_data.data());
+        x_sigmoid_b = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_sigmoid_b_data.data());
     }
 
     void TearDown() override {

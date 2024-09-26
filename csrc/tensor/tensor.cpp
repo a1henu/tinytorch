@@ -6,6 +6,7 @@
  * Licensed under the MIT License.
  */
 
+#include <cassert>
 #include <vector>
 
 #include "core/device/device.h"
@@ -22,13 +23,13 @@ Tensor<Tp>::Tensor() { }
 template <typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    device::BaseDevice* dev
+    DeviceType device
 ) : shape(shape) {
     size_t tol_size = get_tol_size();
-    if (dev->is_cpu()) {
+    if (device == DeviceType::CPU) {
         this->device = new device::CPU();
         malloc_cpu_op()(device::cpu_device, p_data, tol_size);
-    } else if (dev->is_gpu()) {
+    } else if (device == DeviceType::GPU) {
         this->device = new device::GPU();
         malloc_gpu_op()(device::gpu_device, p_data, tol_size);
     } else {
@@ -39,14 +40,16 @@ Tensor<Tp>::Tensor(
 template <typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
-    device::BaseDevice* device,
+    DeviceType device,
     Tp* data
-) : shape(shape), device(device) {
+) : shape(shape) {
     size_t tol_size = get_tol_size();
-    if (device->is_cpu()) {
+    if (device == DeviceType::CPU) {
+        this->device = new device::CPU();
         malloc_cpu_op()(device::cpu_device, p_data, tol_size);
         copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, data, tol_size);
-    } else if (device->is_gpu()) {
+    } else if (device == DeviceType::GPU) {
+        this->device = new device::GPU();
         malloc_gpu_op()(device::gpu_device, p_data, tol_size);
         copy_g2g_op()(device::gpu_device, device::gpu_device, p_data, data, tol_size);
     } else {
@@ -55,12 +58,14 @@ Tensor<Tp>::Tensor(
 }
 
 template <typename Tp>
-Tensor<Tp>::Tensor(const Tensor<Tp>& other) : shape(other.shape), device(other.device) {
+Tensor<Tp>::Tensor(const Tensor<Tp>& other) : shape(other.shape) {
     size_t tol_size = get_tol_size();
-    if (device->is_cpu()) {
+    if (other.in_cpu()) {
+        this->device = new device::CPU();
         malloc_cpu_op()(device::cpu_device, p_data, tol_size);
         copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, other.p_data, tol_size);
-    } else if (device->is_gpu()) {
+    } else if (other.in_gpu()) {
+        this->device = new device::GPU();
         malloc_gpu_op()(device::gpu_device, p_data, tol_size);
         copy_g2g_op()(device::gpu_device, device::gpu_device, p_data, other.p_data, tol_size);
     } else {
@@ -71,32 +76,27 @@ Tensor<Tp>::Tensor(const Tensor<Tp>& other) : shape(other.shape), device(other.d
 template <typename Tp>
 Tensor<Tp>& Tensor<Tp>::operator=(const Tensor<Tp>& other) {
     if (this != &other) {
-        if (device->is_cpu()) {
-            free_cpu_op()(device::cpu_device, p_data);
-        } else if (device->is_gpu()) {
-            free_gpu_op()(device::gpu_device, p_data);
+        if (p_data != nullptr) {
+            if (device->is_cpu()) {
+                free_cpu_op()(device::cpu_device, p_data);
+            } else if (device->is_gpu()) {
+                free_gpu_op()(device::gpu_device, p_data);
+            }
         }
 
         shape = other.shape;
-        device = other.device;
-
         size_t tol_size = get_tol_size();
-        if (device->is_cpu()) {
+        if (other.in_cpu()) {
+            this->device = new device::CPU();
             malloc_cpu_op()(device::cpu_device, p_data, tol_size);
             copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, other.p_data, tol_size);
-        } else if (device->is_gpu()) {
+        } else if (other.in_gpu()) {
+            this->device = new device::GPU();
             malloc_gpu_op()(device::gpu_device, p_data, tol_size);
             copy_g2g_op()(device::gpu_device, device::gpu_device, p_data, other.p_data, tol_size);
         }
     }
     return *this;
-}
-
-template <typename Tp>
-Tensor<Tp>::Tensor(Tensor<Tp>&& other) : shape(std::move(other.shape)) {
-    device = other.device;
-    p_data = other.p_data;
-    other.p_data = nullptr;
 }
 
 template <typename Tp>
@@ -182,11 +182,18 @@ const Tp* Tensor<Tp>::get_data() const {
 }
 
 template <typename Tp>
-void Tensor<Tp>::set_data(const Tp* data, device::BaseDevice* device_d) const {
+void Tensor<Tp>::set_data(Tp* data, size_t size, DeviceType device_d) const {
     size_t tol_size = get_tol_size();
-    if (device->is_cpu() && device_d->is_cpu()) {
+    assert(size <= tol_size);
+    if (device->is_cpu() && device_d == DeviceType::CPU) {
+        if (p_data != nullptr) {
+            free_cpu_op()(device::cpu_device, p_data);
+        }
         copy_c2c_op()(device::cpu_device, device::cpu_device, p_data, data, tol_size);
-    } else if (device->is_gpu() && device_d->is_gpu()) {
+    } else if (device->is_gpu() && device_d == DeviceType::GPU) {
+        if (p_data != nullptr) {
+            free_gpu_op()(device::gpu_device, p_data);
+        }
         copy_g2g_op()(device::gpu_device, device::gpu_device, p_data, data, tol_size);
     } else {
         throw error::DeviceError("Unknown device type");
