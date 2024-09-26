@@ -18,8 +18,8 @@ struct add_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         for (int i = 0; i < size; ++i) {
@@ -33,8 +33,8 @@ struct sub_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         for (int i = 0; i < size; ++i) {
@@ -48,14 +48,15 @@ struct equal_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device, 
         bool* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         *output = true;
         for (int i = 0; i < size; ++i) {
             if (input1[i] != input2[i]) {
                 *output = false;
+                break;
             }
         }
     }
@@ -68,8 +69,8 @@ struct add_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         throw error::DeviceError("add_op<GPU> can not be called without CUDA support.");
@@ -81,8 +82,8 @@ struct sub_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         throw error::DeviceError("sub_op<GPU> can not be called without CUDA support.");
@@ -94,8 +95,8 @@ struct equal_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         bool* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         throw error::DeviceError("equal_op<GPU> can not be called without CUDA support.");

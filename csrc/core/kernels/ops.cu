@@ -14,7 +14,7 @@ namespace ops {
 
 template <typename Tp>
 __global__ void
-kernel_add(Tp* output, Tp* input1, Tp* input2, size_t size) {
+kernel_add(Tp* output, const Tp* input1, const Tp* input2, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         output[i] = input1[i] + input2[i];
     }
@@ -22,7 +22,7 @@ kernel_add(Tp* output, Tp* input1, Tp* input2, size_t size) {
 
 template <typename Tp>
 __global__ void
-kernel_sub(Tp* output, Tp* input1, Tp* input2, size_t size) {
+kernel_sub(Tp* output, const Tp* input1, const Tp* input2, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         output[i] = input1[i] - input2[i];
     }
@@ -35,7 +35,7 @@ assign_to_true(bool* flag) {
 
 template <typename Tp>
 __global__ void
-kernel_eq(bool* output, Tp* input1, Tp* input2, size_t size) {
+kernel_eq(bool* output, const Tp* input1, const Tp* input2, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         if (input1[i] != input2[i]) {
             *output = false;
@@ -48,8 +48,8 @@ struct add_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         kernel_add<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input1, input2, size);
@@ -61,8 +61,8 @@ struct sub_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         Tp* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         kernel_sub<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input1, input2, size);
@@ -74,8 +74,8 @@ struct equal_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
         bool* output, 
-        Tp* input1, 
-        Tp* input2, 
+        const Tp* input1, 
+        const Tp* input2, 
         size_t size
     ) {
         assign_to_true<<<1, 1>>>(output);

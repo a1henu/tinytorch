@@ -23,7 +23,7 @@ struct add_op {
     /// @param input1 : the input1 array pointer
     /// @param input2 : the input2 array pointer
     /// @param size   : the size of the array 
-    void operator()(Device* device, Tp* output, Tp* input1, Tp* input2, size_t size);
+    void operator()(Device* device, Tp* output, const Tp* input1, const Tp* input2, size_t size);
 };
 
 template <typename Tp, typename Device>
@@ -36,7 +36,7 @@ struct sub_op {
     /// @param input1 : the input1 array pointer
     /// @param input2 : the input2 array pointer
     /// @param size   : the size of the array 
-    void operator()(Device* device, Tp* output, Tp* input1, Tp* input2, size_t size);
+    void operator()(Device* device, Tp* output, const Tp* input1, const Tp* input2, size_t size);
 };
 
 template <typename Tp, typename Device>
@@ -49,7 +49,7 @@ struct equal_op {
     /// @param input1 : the input1 array pointer
     /// @param input2 : the input2 array pointer
     /// @param size   : the size of the array 
-    void operator()(Device* device, bool* output, Tp* input1, Tp* input2, size_t size);
+    void operator()(Device* device, bool* output, const Tp* input1, const Tp* input2, size_t size);
 };
 
 } // namespace ops

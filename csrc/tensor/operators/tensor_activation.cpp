@@ -35,6 +35,7 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
 
         return output_t;
     } else if (input.in_gpu()) {
+#ifdef __CUDA
         Tp* output;
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
@@ -50,6 +51,9 @@ tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
         return output_t;
+#else
+        throw error::DeviceError("GPU is not supported");
+#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }
@@ -75,6 +79,7 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
 
         return output_t;
     } else if (input.in_gpu()) {
+#ifdef __CUDA
         Tp* output;
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
@@ -90,6 +95,9 @@ tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tenso
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
     
         return output_t;
+#else
+        throw error::DeviceError("GPU is not supported");
+#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }
@@ -115,6 +123,7 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
 
         return output_t;
     } else if (input.in_gpu()) {
+#ifdef __CUDA
         Tp* output;
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
@@ -130,6 +139,9 @@ tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
         return output_t;
+#else
+        throw error::DeviceError("GPU is not supported");
+#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }
@@ -155,6 +167,7 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
 
         return output_t;
     } else if (input.in_gpu()) {
+#ifdef __CUDA
         Tp* output;
         memory::malloc_mem_op<Tp, device::GPU>()(
             device::gpu_device, output, size
@@ -170,6 +183,9 @@ tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Te
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
 
         return output_t;
+#else
+        throw error::DeviceError("GPU is not supported");
+#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }

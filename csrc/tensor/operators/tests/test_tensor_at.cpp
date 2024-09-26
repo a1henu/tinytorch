@@ -21,8 +21,11 @@ protected:
     tensor::Tensor<double> v_relu_b;
 
     int v_dim;
-
-    std::vector<int> shape;
+    
+#ifdef __CUDA
+    double* vg;
+    double* gg;
+#endif
 
     void SetUp() override {
         std::vector<double> v_data = {
@@ -59,15 +62,31 @@ protected:
         };
 
         v_dim = v_data.size();
-        shape = {v_dim};
 
-        v = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_data.data());
-        g = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, g_data.data());
         v_relu_f = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_relu_f_data.data());
         v_relu_b = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_relu_b_data.data());
+#ifndef __CUDA
+        v = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, v_data.data());
+        g = tensor::Tensor<double>({v_dim}, tensor::DeviceType::CPU, g_data.data());
+#else   
+        memory::malloc_mem_op<double, device::GPU>()(
+            device::gpu_device, vg, v_dim);
+        memory::malloc_mem_op<double, device::GPU>()(
+            device::gpu_device, gg, v_dim);
+        memory::copy_mem_op<double, device::GPU, device::CPU>()(
+            device::gpu_device, device::cpu_device, vg, v_data.data(), v_dim);
+        memory::copy_mem_op<double, device::GPU, device::CPU>()(
+            device::gpu_device, device::cpu_device, gg, g_data.data(), v_dim);
+        v = tensor::Tensor<double>({v_dim}, tensor::DeviceType::GPU, vg);
+        g = tensor::Tensor<double>({v_dim}, tensor::DeviceType::GPU, gg);
+#endif
     }
 
     void TearDown() override {
+#ifdef __CUDA
+        memory::free_mem_op<double, device::GPU>()(device::gpu_device, vg);
+        memory::free_mem_op<double, device::GPU>()(device::gpu_device, gg);
+#endif
     }
 };
 
@@ -80,6 +99,11 @@ protected:
     tensor::Tensor<double> x_sigmoid_b;
 
     int x_dim;
+
+#ifdef __CUDA
+    double* xg;
+    double* gg;
+#endif
 
     void SetUp() override {
         std::vector<double> x_data = {
@@ -116,16 +140,34 @@ protected:
         };
 
         x_dim = x_data.size();
-
-        x = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_data.data());
-        g = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, g_data.data());
         x_sigmoid_f = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_sigmoid_f_data.data());
         x_sigmoid_b = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_sigmoid_b_data.data());
+#ifndef __CUDA
+        x = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, x_data.data());
+        g = tensor::Tensor<double>({x_dim}, tensor::DeviceType::CPU, g_data.data());
+#else
+        memory::malloc_mem_op<double, device::GPU>()(
+            device::gpu_device, xg, x_dim);
+        memory::malloc_mem_op<double, device::GPU>()(
+            device::gpu_device, gg, x_dim);
+        memory::copy_mem_op<double, device::GPU, device::CPU>()(
+            device::gpu_device, device::cpu_device, xg, x_data.data(), x_dim);
+        memory::copy_mem_op<double, device::GPU, device::CPU>()(
+            device::gpu_device, device::cpu_device, gg, g_data.data(), x_dim);
+        x = tensor::Tensor<double>({x_dim}, tensor::DeviceType::GPU, xg);
+        g = tensor::Tensor<double>({x_dim}, tensor::DeviceType::GPU, gg);  
+#endif
     }
 
     void TearDown() override {
+#ifdef __CUDA 
+        memory::free_mem_op<double, device::GPU>()(device::gpu_device, xg);
+        memory::free_mem_op<double, device::GPU>()(device::gpu_device, gg);
+#endif
     }
 };
+
+#ifndef __CUDA
 
 TEST_F(TestTensorReLU, tensor_relu_forward_cpu) {
     tensor::Tensor<double> vt_relu_f = t_relu_f(v);
@@ -154,6 +196,42 @@ TEST_F(TestTensorSigmoid, tensor_sigmoid_backward_cpu) {
         EXPECT_NEAR(xt_sigmoid_b.get_data()[i], x_sigmoid_b.get_data()[i], 1e-6);
     }
 }
+
+#else
+
+TEST_F(TestTensorReLU, tensor_relu_forward_gpu) {
+    tensor::Tensor<double> vt_relu_f = t_relu_f(v);
+    tensor::Tensor<double> vt_relu_f_c = vt_relu_f.cpu();
+    for (int i = 0; i < v_dim; i++) {
+        EXPECT_NEAR(vt_relu_f_c.get_data()[i], v_relu_f.get_data()[i], 1e-6);
+    }
+}
+
+TEST_F(TestTensorReLU, tensor_relu_backward_gpu) {
+    tensor::Tensor<double> vt_relu_b = t_relu_b(v, g);
+    tensor::Tensor<double> vt_relu_b_c = vt_relu_b.cpu();
+    for (int i = 0; i < v_dim; i++) {
+        EXPECT_NEAR(vt_relu_b_c.get_data()[i], v_relu_b.get_data()[i], 1e-6);
+    }
+}
+
+TEST_F(TestTensorSigmoid, tensor_sigmoid_forward_gpu) {
+    tensor::Tensor<double> xt_sigmoid_f = t_sigmoid_f(x);
+    tensor::Tensor<double> xt_sigmoid_f_c = xt_sigmoid_f.cpu();
+    for (int i = 0; i < x_dim; i++) {
+        EXPECT_NEAR(xt_sigmoid_f_c.get_data()[i], x_sigmoid_f.get_data()[i], 1e-6);
+    }
+}
+
+TEST_F(TestTensorSigmoid, tensor_sigmoid_backward_gpu) {
+    tensor::Tensor<double> xt_sigmoid_b = t_sigmoid_b(x, g);
+    tensor::Tensor<double> xt_sigmoid_b_c = xt_sigmoid_b.cpu();
+    for (int i = 0; i < x_dim; i++) {
+        EXPECT_NEAR(xt_sigmoid_b_c.get_data()[i], x_sigmoid_b.get_data()[i], 1e-6);
+    }
+}
+
+#endif
 
 int main(int argc, char** argv) {
     std::cout << "run test for TENSOR::ACTIVATION" << std::endl << std::endl;

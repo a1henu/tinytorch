@@ -11,6 +11,7 @@
 
 #include "core/device/device.h"
 #include "core/memory/memory.h"
+#include "core/kernels/ops.h"
 #include "error/error.h"
 
 #include "tensor/tensor.h"
@@ -207,6 +208,87 @@ size_t Tensor<Tp>::get_tol_size() const {
         s *= i;
     }
     return s;
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::operator+(const Tensor<Tp>& other) const {
+    if (this->get_shape() != other.get_shape()) {
+        throw error::InvalidArgument("The shape of two tensors must be the same.");
+    }
+
+    if (this->in_cpu() && other.in_cpu()) {
+        Tp* p_out;
+        size_t tol_size = this->get_tol_size();
+        memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
+        ops::add_op<Tp, device::CPU>()(device::cpu_device, p_out, this->get_data(), other.get_data(), tol_size);
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU, p_out);
+        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
+        return out;
+    } else if (this->in_gpu() && other.in_gpu()) {
+        Tp* p_out;
+        size_t tol_size = this->get_tol_size();
+        memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
+        ops::add_op<Tp, device::GPU>()(device::gpu_device, p_out, this->get_data(), other.get_data(), tol_size);
+        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::GPU, p_out);
+        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
+        return out;
+    } else {
+        throw error::DeviceError("The device of two tensors must be the same.");
+    }
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::operator-(const Tensor<Tp>& other) const {
+    if (this->get_shape() != other.get_shape()) {
+        throw error::InvalidArgument("The shape of two tensors must be the same.");
+    }
+
+    if (this->in_cpu() && other.in_cpu()) {
+        Tp* p_out;
+        size_t tol_size = this->get_tol_size();
+        memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
+        ops::sub_op<Tp, device::CPU>()(device::cpu_device, p_out, this->get_data(), other.get_data(), tol_size);
+        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::CPU, p_out);
+        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
+        return out;
+    } else if (this->in_gpu() && other.in_gpu()) {
+        Tp* p_out;
+        size_t tol_size = this->get_tol_size();
+        memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
+        ops::sub_op<Tp, device::GPU>()(device::gpu_device, p_out, this->get_data(), other.get_data(), tol_size);
+        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::GPU, p_out);
+        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
+        return out;
+    } else {
+        throw error::DeviceError("The device of two tensors must be the same.");
+    }
+}
+
+template <typename Tp>
+bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
+    if (this == &other) {
+        return true;
+    }
+    if (this->get_shape() != other.get_shape()) {
+        throw error::InvalidArgument("The shape of two tensors must be the same.");
+    }
+
+    if (this->in_cpu() && other.in_cpu()) {
+        bool out = true;
+        ops::equal_op<Tp, device::CPU>()(device::cpu_device, &out, this->get_data(), other.get_data(), this->get_tol_size());
+        return out;
+    } else if (this->in_gpu() && other.in_gpu()) {
+        bool out_c = true;
+        bool* out_g;
+        size_t tol_size = this->get_tol_size();
+        memory::malloc_mem_op<bool, device::GPU>()(device::gpu_device, out_g, 1);
+        ops::equal_op<Tp, device::GPU>()(device::gpu_device, out_g, this->get_data(), other.get_data(), tol_size);
+        memory::copy_mem_op<bool, device::CPU, device::GPU>()(device::cpu_device, device::gpu_device, &out_c, out_g, 1);
+        memory::free_mem_op<bool, device::GPU>()(device::gpu_device, out_g);
+        return out_c;
+    } else {
+        throw error::DeviceError("The device of two tensors must be the same.");
+    }
 }
 
 template class Tensor<int>;

@@ -17,7 +17,7 @@ template <typename Tp>
 __global__ void 
 kernel_sigmoid_f(Tp* output, const Tp* input, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
-        output[i] = 1 / (1 + exp(-input[i]));
+        output[i] = 1 / (1 + expf(-input[i]));
     }
 }
 
@@ -25,7 +25,7 @@ template <typename Tp>
 __global__ void 
 kernel_sigmoid_b(Tp* output, const Tp* input, const Tp* grad, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
-        Tp sigmoid = 1 / (1 + exp(-input[i]));
+        Tp sigmoid = 1 / (1 + expf(-input[i]));
         output[i] = sigmoid * (1 - sigmoid) * grad[i];
     }
 }

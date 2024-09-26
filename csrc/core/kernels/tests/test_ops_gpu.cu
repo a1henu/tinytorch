@@ -29,7 +29,7 @@ std::vector<double> generate_random_vector(size_t size, double min_value, double
     return vec;
 }
 
-class TestMemory : public ::testing::Test {
+class TestOps : public ::testing::Test {
 protected:
     std::vector<double> v1;
     std::vector<double> v2;
@@ -64,7 +64,7 @@ protected:
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
 };
 
-TEST_F(TestMemory, TestAddOp_gpu_1) {
+TEST_F(TestOps, TestAddOp_gpu_1) {
     double* vt_out;
     double* vt_out_cpu = new double[vt_dim];
     cudaMalloc(&vt_out, vt_dim * sizeof(double));
@@ -77,7 +77,7 @@ TEST_F(TestMemory, TestAddOp_gpu_1) {
     cudaFree(vt_out);
 }
 
-TEST_F(TestMemory, TestAddOp_gpu_2) {
+TEST_F(TestOps, TestAddOp_gpu_2) {
     double* vt_out;
     double* vt_out_cpu = new double[vt_dim];
     cudaMalloc(&vt_out, vt_dim * sizeof(double));
@@ -90,7 +90,7 @@ TEST_F(TestMemory, TestAddOp_gpu_2) {
     cudaFree(vt_out);
 }
 
-TEST_F(TestMemory, TestSubOp_gpu) {
+TEST_F(TestOps, TestSubOp_gpu) {
     double* vt_out;
     double* vt_out_cpu = new double[vt_dim];
     cudaMalloc(&vt_out, vt_dim * sizeof(double));
@@ -103,7 +103,7 @@ TEST_F(TestMemory, TestSubOp_gpu) {
     cudaFree(vt_out);
 }
 
-TEST_F(TestMemory, TestEqualOp_gpu_1) {
+TEST_F(TestOps, TestEqualOp_gpu_1) {
     bool vt_out_c = true;
     bool* vt_out_g;
     cudaMalloc(&vt_out_g, sizeof(bool));
@@ -120,7 +120,7 @@ TEST_F(TestMemory, TestEqualOp_gpu_1) {
     cudaFree(vt_out_g);
 }
 
-TEST_F(TestMemory, TestEqualOp_gpu_2) {
+TEST_F(TestOps, TestEqualOp_gpu_2) {
     double* vt_out1;
     double* vt_out2;
     bool* vt_out_g;

@@ -59,14 +59,18 @@ public:
     // these operators are implemented in:
     // /tensor/operators/tensor_math_ops.cpp
     
-    template <typename T>
-    friend Tensor<T>& operator+(const Tensor<T>& a, const Tensor<T>& b);
+    // template <typename T>
+    // friend Tensor<T>& operator+(const Tensor<T>& a, const Tensor<T>& b);
 
-    template <typename T>
-    friend Tensor<T>& operator-(const Tensor<T>& a, const Tensor<T>& b);
+    // template <typename T>
+    // friend Tensor<T>& operator-(const Tensor<T>& a, const Tensor<T>& b);
 
-    template <typename T>
-    friend bool operator==(const Tensor<T>& a, const Tensor<T>& b);
+    // template <typename T>
+    // friend bool operator==(const Tensor<T>& a, const Tensor<T>& b);
+
+    Tensor operator+(const Tensor& other) const;
+    Tensor operator-(const Tensor& other) const;
+    bool operator==(const Tensor& other) const;
 
 private:
     std::vector<int> shape;

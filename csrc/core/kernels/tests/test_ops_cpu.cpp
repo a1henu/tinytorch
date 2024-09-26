@@ -29,7 +29,7 @@ std::vector<double> generate_random_vector(size_t size, double min_value, double
     return vec;
 }
 
-class TestMemory : public ::testing::Test {
+class TestOps : public ::testing::Test {
 protected:
     std::vector<double> vt_1;
     std::vector<double> vt_2;
@@ -53,7 +53,7 @@ protected:
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
 };
 
-TEST_F(TestMemory, TestAddOp_cpu_1) {
+TEST_F(TestOps, TestAddOp_cpu_1) {
     std::vector<double> vt_out(vt_dim);
     add_cpu_op()(device::cpu_device, vt_out.data(), vt_1.data(), vt_2.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
@@ -61,7 +61,7 @@ TEST_F(TestMemory, TestAddOp_cpu_1) {
     }
 }
 
-TEST_F(TestMemory, TestAddOp_cpu_2) {
+TEST_F(TestOps, TestAddOp_cpu_2) {
     std::vector<double> vt_out(vt_dim);
     add_cpu_op()(device::cpu_device, vt_out.data(), vt_2.data(), vt_1.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
@@ -69,7 +69,7 @@ TEST_F(TestMemory, TestAddOp_cpu_2) {
     }
 }
 
-TEST_F(TestMemory, TestSubOp_cpu) {
+TEST_F(TestOps, TestSubOp_cpu) {
     std::vector<double> vt_out(vt_dim);
     sub_cpu_op()(device::cpu_device, vt_out.data(), vt_1.data(), vt_2.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
@@ -77,7 +77,7 @@ TEST_F(TestMemory, TestSubOp_cpu) {
     }
 }
 
-TEST_F(TestMemory, TestEqualOp_cpu_1) {
+TEST_F(TestOps, TestEqualOp_cpu_1) {
     bool vt_out;
     equal_cpu_op()(device::cpu_device, &vt_out, vt_1.data(), vt_2.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
@@ -89,7 +89,7 @@ TEST_F(TestMemory, TestEqualOp_cpu_1) {
     EXPECT_TRUE(vt_out);
 }
 
-TEST_F(TestMemory, TestEqualOp_cpu_2) {
+TEST_F(TestOps, TestEqualOp_cpu_2) {
     std::vector<double> vt_out_1(vt_dim);
     std::vector<double> vt_out_2(vt_dim);
     add_cpu_op()(device::cpu_device, vt_out_1.data(), vt_1.data(), vt_2.data(), vt_dim);
