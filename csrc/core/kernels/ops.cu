@@ -6,6 +6,8 @@
  * Licensed under the MIT License.
  */
 
+#include <cublas_v2.h>
+
 #include "core/kernels/ops.h"
 
 #include "macros.h"
@@ -70,6 +72,71 @@ struct sub_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct matmul_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const char* transa, 
+        const char* transb,
+        const int m,
+        const int n,
+        const int k,
+        const Tp alpha,
+        const Tp* A,
+        const int lda,
+        const Tp* B,
+        const int ldb,
+        const Tp beta,
+        Tp* C,
+        const int ldc
+    ) {
+        cublasHandle_t handle;
+        cublasCreate(&handle);
+        cublasOperation_t transa_ = (*transa == 'N') ? CUBLAS_OP_N : CUBLAS_OP_T;
+        cublasOperation_t transb_ = (*transb == 'N') ? CUBLAS_OP_N : CUBLAS_OP_T;
+        if (std::is_same<Tp, float>::value) {
+            cublasSgemm(
+                handle,
+                transa_,
+                transb_,
+                m,
+                n,
+                k,
+                reinterpret_cast<const float*>(&alpha),
+                reinterpret_cast<const float*>(A),
+                lda,
+                reinterpret_cast<const float*>(B),
+                ldb,
+                reinterpret_cast<const float*>(&beta),
+                reinterpret_cast<float*>(C),
+                ldc
+            );
+            cublasDestroy(handle);
+        } else if (std::is_same<Tp, double>::value) {
+            cublasDgemm(
+                handle,
+                transa_,
+                transb_,
+                m,
+                n,
+                k,
+                reinterpret_cast<const double*>(&alpha),
+                reinterpret_cast<const double*>(A),
+                lda,
+                reinterpret_cast<const double*>(B),
+                ldb,
+                reinterpret_cast<const double*>(&beta),
+                reinterpret_cast<double*>(C),
+                ldc
+            );
+            cublasDestroy(handle);
+        } else {
+            cublasDestroy(handle);
+            throw std::runtime_error("Unsupported data type for matmul");
+        }
+    }
+};
+
+template <typename Tp>
 struct equal_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
@@ -90,6 +157,10 @@ template struct add_op<double, device::GPU>;
 template struct sub_op<int, device::GPU>;
 template struct sub_op<float, device::GPU>;
 template struct sub_op<double, device::GPU>;
+
+template struct matmul_op<int, device::GPU>;
+template struct matmul_op<float, device::GPU>;
+template struct matmul_op<double, device::GPU>;
 
 template struct equal_op<int, device::GPU>;
 template struct equal_op<float, device::GPU>;

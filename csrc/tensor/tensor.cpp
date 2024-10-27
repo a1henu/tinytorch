@@ -213,7 +213,7 @@ size_t Tensor<Tp>::get_tol_size() const {
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::operator+(const Tensor<Tp>& other) const {
     if (this->get_shape() != other.get_shape()) {
-        throw error::InvalidArgument("The shape of two tensors must be the same.");
+        throw error::InvalidArgumentError("The shape of two tensors must be the same.");
     }
 
     if (this->in_cpu() && other.in_cpu()) {
@@ -240,7 +240,7 @@ Tensor<Tp> Tensor<Tp>::operator+(const Tensor<Tp>& other) const {
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::operator-(const Tensor<Tp>& other) const {
     if (this->get_shape() != other.get_shape()) {
-        throw error::InvalidArgument("The shape of two tensors must be the same.");
+        throw error::InvalidArgumentError("The shape of two tensors must be the same.");
     }
 
     if (this->in_cpu() && other.in_cpu()) {
@@ -270,7 +270,7 @@ bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
         return true;
     }
     if (this->get_shape() != other.get_shape()) {
-        throw error::InvalidArgument("The shape of two tensors must be the same.");
+        throw error::InvalidArgumentError("The shape of two tensors must be the same.");
     }
 
     if (this->in_cpu() && other.in_cpu()) {

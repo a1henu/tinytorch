@@ -18,6 +18,17 @@
 
 #include "error/error.h"
 
+std::vector<float> generate_random_vector(size_t size, float min_value, float max_value) {
+    std::vector<float> vec(size);
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+    std::uniform_real_distribution<> dis(min_value, max_value); 
+
+    std::generate(vec.begin(), vec.end(), [&]() { return dis(gen); });
+
+    return vec;
+}
+
 std::vector<double> generate_random_vector(size_t size, double min_value, double max_value) {
     std::vector<double> vec(size);
     std::random_device rd;  
@@ -46,10 +57,14 @@ protected:
     
     using add_cpu_op = ops::add_op<double, device::CPU>;
     using sub_cpu_op = ops::sub_op<double, device::CPU>;
+    using smatmul_cpu_op = ops::matmul_op<float, device::CPU>;
+    using dmatmul_cpu_op = ops::matmul_op<double, device::CPU>;
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
+    using smatmul_gpu_op = ops::matmul_op<float, device::GPU>;
+    using dmatmul_gpu_op = ops::matmul_op<double, device::GPU>;
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
 };
 
@@ -74,6 +89,56 @@ TEST_F(TestOps, TestSubOp_cpu) {
     sub_cpu_op()(device::cpu_device, vt_out.data(), vt_1.data(), vt_2.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
         EXPECT_EQ(vt_out[i], vt_1[i] - vt_2[i]);
+    }
+}
+
+TEST_F(TestOps, TestMatmulOp_cpu_float) {
+    const int m = 30, n = 40, k = 35;
+    std::vector<float> A = generate_random_vector(m * k, 0.0f, 1.0f);
+    std::vector<float> B = generate_random_vector(k * n, 0.0f, 1.0f);
+    std::vector<float> C(m * n, 0.0);
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    smatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), m, B.data(), k, beta, C.data(), m);
+
+    std::vector<float> C_expected(m * n, 0.0);
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int p = 0; p < k; ++p) {
+                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+            }
+        }
+    }
+
+    for (int i = 0; i < m * n; ++i) {
+        EXPECT_NEAR(C[i], C_expected[i], 1e-4);
+    }
+}
+
+TEST_F(TestOps, TestMatmulOp_cpu_double) {
+    const int m = 30, n = 40, k = 35;
+    std::vector<double> A = generate_random_vector(m * k, 0.0, 1.0);
+    std::vector<double> B = generate_random_vector(k * n, 0.0, 1.0);
+    std::vector<double> C(m * n, 0.0);
+
+    const double alpha = 1.0;
+    const double beta = 0.0;
+
+    dmatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), m, B.data(), k, beta, C.data(), m);
+
+    std::vector<double> C_expected(m * n, 0.0);
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int p = 0; p < k; ++p) {
+                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+            }
+        }
+    }
+
+    for (int i = 0; i < m * n; ++i) {
+        EXPECT_NEAR(C[i], C_expected[i], 1e-4);
     }
 }
 

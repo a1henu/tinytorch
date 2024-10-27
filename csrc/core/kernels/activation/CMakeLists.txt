@@ -6,6 +6,7 @@ list(APPEND ACTIVATION_SOURCES
 )
 
 if(CUDA)
+    add_compile_definitions(RELU__IMP__CUDA)
     list(APPEND ACTIVATION_SOURCES
         relu.cu
         sigmoid.cu

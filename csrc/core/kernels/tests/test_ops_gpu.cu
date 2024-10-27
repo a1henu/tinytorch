@@ -18,6 +18,17 @@
 
 #include "error/error.h"
 
+std::vector<float> generate_random_vector(size_t size, float min_value, float max_value) {
+    std::vector<float> vec(size);
+    std::random_device rd;  
+    std::mt19937 gen(rd()); 
+    std::uniform_real_distribution<> dis(min_value, max_value); 
+
+    std::generate(vec.begin(), vec.end(), [&]() { return dis(gen); });
+
+    return vec;
+}
+
 std::vector<double> generate_random_vector(size_t size, double min_value, double max_value) {
     std::vector<double> vec(size);
     std::random_device rd;  
@@ -57,10 +68,14 @@ protected:
     
     using add_cpu_op = ops::add_op<double, device::CPU>;
     using sub_cpu_op = ops::sub_op<double, device::CPU>;
+    using smatmul_cpu_op = ops::matmul_op<float, device::CPU>;
+    using dmatmul_cpu_op = ops::matmul_op<double, device::CPU>;
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
+    using smatmul_gpu_op = ops::matmul_op<float, device::GPU>;
+    using dmatmul_gpu_op = ops::matmul_op<double, device::GPU>;
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
 };
 
@@ -101,6 +116,90 @@ TEST_F(TestOps, TestSubOp_gpu) {
     }
     delete[] vt_out_cpu;
     cudaFree(vt_out);
+}
+
+TEST_F(TestOps, TestMatmulOp_gpu_float) {
+    const int m = 30, n = 40, k = 35;
+    std::vector<float> A = generate_random_vector(m * k, 0.0f, 1.0f);
+    std::vector<float> B = generate_random_vector(k * n, 0.0f, 1.0f);
+    float* d_A;
+    float* d_B;
+    float* d_C;
+    float* h_C = new float[m * n];
+
+    cudaMalloc(&d_A, m * k * sizeof(float));
+    cudaMalloc(&d_B, k * n * sizeof(float));
+    cudaMalloc(&d_C, m * n * sizeof(float));
+
+    cudaMemcpy(d_A, A.data(), m * k * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, B.data(), k * n * sizeof(float), cudaMemcpyHostToDevice);
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    smatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, m, d_B, k, beta, d_C, m);
+
+    cudaMemcpy(h_C, d_C, m * n * sizeof(float), cudaMemcpyDeviceToHost);
+
+    std::vector<float> C_expected(m * n, 0.0f);
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int p = 0; p < k; ++p) {
+                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+            }
+        }
+    }
+
+    for (int i = 0; i < m * n; ++i) {
+        EXPECT_NEAR(h_C[i], C_expected[i], 1e-4f);
+    }
+
+    delete[] h_C;
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
+}
+
+TEST_F(TestOps, TestMatmulOp_gpu_double) {
+    const int m = 2, n = 3, k = 4;
+    std::vector<double> A = generate_random_vector(m * k, 0.0, 1.0);
+    std::vector<double> B = generate_random_vector(k * n, 0.0, 1.0);
+    double* d_A;
+    double* d_B;
+    double* d_C;
+    double* h_C = new double[m * n];
+
+    cudaMalloc(&d_A, m * k * sizeof(double));
+    cudaMalloc(&d_B, k * n * sizeof(double));
+    cudaMalloc(&d_C, m * n * sizeof(double));
+
+    cudaMemcpy(d_A, A.data(), m * k * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, B.data(), k * n * sizeof(double), cudaMemcpyHostToDevice);
+
+    const double alpha = 1.0;
+    const double beta = 0.0;
+
+    dmatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, m, d_B, k, beta, d_C, m);
+
+    cudaMemcpy(h_C, d_C, m * n * sizeof(double), cudaMemcpyDeviceToHost);
+
+    std::vector<double> C_expected(m * n, 0.0);
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int p = 0; p < k; ++p) {
+                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+            }
+        }
+    }
+
+    for (int i = 0; i < m * n; ++i) {
+        EXPECT_NEAR(h_C[i], C_expected[i], 1e-4);
+    }
+
+    delete[] h_C;
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
 }
 
 TEST_F(TestOps, TestEqualOp_gpu_1) {
