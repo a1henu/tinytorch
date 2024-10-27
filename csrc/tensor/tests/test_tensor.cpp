@@ -54,6 +54,36 @@ TEST_F(TestTensor, copy_constructor) {
     tensor::Tensor<double> t2(t1);
 }
 
+TEST_F(TestTensor, reshape_without_autocalc) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_reshape = t.reshape({3, 2, 4});
+    ASSERT_EQ(t_reshape.get_shape()[0], 3);
+    ASSERT_EQ(t_reshape.get_shape()[1], 2);
+    ASSERT_EQ(t_reshape.get_shape()[2], 4);
+}
+
+TEST_F(TestTensor, reshape_with_autocalc) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_reshape = t.reshape({3, 1, -1});
+    ASSERT_EQ(t_reshape.get_shape()[0], 3);
+    ASSERT_EQ(t_reshape.get_shape()[1], 1);
+    ASSERT_EQ(t_reshape.get_shape()[2], 8);
+}
+
+TEST_F(TestTensor, transpose_without_dim) {
+    tensor::Tensor<double> t({5, 8}, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_transpose = t.transpose();
+    ASSERT_EQ(t_transpose.get_shape()[0], 8);
+    ASSERT_EQ(t_transpose.get_shape()[1], 5);
+}
+
+TEST_F(TestTensor, transpose_with_dim) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_transpose = t.transpose(1, 2);
+    ASSERT_EQ(t_transpose.get_shape()[0], 2);
+    ASSERT_EQ(t_transpose.get_shape()[1], 4);
+    ASSERT_EQ(t_transpose.get_shape()[2], 3);
+}
 
 
 int main(int argc, char** argv) {

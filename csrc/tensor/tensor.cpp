@@ -191,14 +191,37 @@ const std::vector<int> Tensor<Tp>::get_shape() const {
 
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) {
-    if (std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>()) != this->get_tol_size()) {
-        throw error::InvalidArgumentError("The size of the new shape must be equal to the old shape.");
+    int total_size = this->get_tol_size();
+    int new_total_size = 1;
+    int unknown_dim = -1;
+
+    std::vector<int> new_shape(shape);
+
+    // If the new shape has a dimension of -1, the size of the new shape must be divisible by the known dimensions.
+    for (size_t i = 0; i < shape.size(); ++i) {
+        if (shape[i] == -1) {
+            if (unknown_dim != -1) {
+                throw std::invalid_argument("Only one dimension can be -1.");
+            }
+            unknown_dim = i;
+        } else {
+            new_total_size *= shape[i];
+        }
+    }
+
+    if (unknown_dim != -1) {
+        if (total_size % new_total_size != 0) {
+            throw std::invalid_argument("The size of the new shape must be divisible by the known dimensions.");
+        }
+        new_shape[unknown_dim] = total_size / new_total_size;
+    } else if (new_total_size != total_size) {
+        throw std::invalid_argument("The size of the new shape must be equal to the old shape.");
     }
     if (this->in_cpu()) {
-        Tensor<Tp> out(shape, DeviceType::CPU, this->p_data);
+        Tensor<Tp> out(new_shape, DeviceType::CPU, this->p_data);
         return out;
     } else {
-        Tensor<Tp> out(shape, DeviceType::GPU, this->p_data);
+        Tensor<Tp> out(new_shape, DeviceType::GPU, this->p_data);
         return out;
     }
 }
@@ -206,6 +229,35 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) {
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) {
     return this->reshape(std::vector<int>(shape));
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::transpose() {
+    if (this->shape.size() != 2) {
+        throw error::InvalidArgumentError(
+            "The tensor must be 2-dimensional. If you want to transpose a tensor with more than 2 dimensions, please use the transpose function with dimensions parameter.");
+    }
+    std::vector<int> shape_t = {this->shape[1], this->shape[0]};
+    if (this->in_cpu()) {
+        Tensor<Tp> out(shape_t, DeviceType::CPU, this->p_data);
+        return out;
+    } else {
+        Tensor<Tp> out(shape_t, DeviceType::GPU, this->p_data);
+        return out;
+    }
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::transpose(int dim1, int dim2) {
+    std::vector<int> shape_t = this->shape;
+    std::swap(shape_t[dim1], shape_t[dim2]);
+    if (this->in_cpu()) {
+        Tensor<Tp> out(shape_t, DeviceType::CPU, this->p_data);
+        return out;
+    } else {
+        Tensor<Tp> out(shape_t, DeviceType::GPU, this->p_data);
+        return out;
+    }
 }
 
 template <typename Tp>

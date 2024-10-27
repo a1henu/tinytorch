@@ -1,6 +1,6 @@
 /**
- * @file tensor.cpp
- * @brief Tensor class implementation
+ * @file tensor.h
+ * @brief Tensor class declaration
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -61,6 +61,9 @@ public:
     const std::vector<int> get_shape() const;
     Tensor<Tp> reshape(const std::vector<int>& shape);
     Tensor<Tp> reshape(const std::initializer_list<int>& shape);
+
+    Tensor<Tp> transpose();
+    Tensor<Tp> transpose(int dim1, int dim2);
 
     const Tp* get_data() const;
     void set_data(Tp* data, size_t size, DeviceType device_d) const;
