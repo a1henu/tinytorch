@@ -239,7 +239,21 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) const {
 
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::transpose() const {
-
+    if (shape.size() != 2) {
+        throw std::invalid_argument("The shape of the tensor must be 2.");
+    }
+    std::vector<int> new_shape {shape[1], shape[0]};
+    if (this->in_cpu()) {
+        tensor::Tensor<Tp> out(new_shape, DeviceType::CPU);
+        ops::transpose_op<Tp, device::CPU>()(device::cpu_device, this->get_data(), out.get_data(), shape[0], shape[1]);
+        return out;
+    } else if (this->in_gpu()) {
+        tensor::Tensor<Tp> out(new_shape, DeviceType::GPU);
+        ops::transpose_op<Tp, device::GPU>()(device::gpu_device, this->get_data(), out.get_data(), shape[0], shape[1]);
+        return out;
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
 }
 
 template <typename Tp>
@@ -407,7 +421,6 @@ bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
 
 template <typename Tp>
 Tp& Tensor<Tp>::operator[](const std::vector<int>& indices) const {
-    assert(indices.size() == shape.size() && "Number of indices must match number of dimensions");
     int index = get_index(shape, indices);
     return p_data[index];
 }
@@ -419,7 +432,9 @@ Tp& Tensor<Tp>::operator[](const std::initializer_list<int>& indices) const {
 
 template <typename Tp>
 int Tensor<Tp>::get_index(const std::vector<int>& shape, const std::vector<int>& indices) {
-    assert(indices.size() == shape.size() && "Number of indices must match number of dimensions");
+    if (shape.size() != indices.size()) {
+        throw std::invalid_argument("The size of the shape and indices must be the same.");
+    }
     int index = 0;
     int dim = 1;
     for (int i = 0; i < shape.size(); ++i) {

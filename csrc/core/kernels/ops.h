@@ -10,6 +10,7 @@
 #define CSRC_CORE_KERNELS_OPS_H
 
 #include "core/device/device.h"
+#include "core/memory/memory.h"
 #include "error/error.h"
 
 #include <cblas.h>
@@ -114,6 +115,19 @@ struct eye_op {
     /// @param output : the output array pointer
     /// @param dim    : the dimension of the square matrix
     void operator()(Device* device, Tp* output, size_t dim);
+};
+
+template <typename Tp, typename Device>
+struct transpose_op {
+    /// @brief transpose the matrix
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param input  : the input array pointer
+    /// @param output : the output array pointer
+    /// @param m      : the number of rows of the input matrix
+    /// @param n      : the number of columns of the output matrix
+    void operator()(Device* device, const Tp* input, Tp* output, const int m, const int n);
 };
 
 } // namespace ops

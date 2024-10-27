@@ -56,8 +56,18 @@ kernel_ones(Tp* arr, size_t size) {
 template <typename Tp>
 __global__ void
 kernel_eye(Tp* arr, size_t dim) {
-    if (blockIdx.x < dim) {
-        arr[blockIdx.x * dim + blockIdx.x] = 1;
+    CUDA_KERNEL_LOOP(i, dim) {
+        arr[i * dim + i] = 1;
+    }
+}
+
+template <typename Tp>
+__global__ void
+kernel_trans(const Tp* input, Tp* output, const int m, const int n) {
+    const int i = threadIdx.x / n;
+    const int j = threadIdx.x % n;
+    if (i < m) {
+        output[j + i * n] = input[i + j * m];
     }
 }
 
@@ -188,6 +198,19 @@ struct eye_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct transpose_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* input,
+        Tp* output,
+        const int m,
+        const int n
+    ) {
+        kernel_trans<Tp><<<CUDA_GET_BLOCKS(m * n), CUDA_K_THREADS>>>(input, output, m, n);
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -211,5 +234,9 @@ template struct ones_op<double, device::GPU>;
 template struct eye_op<int, device::GPU>;
 template struct eye_op<float, device::GPU>;
 template struct eye_op<double, device::GPU>;
+
+template struct transpose_op<int, device::GPU>;
+template struct transpose_op<float, device::GPU>;
+template struct transpose_op<double, device::GPU>;
 
 } // namespace ops

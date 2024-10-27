@@ -85,14 +85,14 @@ void fc_backward(
         throw error::InvalidArgumentError("Output dimensions do not match");
     }
 
-    //grad_input = grad_output * weight.transpose();
-    //grad_weight = input.transpose() * grad_output;
     tensor::Tensor<Tp> ones_;
     if (input.in_cpu()) {
-        ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::CPU);
-    } else {
-        ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::GPU);
+        ones_ = tensor::Tensor<Tp>::ones({1, input.get_shape()[0]}, tensor::DeviceType::CPU);
+    } else if (input.in_gpu()) {
+        ones_ = tensor::Tensor<Tp>::ones({1, input.get_shape()[0]}, tensor::DeviceType::GPU);
     }
+    grad_input = grad_output * weight.transpose();
+    grad_weight = input.transpose() * grad_output;
     grad_bias = ones_ * grad_output;
 }
 

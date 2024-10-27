@@ -62,6 +62,7 @@ protected:
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
     using ones_cpu_op = ops::ones_op<double, device::CPU>;
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
+    using trans_cpu_op = ops::transpose_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
@@ -70,6 +71,7 @@ protected:
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
     using ones_gpu_op = ops::ones_op<double, device::GPU>;
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
+    using trans_gpu_op = ops::transpose_op<double, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_cpu_1) {
@@ -189,6 +191,25 @@ TEST_F(TestOps, TestEyeOp_cpu) {
                 EXPECT_EQ(vt_out[i + j * dim], 0.0);
             }
         }
+    }
+}
+
+TEST_F(TestOps, TestTransposeOp_cpu) {
+    const int m = 30, n = 40;
+    std::vector<double> A = generate_random_vector(m * n, 0.0, 1.0);
+    std::vector<double> At(n * m, 0.0);
+
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            At[j + i * n] = A[i + j * m];
+        }
+    }
+
+    std::vector<double> At_out(n * m, 0.0);
+    trans_cpu_op()(device::cpu_device, A.data(), At_out.data(), m, n);
+
+    for (int i = 0; i < m * n; ++i) {
+        EXPECT_NEAR(At_out[i], At[i], 1e-6);
     }
 }
 

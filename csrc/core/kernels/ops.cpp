@@ -150,6 +150,23 @@ struct eye_op<Tp, device::CPU> {
     }
 };
 
+template <typename Tp>
+struct transpose_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        const Tp* input,
+        Tp* output,
+        const int m,
+        const int n
+    ) {
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                output[j + i * n] = input[i + j * m];
+            }
+        }
+    }
+};
+
 #ifndef __CUDA
 
 template <typename Tp>
@@ -235,6 +252,19 @@ struct eye_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct transpose_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* input,
+        Tp* output,
+        const int m,
+        const int n
+    ) {
+        throw error::DeviceError("transpose_op<GPU> can not be called without CUDA support.");
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -258,6 +288,10 @@ template struct ones_op<double, device::GPU>;
 template struct eye_op<int, device::GPU>;
 template struct eye_op<float, device::GPU>;
 template struct eye_op<double, device::GPU>;
+
+template struct transpose_op<int, device::GPU>;
+template struct transpose_op<float, device::GPU>;
+template struct transpose_op<double, device::GPU>;
 
 #endif
 
@@ -284,5 +318,9 @@ template struct ones_op<double, device::CPU>;
 template struct eye_op<int, device::CPU>;
 template struct eye_op<float, device::CPU>;
 template struct eye_op<double, device::CPU>;
+
+template struct transpose_op<int, device::CPU>;
+template struct transpose_op<float, device::CPU>;
+template struct transpose_op<double, device::CPU>;
 
 } // namespace ops

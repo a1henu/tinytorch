@@ -10,6 +10,7 @@ BUILD_DIR="../build"
 if [ -f "$BUILD_DIR/CMakeCache.txt" ] && [ -f "$BUILD_DIR/Makefile" ]; then
     echo "Build already exists. Skipping build step."
     cd ../build
+    make
 else
     if [ "$1" == "--cpu" ]; then
         echo "=== Building for CPU... ==="

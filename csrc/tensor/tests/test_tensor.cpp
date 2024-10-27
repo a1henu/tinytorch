@@ -70,20 +70,18 @@ TEST_F(TestTensor, reshape_with_autocalc) {
     ASSERT_EQ(t_reshape.get_shape()[2], 8);
 }
 
-// TEST_F(TestTensor, transpose_without_dim) {
-//     tensor::Tensor<double> t({5, 8}, tensor::DeviceType::CPU);
-//     tensor::Tensor<double> t_transpose = t.transpose();
-//     ASSERT_EQ(t_transpose.get_shape()[0], 8);
-//     ASSERT_EQ(t_transpose.get_shape()[1], 5);
-// }
+TEST_F(TestTensor, transpose) {
+    tensor::Tensor<double> t({2, 5}, tensor::DeviceType::CPU, v.data());
+    tensor::Tensor<double> t_transpose = t.transpose();
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            double a = t[{i, j}];
+            double b = t_transpose[{j, i}];
+            ASSERT_EQ(a, b);
+        }
+    }
+}
 
-// TEST_F(TestTensor, transpose_with_dim) {
-//     tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
-//     tensor::Tensor<double> t_transpose = t.transpose(1, 2);
-//     ASSERT_EQ(t_transpose.get_shape()[0], 2);
-//     ASSERT_EQ(t_transpose.get_shape()[1], 4);
-//     ASSERT_EQ(t_transpose.get_shape()[2], 3);
-// }
 
 
 int main(int argc, char** argv) {

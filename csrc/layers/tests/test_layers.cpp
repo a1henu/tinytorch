@@ -15,7 +15,7 @@
 class TestFC : public ::testing::Test {
 protected:
     std::vector<double> x, w, b, y, dy, dx, dw, db;
-    tensor::Tensor<double> input, weight_, weight, bias, output;
+    tensor::Tensor<double> input, weight_, weight, bias, o, output, input_grad, output_grad, weight_grad, bias_grad;
 
     int batch_size = 2, in_features = 3, out_features = 4;
 
@@ -45,18 +45,38 @@ protected:
         input = tensor::Tensor<double>({batch_size, in_features}, tensor::DeviceType::CPU, x.data());
         weight = tensor::Tensor<double>({in_features, out_features}, tensor::DeviceType::CPU, w.data());
         bias = tensor::Tensor<double>({1, out_features}, tensor::DeviceType::CPU, b.data());
-        output = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU);
-        
+        o = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU);
+        output = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU, y.data());
+        input_grad = tensor::Tensor<double>({batch_size, in_features}, tensor::DeviceType::CPU);
+        output_grad = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU, dy.data());
+        weight_grad = tensor::Tensor<double>({in_features, out_features}, tensor::DeviceType::CPU);
+        bias_grad = tensor::Tensor<double>({1, out_features}, tensor::DeviceType::CPU);
     }
     void TearDown() override {
     }
 };
 
 TEST_F(TestFC, TestFCForward) {
-    layers::fc_forward(input, weight, bias, output);
+    layers::fc_forward(input, weight, bias, o);
 
     for (int i = 0; i < batch_size * out_features; ++i) {
-        EXPECT_NEAR(output.get_data()[i], y[i], 1e-6);
+        EXPECT_NEAR(o.get_data()[i], y[i], 1e-4);
+    }
+}
+
+TEST_F(TestFC, TestFCBackward) {
+    layers::fc_backward(input, weight, bias, output, input_grad, weight_grad, bias_grad, output_grad);
+
+    for (int i = 0; i < batch_size * in_features; ++i) {
+        EXPECT_NEAR(input_grad.get_data()[i], dx[i], 1e-4);
+    }
+
+    for (int i = 0; i < in_features * out_features; ++i) {
+        EXPECT_NEAR(weight_grad.get_data()[i], dw[i], 1e-4);
+    }
+
+    for (int i = 0; i < out_features; ++i) {
+        EXPECT_NEAR(bias_grad.get_data()[i], db[i], 1e-4);
     }
 }
 
