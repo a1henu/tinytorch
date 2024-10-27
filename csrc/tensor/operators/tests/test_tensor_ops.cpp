@@ -85,6 +85,22 @@ TEST_F(TestOps, tensor_sub_cpu) {
     }
 }
 
+TEST_F(TestOps, tensor_mul_cpu) {
+    tensor::Tensor<double> tt_1_reshape = tt_1.reshape({5, 20});
+    tensor::Tensor<double> tt_2_reshape = tt_2.reshape({20, 5});
+    tensor::Tensor<double> vt_mul = tt_1_reshape * tt_2_reshape;
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < 20; k++) {
+                sum += vt_1[i * 20 + k] * vt_2[k * 5 + j];
+            }
+            EXPECT_NEAR(vt_mul[{i, j}], sum, 1e-6);
+        }
+    }
+}
+
 TEST_F(TestOps, tensor_eq_cpu) {
     tensor::Tensor<double> vt_1 = tt_1 + tt_2;
     tensor::Tensor<double> vt_2 = tt_2 + tt_1;

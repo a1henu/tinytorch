@@ -155,7 +155,7 @@ struct sub_op<Tp, device::GPU> {
 template <typename Tp>
 struct matmul_op<Tp, device::GPU> {
     void operator()(
-        device::CPU* device,
+        device::GPU* device,
         const char* transa, 
         const char* transb,
         const int m,

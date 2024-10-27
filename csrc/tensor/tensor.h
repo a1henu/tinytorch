@@ -9,7 +9,9 @@
 #ifndef CSRC_TENSOR_TENSOR_H
 #define CSRC_TENSOR_TENSOR_H
 
+#include <algorithm>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
@@ -30,8 +32,16 @@ public:
     
     Tensor(const std::vector<int>& shape, DeviceType device);
 
+    Tensor(const std::initializer_list<int>& shape, DeviceType device);
+
     Tensor(
         const std::vector<int>& shape, 
+        DeviceType device,
+        Tp* data
+    );
+
+    Tensor(
+        const std::initializer_list<int>& shape,
         DeviceType device,
         Tp* data
     );
@@ -49,6 +59,8 @@ public:
     bool in_gpu() const;
 
     const std::vector<int> get_shape() const;
+    Tensor<Tp> reshape(const std::vector<int>& shape);
+    Tensor<Tp> reshape(const std::initializer_list<int>& shape);
 
     const Tp* get_data() const;
     void set_data(Tp* data, size_t size, DeviceType device_d) const;
@@ -70,7 +82,14 @@ public:
 
     Tensor operator+(const Tensor& other) const;
     Tensor operator-(const Tensor& other) const;
+    Tensor operator*(const Tensor& other) const;
+
     bool operator==(const Tensor& other) const;
+
+    Tp& operator[](const std::vector<int>& indices) const;
+    Tp& operator[](const std::initializer_list<int>& indices) const;
+
+    static int get_index(const std::vector<int>& shape, const std::vector<int>& indices);
 
 private:
     std::vector<int> shape;
