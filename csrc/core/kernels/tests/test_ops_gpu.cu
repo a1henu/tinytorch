@@ -71,12 +71,16 @@ protected:
     using smatmul_cpu_op = ops::matmul_op<float, device::CPU>;
     using dmatmul_cpu_op = ops::matmul_op<double, device::CPU>;
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
+    using ones_cpu_op = ops::ones_op<double, device::CPU>;
+    using eye_cpu_op = ops::eye_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
     using smatmul_gpu_op = ops::matmul_op<float, device::GPU>;
     using dmatmul_gpu_op = ops::matmul_op<double, device::GPU>;
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
+    using ones_gpu_op = ops::ones_op<double, device::GPU>;
+    using eye_gpu_op = ops::eye_op<double, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_gpu_1) {
@@ -236,6 +240,37 @@ TEST_F(TestOps, TestEqualOp_gpu_2) {
     cudaFree(vt_out2);
     cudaFree(vt_out_g);
     delete vt_out_c;
+}
+
+TEST_F(TestOps, TestOnesOp_gpu) {
+    double* vt_out;
+    double* vt_out_cpu = new double[vt_dim];
+    cudaMalloc(&vt_out, vt_dim * sizeof(double));
+    ones_gpu_op()(device::gpu_device, vt_out, vt_dim);
+    cudaMemcpy(vt_out_cpu, vt_out, vt_dim * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(vt_out_cpu[i], 1.0);
+    }
+    delete[] vt_out_cpu;
+    cudaFree(vt_out);
+}
+
+TEST_F(TestOps, TestEyeOp_gpu) {
+    const int dim = 100;
+    double* vt_out;
+    double* vt_out_cpu = new double[dim * dim];
+    cudaMalloc(&vt_out, dim * dim * sizeof(double));
+    eye_gpu_op()(device::gpu_device, vt_out, dim);
+    cudaMemcpy(vt_out_cpu, vt_out, dim * dim * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < dim; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            if (i == j) {
+                EXPECT_EQ(vt_out_cpu[i + j * dim], 1.0);
+            } else {
+                EXPECT_EQ(vt_out_cpu[i + j * dim], 0.0);
+            }
+        }
+    }
 }
 
 int main(int argc, char** argv) {

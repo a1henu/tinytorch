@@ -46,6 +46,22 @@ kernel_eq(bool* output, const Tp* input1, const Tp* input2, size_t size) {
 }
 
 template <typename Tp>
+__global__ void
+kernel_ones(Tp* arr, size_t size) {
+    CUDA_KERNEL_LOOP(i, size) {
+        arr[i] = 1;
+    }
+}
+
+template <typename Tp>
+__global__ void
+kernel_eye(Tp* arr, size_t dim) {
+    if (blockIdx.x < dim) {
+        arr[blockIdx.x * dim + blockIdx.x] = 1;
+    }
+}
+
+template <typename Tp>
 struct add_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
@@ -150,6 +166,28 @@ struct equal_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct ones_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* arr, 
+        size_t size
+    ) {
+        kernel_ones<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(arr, size);
+    }
+};
+
+template <typename Tp>
+struct eye_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* arr, 
+        size_t dim
+    ) {
+        kernel_eye<Tp><<<CUDA_GET_BLOCKS(dim), CUDA_K_THREADS>>>(arr, dim);
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -165,5 +203,13 @@ template struct matmul_op<double, device::GPU>;
 template struct equal_op<int, device::GPU>;
 template struct equal_op<float, device::GPU>;
 template struct equal_op<double, device::GPU>;
+
+template struct ones_op<int, device::GPU>;
+template struct ones_op<float, device::GPU>;
+template struct ones_op<double, device::GPU>;
+
+template struct eye_op<int, device::GPU>;
+template struct eye_op<float, device::GPU>;
+template struct eye_op<double, device::GPU>;
 
 } // namespace ops

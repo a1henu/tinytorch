@@ -7,6 +7,7 @@
  */
 
 #include <cassert>
+#include <iostream>
 
 #include "core/device/device.h"
 #include "core/memory/memory.h"
@@ -185,12 +186,17 @@ bool Tensor<Tp>::in_gpu() const {
 }
 
 template <typename Tp>
+const int Tensor<Tp>::dim() const {
+    return shape.size();
+}
+
+template <typename Tp>
 const std::vector<int> Tensor<Tp>::get_shape() const {
     return shape;
 }
 
 template <typename Tp>
-Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) {
+Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) const {
     int total_size = this->get_tol_size();
     int new_total_size = 1;
     int unknown_dim = -1;
@@ -227,41 +233,17 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) {
 }
 
 template <typename Tp>
-Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) {
+Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) const {
     return this->reshape(std::vector<int>(shape));
 }
 
 template <typename Tp>
-Tensor<Tp> Tensor<Tp>::transpose() {
-    if (this->shape.size() != 2) {
-        throw error::InvalidArgumentError(
-            "The tensor must be 2-dimensional. If you want to transpose a tensor with more than 2 dimensions, please use the transpose function with dimensions parameter.");
-    }
-    std::vector<int> shape_t = {this->shape[1], this->shape[0]};
-    if (this->in_cpu()) {
-        Tensor<Tp> out(shape_t, DeviceType::CPU, this->p_data);
-        return out;
-    } else {
-        Tensor<Tp> out(shape_t, DeviceType::GPU, this->p_data);
-        return out;
-    }
+Tensor<Tp> Tensor<Tp>::transpose() const {
+
 }
 
 template <typename Tp>
-Tensor<Tp> Tensor<Tp>::transpose(int dim1, int dim2) {
-    std::vector<int> shape_t = this->shape;
-    std::swap(shape_t[dim1], shape_t[dim2]);
-    if (this->in_cpu()) {
-        Tensor<Tp> out(shape_t, DeviceType::CPU, this->p_data);
-        return out;
-    } else {
-        Tensor<Tp> out(shape_t, DeviceType::GPU, this->p_data);
-        return out;
-    }
-}
-
-template <typename Tp>
-const Tp* Tensor<Tp>::get_data() const {
+Tp* Tensor<Tp>::get_data() const {
     return p_data;
 }
 
@@ -351,14 +333,16 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
     int k_2 = other.get_shape()[0];
 
     if (k_1 != k_2) {
+        std::cout << "shape of A: (" << this->get_shape()[0] << ", " << this->get_shape()[1] << ")" << std::endl;
+        std::cout << "shape of B: (" << other.get_shape()[0] << ", " << other.get_shape()[1] << ")" << std::endl;
         throw error::InvalidArgumentError("The inner dimensions of two tensors must be the same.");
     }
 
     int k = k_1;
+    size_t tol_size = m * n;
 
     if (this->in_cpu() && other.in_cpu()) {
         Tp* p_out;
-        size_t tol_size = this->get_tol_size();
         memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
         ops::matmul_op<Tp, device::CPU>()(
             device::cpu_device,
@@ -375,7 +359,6 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
         return out;
     } else if (this->in_gpu() && other.in_gpu()) {
         Tp* p_out;
-        size_t tol_size = this->get_tol_size();
         memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
         ops::matmul_op<Tp, device::GPU>()(
             device::gpu_device,
@@ -444,6 +427,26 @@ int Tensor<Tp>::get_index(const std::vector<int>& shape, const std::vector<int>&
         dim *= shape[i];
     }
     return index;
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::ones(const std::vector<int>& shape, DeviceType device) {
+    tensor::Tensor<Tp> out(shape, device);
+    int tol_size = out.get_tol_size();
+    if (device == DeviceType::CPU) {
+        ops::ones_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), tol_size);
+        return out;
+    } else if (device == DeviceType::GPU) {
+        ops::ones_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), tol_size);
+        return out;
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::ones(const std::initializer_list<int>& shape, DeviceType device) {
+    return ones(std::vector<int>(shape), device);
 }
 
 template class Tensor<int>;

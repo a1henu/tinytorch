@@ -86,7 +86,7 @@ TEST_F(TestOps, tensor_sub_cpu) {
 }
 
 TEST_F(TestOps, tensor_mul_cpu) {
-    int m = 5, n = 5, k = 20;
+    int m = 20, n = 20, k = 5;
     tensor::Tensor<double> tt_1_reshape = tt_1.reshape({m, k});
     tensor::Tensor<double> tt_2_reshape = tt_2.reshape({k, n});
     tensor::Tensor<double> vt_mul = tt_1_reshape * tt_2_reshape;
@@ -128,7 +128,7 @@ TEST_F(TestOps, tensor_sub_gpu) {
 }
 
 TEST_F(TestOps, tensor_mul_gpu) {
-    int m = 5, n = 5, k = 20;
+    int m = 20, n = 20, k = 5;
     tensor::Tensor<double> tt_1_reshape = tt_1.reshape({m, k});
     tensor::Tensor<double> tt_2_reshape = tt_2.reshape({k, n});
     tensor::Tensor<double> vt_mul = tt_1_reshape * tt_2_reshape;

@@ -124,6 +124,32 @@ struct equal_op<Tp, device::CPU> {
     }
 };
 
+template <typename Tp>
+struct ones_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device, 
+        Tp* output, 
+        size_t size
+    ) {
+        for (int i = 0; i < size; ++i) {
+            output[i] = 1;
+        }
+    }
+};
+
+template <typename Tp>
+struct eye_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device, 
+        Tp* output, 
+        size_t dim
+    ) {
+        for (int i = 0; i < dim; ++i) {
+            output[i + i * dim] = 1;
+        }
+    }
+};
+
 #ifndef __CUDA
 
 template <typename Tp>
@@ -187,6 +213,28 @@ struct equal_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct ones_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* output, 
+        size_t size
+    ) {
+        throw error::DeviceError("ones_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct eye_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* output, 
+        size_t dim
+    ) {
+        throw error::DeviceError("eye_op<GPU> can not be called without CUDA support.");
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -202,6 +250,14 @@ template struct matmul_op<double, device::GPU>;
 template struct equal_op<int, device::GPU>;
 template struct equal_op<float, device::GPU>;
 template struct equal_op<double, device::GPU>;
+
+template struct ones_op<int, device::GPU>;
+template struct ones_op<float, device::GPU>;
+template struct ones_op<double, device::GPU>;
+
+template struct eye_op<int, device::GPU>;
+template struct eye_op<float, device::GPU>;
+template struct eye_op<double, device::GPU>;
 
 #endif
 
@@ -220,5 +276,13 @@ template struct matmul_op<double, device::CPU>;
 template struct equal_op<int, device::CPU>;
 template struct equal_op<float, device::CPU>;
 template struct equal_op<double, device::CPU>;
+
+template struct ones_op<int, device::CPU>;
+template struct ones_op<float, device::CPU>;
+template struct ones_op<double, device::CPU>;
+
+template struct eye_op<int, device::CPU>;
+template struct eye_op<float, device::CPU>;
+template struct eye_op<double, device::CPU>;
 
 } // namespace ops

@@ -94,6 +94,28 @@ struct equal_op {
     void operator()(Device* device, bool* output, const Tp* input1, const Tp* input2, size_t size);
 };
 
+template <typename Tp, typename Device>
+struct ones_op {
+    /// @brief set all elements to 1
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer
+    /// @param size   : the size of the array 
+    void operator()(Device* device, Tp* output, size_t size);
+};
+
+template <typename Tp, typename Device>
+struct eye_op {
+    /// @brief set the diagonal elements to 1
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer
+    /// @param dim    : the dimension of the square matrix
+    void operator()(Device* device, Tp* output, size_t dim);
+};
+
 } // namespace ops
 
 #endif

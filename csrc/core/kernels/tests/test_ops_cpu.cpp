@@ -60,12 +60,16 @@ protected:
     using smatmul_cpu_op = ops::matmul_op<float, device::CPU>;
     using dmatmul_cpu_op = ops::matmul_op<double, device::CPU>;
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
+    using ones_cpu_op = ops::ones_op<double, device::CPU>;
+    using eye_cpu_op = ops::eye_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
     using smatmul_gpu_op = ops::matmul_op<float, device::GPU>;
     using dmatmul_gpu_op = ops::matmul_op<double, device::GPU>;
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
+    using ones_gpu_op = ops::ones_op<double, device::GPU>;
+    using eye_gpu_op = ops::eye_op<double, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_cpu_1) {
@@ -163,6 +167,31 @@ TEST_F(TestOps, TestEqualOp_cpu_2) {
     equal_cpu_op()(device::cpu_device, &vt_out, vt_out_1.data(), vt_out_2.data(), vt_dim);
     EXPECT_TRUE(vt_out);
 }
+
+TEST_F(TestOps, TestOnesOp_cpu) {
+    const int size = 100;
+    std::vector<double> vt_out(size);
+    ones_cpu_op()(device::cpu_device, vt_out.data(), size);
+    for (int i = 0; i < size; ++i) {
+        EXPECT_EQ(vt_out[i], 1.0);
+    }
+}
+
+TEST_F(TestOps, TestEyeOp_cpu) {
+    const int dim = 100;
+    std::vector<double> vt_out(dim * dim, 0.0);
+    eye_cpu_op()(device::cpu_device, vt_out.data(), dim);
+    for (int i = 0; i < dim; ++i) {
+        for (int j = 0; j < dim; ++j) {
+            if (i == j) {
+                EXPECT_EQ(vt_out[i + j * dim], 1.0);
+            } else {
+                EXPECT_EQ(vt_out[i + j * dim], 0.0);
+            }
+        }
+    }
+}
+
 
 int main(int argc, char** argv) {
 std::cout << "run test for CORE::KERNELS::OPS::CPU" << std::endl << std::endl;

@@ -58,30 +58,18 @@ public:
     bool in_cpu() const;
     bool in_gpu() const;
 
+    const int dim() const;
+
     const std::vector<int> get_shape() const;
-    Tensor<Tp> reshape(const std::vector<int>& shape);
-    Tensor<Tp> reshape(const std::initializer_list<int>& shape);
+    Tensor<Tp> reshape(const std::vector<int>& shape) const;
+    Tensor<Tp> reshape(const std::initializer_list<int>& shape) const;
 
-    Tensor<Tp> transpose();
-    Tensor<Tp> transpose(int dim1, int dim2);
+    Tensor<Tp> transpose() const;
 
-    const Tp* get_data() const;
+    Tp* get_data() const;
     void set_data(Tp* data, size_t size, DeviceType device_d) const;
 
     size_t get_tol_size() const;
-
-    // Tensor operators here
-    // these operators are implemented in:
-    // /tensor/operators/tensor_math_ops.cpp
-    
-    // template <typename T>
-    // friend Tensor<T>& operator+(const Tensor<T>& a, const Tensor<T>& b);
-
-    // template <typename T>
-    // friend Tensor<T>& operator-(const Tensor<T>& a, const Tensor<T>& b);
-
-    // template <typename T>
-    // friend bool operator==(const Tensor<T>& a, const Tensor<T>& b);
 
     Tensor operator+(const Tensor& other) const;
     Tensor operator-(const Tensor& other) const;
@@ -93,6 +81,9 @@ public:
     Tp& operator[](const std::initializer_list<int>& indices) const;
 
     static int get_index(const std::vector<int>& shape, const std::vector<int>& indices);
+
+    static Tensor<Tp> ones(const std::vector<int>& shape, DeviceType device);
+    static Tensor<Tp> ones(const std::initializer_list<int>& shape, DeviceType device);
 
 private:
     std::vector<int> shape;
