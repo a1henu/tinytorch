@@ -1,8 +1,16 @@
 # tinytorch
 
-This is a project for the course "[Programming in AI](https://pkuprogramminginai.github.io/Labs-Documentation/#/)" in Peking University.
+This is the project for the course "[Programming in AI](https://pkuprogramminginai.github.io/Labs-Documentation/#/)" in Peking University.
 
 We purpose to implement a tiny deep learning framework, and we will use it to train a simple neural network.
+
+<!-- toc -->
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Unit Test](#unit-test)
+
+<!-- tocstop -->
 
 ## Installation
 
@@ -24,7 +32,7 @@ To test the C++/CUDA code, you need to install [GoogleTest](https://github.com/g
 git submodule update --init --recursive
 ```
 
-**Building C++ Code**
+#### Building C++ Code
 
 To build the C++ code independently, you can run the script `build.sh`. The script will create a folder `build` and compile the source code in it.
 
@@ -49,7 +57,7 @@ cmake -DCUDA=ON -DTEST=ON .. # build the GPU Version
 make
 ```
 
-**Testing C++ Code**
+#### Testing C++ Code
 
 You can run the script `test.sh` to test the C++ code. The script will create a folder `build` and compile the source code in it.
 
@@ -58,24 +66,13 @@ bash test.sh --cpu # test the CPU Version
 bash test.sh --gpu # test the GPU Version
 ```
 
-You can also run the following commands to test the C++ code:
+You can also run the following commands to do the same thing:
 
 ```bash
 mkdir build
 cd build
-cmake -DTEST=ON -DCUDA=OFF ..
-make
-ctest --verbose --output-on-failure -C Debug -T test
-```
-
-**Testing CUDA Code**
-
-You can run the following commands to test the CUDA code:
-
-```bash
-mkdir build
-cd build
-cmake -DTEST=ON -DCUDA=ON ..
+cmake -DTEST=ON -DCUDA=OFF .. # test the CPU Version
+cmake -DTEST=ON -DCUDA=ON ..  # test the GPU Version
 make
 ctest --verbose --output-on-failure -C Debug -T test
 ```
