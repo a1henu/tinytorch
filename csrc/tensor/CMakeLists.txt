@@ -1,8 +1,8 @@
+add_subdirectory(operators)
+
 set(TENSOR_SOURCES
     tensor.cpp
 )
-
-add_subdirectory(operators)
 
 add_library(tensor STATIC ${TENSOR_SOURCES})
 target_include_directories(tensor PUBLIC ${CMAKE_SOURCE_DIR}/csrc)
