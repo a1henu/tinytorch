@@ -200,7 +200,7 @@ TEST_F(TestSigmoid, backward) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << "run test for CORE::KERNELS::ACTIVATION::CPU" << std::endl << std::endl;
+    std::cout << "run test for CORE::KERNELS::ACTIVATION::GPU" << std::endl << std::endl;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
