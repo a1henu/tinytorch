@@ -6,7 +6,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ "$1" == "--cpu" ]; then
-    echo "Building for CPU..."
+    echo "=== Building for CPU... ==="
     cd ..
     mkdir -p build
     cd build
@@ -22,7 +22,7 @@ if [ "$1" == "--cpu" ]; then
     fi
     cd ../scripts
 elif [ "$1" == "--gpu" ]; then
-    echo "Building for GPU..."
+    echo "=== Building for GPU... ==="
     cd ..
     mkdir -p build
     cd build
