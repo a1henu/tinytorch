@@ -8,9 +8,25 @@ We purpose to implement a tiny deep learning framework, and we will use it to tr
 
 **TODO**: Describe the installation process
 
-## Build C++/CUDA Part
+## Usage
 
-You can run the script `build.sh` to build the C++/CUDA part of the project. The script will create a folder `build` and compile the source code in it.
+**TODO**: Write usage instructions
+
+## Unit Test
+
+`tinytorch` is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest) to implement unit tests. For Python source code, tinytorch uses ...
+
+### C++/CUDA Part
+
+To test the C++/CUDA code, you need to install [GoogleTest](https://github.com/google/googletest) first. This module is included in `third_party` folder. You can install it by running the following commands:
+
+```bash
+git submodule update --init --recursive
+```
+
+**Building C++ Code**
+
+To build the C++ code independently, you can run the script `build.sh`. The script will create a folder `build` and compile the source code in it.
 
 ```bash
 bash build.sh --cpu # build the CPU Version
@@ -31,23 +47,6 @@ cd build
 cmake -DCUDA=OFF -DTEST=ON .. # build the CPU Version
 cmake -DCUDA=ON -DTEST=ON .. # build the GPU Version
 make
-```
-
-
-## Usage
-
-**TODO**: Write usage instructions
-
-## Unit Test
-
-`tinytorch` is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest) to implement unit tests. For Python source code, tinytorch uses ...
-
-### C++/CUDA Part
-
-To test the C++/CUDA code, you need to install [GoogleTest](https://github.com/google/googletest) first. This module is included in `third_party` folder. You can install it by running the following commands:
-
-```bash
-git submodule update --init --recursive
 ```
 
 **Testing C++ Code**
