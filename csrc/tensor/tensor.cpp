@@ -191,8 +191,7 @@ const std::vector<int> Tensor<Tp>::get_shape() const {
 
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) {
-    if (std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>()) != this->get_tol_size() || 
-        shape.size() != this->get_shape().size()) {
+    if (std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>()) != this->get_tol_size()) {
         throw error::InvalidArgumentError("The size of the new shape must be equal to the old shape.");
     }
     if (this->in_cpu()) {
@@ -294,15 +293,16 @@ Tensor<Tp> Tensor<Tp>::operator-(const Tensor<Tp>& other) const {
 
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
-    if ((this->get_shape() != other.get_shape()) || (this->get_shape().size() != 2) || (other.get_shape().size() != 2)) {
-        throw error::InvalidArgumentError("The shape of two tensors must be the same.");
-    }
-
     int m = this->get_shape()[0];
     int n = other.get_shape()[1];
+    int k_1 = this->get_shape()[1];
+    int k_2 = other.get_shape()[0];
 
-    assert(this->get_shape()[1] == other.get_shape()[0]);
-    int k = this->get_shape()[1];
+    if (k_1 != k_2) {
+        throw error::InvalidArgumentError("The inner dimensions of two tensors must be the same.");
+    }
+
+    int k = k_1;
 
     if (this->in_cpu() && other.in_cpu()) {
         Tp* p_out;
