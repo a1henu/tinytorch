@@ -207,7 +207,7 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) const {
     for (size_t i = 0; i < shape.size(); ++i) {
         if (shape[i] == -1) {
             if (unknown_dim != -1) {
-                throw std::invalid_argument("Only one dimension can be -1.");
+                throw error::InvalidArgumentError("Only one dimension can be -1.");
             }
             unknown_dim = i;
         } else {
@@ -217,11 +217,11 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::vector<int>& shape) const {
 
     if (unknown_dim != -1) {
         if (total_size % new_total_size != 0) {
-            throw std::invalid_argument("The size of the new shape must be divisible by the known dimensions.");
+            throw error::InvalidArgumentError("The size of the new shape must be divisible by the known dimensions.");
         }
         new_shape[unknown_dim] = total_size / new_total_size;
     } else if (new_total_size != total_size) {
-        throw std::invalid_argument("The size of the new shape must be equal to the old shape.");
+        throw error::InvalidArgumentError("The size of the new shape must be equal to the old shape.");
     }
     if (this->in_cpu()) {
         Tensor<Tp> out(new_shape, DeviceType::CPU, this->p_data);
@@ -240,7 +240,7 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) const {
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::transpose() const {
     if (shape.size() != 2) {
-        throw std::invalid_argument("The shape of the tensor must be 2.");
+        throw error::InvalidArgumentError("The shape of the tensor must be 2.");
     }
     std::vector<int> new_shape {shape[1], shape[0]};
     if (this->in_cpu()) {
@@ -433,7 +433,7 @@ Tp& Tensor<Tp>::operator[](const std::initializer_list<int>& indices) const {
 template <typename Tp>
 int Tensor<Tp>::get_index(const std::vector<int>& shape, const std::vector<int>& indices) {
     if (shape.size() != indices.size()) {
-        throw std::invalid_argument("The size of the shape and indices must be the same.");
+        throw error::InvalidArgumentError("The size of the shape and indices must be the same.");
     }
     int index = 0;
     int dim = 1;
