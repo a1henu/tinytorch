@@ -55,24 +55,43 @@ TEST_F(TestTensor, copy_constructor) {
 }
 
 TEST_F(TestTensor, reshape_without_autocalc) {
+#ifndef __CUDA
     tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
     tensor::Tensor<double> t_reshape = t.reshape({3, 2, 4});
+#else
+    tensor::Tensor<double> tg(shape, tensor::DeviceType::GPU);
+    tensor::Tensor<double> tg_reshape = tg.reshape({3, 2, 4});
+    tensor::Tensor<double> t_reshape = tg_reshape.cpu();
+#endif
     ASSERT_EQ(t_reshape.get_shape()[0], 3);
     ASSERT_EQ(t_reshape.get_shape()[1], 2);
     ASSERT_EQ(t_reshape.get_shape()[2], 4);
 }
 
 TEST_F(TestTensor, reshape_with_autocalc) {
+#ifndef __CUDA
     tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
     tensor::Tensor<double> t_reshape = t.reshape({3, 1, -1});
+#else
+    tensor::Tensor<double> tg(shape, tensor::DeviceType::GPU);
+    tensor::Tensor<double> tg_reshape = tg.reshape({3, 1, -1});
+    tensor::Tensor<double> t_reshape = tg_reshape.cpu();
+#endif
     ASSERT_EQ(t_reshape.get_shape()[0], 3);
     ASSERT_EQ(t_reshape.get_shape()[1], 1);
     ASSERT_EQ(t_reshape.get_shape()[2], 8);
 }
 
 TEST_F(TestTensor, transpose) {
+#ifndef __CUDA
     tensor::Tensor<double> t({2, 5}, tensor::DeviceType::CPU, v.data());
     tensor::Tensor<double> t_transpose = t.transpose();
+#else
+    tensor::Tensor<double> tg({2, 5}, tensor::DeviceType::GPU, v.data());
+    tensor::Tensor<double> tg_transpose = tg.transpose();
+    tensor::Tensor<double> t = tg.cpu();
+    tensor::Tensor<double> t_transpose = tg_transpose.cpu();
+#endif
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 5; ++j) {
             double a = t[{i, j}];
@@ -81,8 +100,6 @@ TEST_F(TestTensor, transpose) {
         }
     }
 }
-
-
 
 int main(int argc, char** argv) {
     std::cout << "run test for TENSOR" << std::endl << std::endl;

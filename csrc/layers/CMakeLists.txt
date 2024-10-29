@@ -1,5 +1,5 @@
 set(LAYERS_SOURCES
-    layers.cpp
+    fc_layer.cpp
 )
 
 add_library(layers STATIC ${LAYERS_SOURCES})
