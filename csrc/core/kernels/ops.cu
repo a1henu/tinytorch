@@ -67,7 +67,7 @@ kernel_trans(const Tp* input, Tp* output, const int m, const int n) {
     const int i = threadIdx.x / n;
     const int j = threadIdx.x % n;
     if (i < m) {
-        output[j + i * n] = input[i + j * m];
+        output[j * m + i] = input[i * n + j];
     }
 }
 
@@ -122,16 +122,16 @@ struct matmul_op<Tp, device::GPU> {
         if (std::is_same<Tp, float>::value) {
             cublasSgemm(
                 handle,
-                transa_,
                 transb_,
-                m,
+                transa_,
                 n,
+                m,
                 k,
                 reinterpret_cast<const float*>(&alpha),
-                reinterpret_cast<const float*>(A),
-                lda,
                 reinterpret_cast<const float*>(B),
                 ldb,
+                reinterpret_cast<const float*>(A),
+                lda,
                 reinterpret_cast<const float*>(&beta),
                 reinterpret_cast<float*>(C),
                 ldc
@@ -140,16 +140,16 @@ struct matmul_op<Tp, device::GPU> {
         } else if (std::is_same<Tp, double>::value) {
             cublasDgemm(
                 handle,
-                transa_,
                 transb_,
-                m,
+                transa_,
                 n,
+                m,
                 k,
                 reinterpret_cast<const double*>(&alpha),
-                reinterpret_cast<const double*>(A),
-                lda,
                 reinterpret_cast<const double*>(B),
                 ldb,
+                reinterpret_cast<const double*>(A),
+                lda,
                 reinterpret_cast<const double*>(&beta),
                 reinterpret_cast<double*>(C),
                 ldc

@@ -95,7 +95,7 @@ TEST_F(TestOps, tensor_mul_cpu) {
         for (int j = 0; j < n; ++j) {
             double sum = 0.0;
             for (int p = 0; p < k; ++p) {
-                sum += vt_1[i + p * m] * vt_2[j * k + p];
+                sum += vt_1[i * k + p] * vt_2[p * n + j];
             }
             double expected = vt_mul[{i, j}];
             EXPECT_NEAR(expected, sum, 1e-6);
@@ -139,7 +139,7 @@ TEST_F(TestOps, tensor_mul_gpu) {
         for (int j = 0; j < n; ++j) {
             double sum = 0.0;
             for (int p = 0; p < k; ++p) {
-                sum += vt_1[i + p * m] * vt_2[j * k + p];
+                sum += vt_1[i * k + p] * vt_2[p * n + j];
             }
             double expected = vt_mc[{i, j}];
             EXPECT_NEAR(expected, sum, 1e-6);

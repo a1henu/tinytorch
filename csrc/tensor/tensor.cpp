@@ -363,10 +363,10 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
             "N", "N",
             m, n, k,
             1.0,
-            this->get_data(), m,
-            other.get_data(), k,
+            this->get_data(), k,
+            other.get_data(), n,
             0.0,
-            p_out, m
+            p_out, n
         );
         tensor::Tensor<Tp> out({m, n}, DeviceType::CPU, p_out);
         memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
@@ -379,10 +379,10 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
             "N", "N",
             m, n, k,
             1.0,
-            this->get_data(), m,
-            other.get_data(), k,
+            this->get_data(), k,
+            other.get_data(), n,
             0.0,
-            p_out, m
+            p_out, n
         );
         tensor::Tensor<Tp> out({m, n}, DeviceType::GPU, p_out);
         memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
@@ -437,7 +437,11 @@ int Tensor<Tp>::get_index(const std::vector<int>& shape, const std::vector<int>&
     }
     int index = 0;
     int dim = 1;
-    for (int i = 0; i < shape.size(); ++i) {
+    // the tensor is stored in row-major order
+    for (int i = shape.size() - 1; i >= 0; --i) {
+        if (indices[i] < 0 || indices[i] >= shape[i]) {
+            throw error::InvalidArgumentError("The indices must be in the range of the shape.");
+        }
         index += indices[i] * dim;
         dim *= shape[i];
     }

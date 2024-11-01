@@ -15,7 +15,6 @@
 
 #include <cblas.h>
 
-
 namespace ops {
 
 template <typename Tp, typename Device>
@@ -128,6 +127,39 @@ struct transpose_op {
     /// @param m      : the number of rows of the input matrix
     /// @param n      : the number of columns of the output matrix
     void operator()(Device* device, const Tp* input, Tp* output, const int m, const int n);
+};
+
+template <typename Tp, typename Device>
+struct im2col_op {
+    /// @brief convert the image to the column matrix
+    ///
+    /// Inputs:
+    /// @param device    : the type of device
+    /// @param data_im   : the input image array pointer
+    /// @param data_col  : the output column matrix array pointer
+    /// @param channels  : the number of channels of the image
+    /// @param height    : the height of the image
+    /// @param width     : the width of the image
+    /// @param kernel_h  : the height of the kernel
+    /// @param kernel_w  : the width of the kernel
+    /// @param pad_h     : the height of the padding
+    /// @param pad_w     : the width of the padding
+    /// @param stride_h  : the height of the stride
+    /// @param stride_w  : the width of the stride
+    void operator()(
+        Device* device,
+        const Tp* data_im,
+        Tp* data_col,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
 };
 
 } // namespace ops

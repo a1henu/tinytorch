@@ -1,6 +1,6 @@
 /**
- * @file test_activation_cpu.cpp
- * @brief Activation function test cases for CPU
+ * @file test_layers_cpu.cpp
+ * @brief Fully connected layer test cases for CPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -20,27 +20,21 @@ protected:
     int batch_size = 2, in_features = 3, out_features = 4;
 
     void SetUp() override {
-        x = {0.349714, 0.928925, 0.120875, 1.776752, -0.020010, -2.058003};
+        x = {-0.148011, -0.729241, 2.118632, -1.679356, -0.540102, 0.861272};
 
-        w = {2.622056, 0.776671, 0.935029, 0.038836, -0.106238, 
-            -1.187628, 0.496029, 0.668119, -0.759459, 1.103246, 
-            0.620958, -0.294705};
+        w = {-0.751523, -1.105763, 0.287860, 0.683705, -0.067248, -0.521211, 0.934177, -0.972594, 0.041104, -0.229331, -1.562299, -1.330761};
 
-        b = {1.174965, -0.723839, -1.496529, 1.039356};
+        b = {-1.118533, -0.789384, 1.793169, -1.068506};
 
-        y = {2.167105, 3.066317, -0.699335, 1.567620, -1.227105, 
-            1.714296, 1.506132, 3.773981};
+        y = {-0.871176, -0.731499, -2.240614, -3.279839, 0.215264, 1.151577, -0.540365, -2.837536};
 
-        dy =  {-0.299013, -1.662136, 0.646587, -0.417194, 1.058998, 
-                -1.708521, -1.830452, 0.362910};
+        dy = {-0.447217, 0.134503, -0.906900, -0.529319, 1.357754, -0.369581, 0.877381, -1.313340};
 
-        dx =  {-2.253062, -4.821511, -0.730024, -2.162754, -1.312314, 0.131926};
+        dx = {-0.435592, -0.372422, 2.072017, -1.257088, 2.198299, 0.517575};
 
-        dw =  {-1.648568, -2.989346, 3.426663, -0.161421, -0.663093, 
-                0.845647, -1.216741, -2.907610, 3.494951, -0.303019, 
-                0.423545, -0.710243};
+        dw = {-2.213959, 0.600751, -1.339203, 2.283910, -0.407197, 0.101527, 0.187473, 1.095338, 0.221908, -0.033348, -1.165723, -2.252574};
 
-        db = {-1.961148, 0.229394, -0.649523, -1.467542};
+        db = {0.910537, -0.235078, -0.029519, -1.842658};
 
         input = tensor::Tensor<double>({batch_size, in_features}, tensor::DeviceType::CPU, x.data());
         weight = tensor::Tensor<double>({in_features, out_features}, tensor::DeviceType::CPU, w.data());
@@ -51,6 +45,17 @@ protected:
         output_grad = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU, dy.data());
         weight_grad = tensor::Tensor<double>({in_features, out_features}, tensor::DeviceType::CPU);
         bias_grad = tensor::Tensor<double>({1, out_features}, tensor::DeviceType::CPU);
+
+#ifdef __CUDA
+        tensor::Tensor<double> input = input.gpu();
+        tensor::Tensor<double> weight = weight.gpu();
+        tensor::Tensor<double> bias = bias.gpu();
+        tensor::Tensor<double> output = output.gpu();
+        tensor::Tensor<double> output_grad = output_grad.gpu();
+        tensor::Tensor<double> input_grad = input_grad.gpu();
+        tensor::Tensor<double> weight_grad = weight_grad.gpu();
+        tensor::Tensor<double> bias_grad = bias_grad.gpu();
+#endif
     }
     void TearDown() override {
     }

@@ -67,7 +67,7 @@ struct matmul_op<Tp, device::CPU> {
         CBLAS_TRANSPOSE transb_ = transb[0] == 'N' ? CblasNoTrans : CblasTrans;
         if (std::is_same<Tp, float>::value) {
             cblas_sgemm(
-                CblasColMajor,
+                CblasRowMajor,
                 transa_,
                 transb_,
                 m,
@@ -84,7 +84,7 @@ struct matmul_op<Tp, device::CPU> {
             );
         } else if (std::is_same<Tp, double>::value) {
             cblas_dgemm(
-                CblasColMajor,
+                CblasRowMajor,
                 transa_,
                 transb_,
                 m,
@@ -161,7 +161,56 @@ struct transpose_op<Tp, device::CPU> {
     ) {
         for (int i = 0; i < m; ++i) {
             for (int j = 0; j < n; ++j) {
-                output[j + i * n] = input[i + j * m];
+                output[j * m + i] = input[i * n + j];
+            }
+        }
+    }
+};
+
+template <typename Tp>
+struct im2col_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        const Tp* data_im,
+        Tp* data_col,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        // calculate the size of the output img
+        int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+
+        // calculate the size of the col matrix(row-major) for each channel
+        int width_col = kernel_h * kernel_w;
+        int height_col = height_out * width_out;
+
+        // for each channel
+        for (int c = 0; c < channels; ++c) {
+            const Tp* img = data_im + c * height * width;
+            Tp* col = data_col + c * width_col * height_col;
+
+            // for each point in the output col matrix
+            for (int j = 0; j < width_col; ++j) {
+                for (int i = 0; i < height_col; ++i) {
+                    int h_offset = i / width_out * stride_h - pad_h;
+                    int w_offset = i % width_out * stride_w - pad_w;
+
+                    int kh_offset = j / kernel_w;
+                    int kw_offset = j % kernel_w;
+
+                    if (h_offset >= 0 && h_offset < height && w_offset >= 0 && w_offset < width) {
+                        col[i + j * height_col] = img[h_offset + kh_offset + (w_offset + kw_offset) * height];
+                    } else {
+                        col[i + j * height_col] = 0;
+                    }
+                }
             }
         }
     }
@@ -265,6 +314,26 @@ struct transpose_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct im2col_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* data_im,
+        Tp* data_col,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        throw error::DeviceError("im2col_op<GPU> can not be called without CUDA support.");
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -292,6 +361,10 @@ template struct eye_op<double, device::GPU>;
 template struct transpose_op<int, device::GPU>;
 template struct transpose_op<float, device::GPU>;
 template struct transpose_op<double, device::GPU>;
+
+template struct im2col_op<int, device::GPU>;
+template struct im2col_op<float, device::GPU>;
+template struct im2col_op<double, device::GPU>;
 
 #endif
 
@@ -322,5 +395,9 @@ template struct eye_op<double, device::CPU>;
 template struct transpose_op<int, device::CPU>;
 template struct transpose_op<float, device::CPU>;
 template struct transpose_op<double, device::CPU>;
+
+template struct im2col_op<int, device::CPU>;
+template struct im2col_op<float, device::CPU>;
+template struct im2col_op<double, device::CPU>;
 
 } // namespace ops

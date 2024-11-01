@@ -63,6 +63,7 @@ protected:
     using ones_cpu_op = ops::ones_op<double, device::CPU>;
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
     using trans_cpu_op = ops::transpose_op<double, device::CPU>;
+    using im2col_cpu_op = ops::im2col_op<int, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
@@ -72,6 +73,7 @@ protected:
     using ones_gpu_op = ops::ones_op<double, device::GPU>;
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
     using trans_gpu_op = ops::transpose_op<double, device::GPU>;
+    using im2col_gpu_op = ops::im2col_op<int, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_cpu_1) {
@@ -107,13 +109,13 @@ TEST_F(TestOps, TestMatmulOp_cpu_float) {
     const float alpha = 1.0f;
     const float beta = 0.0f;
 
-    smatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), m, B.data(), k, beta, C.data(), m);
+    smatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), k, B.data(), n, beta, C.data(), n);
 
     std::vector<float> C_expected(m * n, 0.0);
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int p = 0; p < k; ++p) {
-                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+                C_expected[i * n + j] += A[i * k + p] * B[p * n + j];
             }
         }
     }
@@ -132,13 +134,13 @@ TEST_F(TestOps, TestMatmulOp_cpu_double) {
     const double alpha = 1.0;
     const double beta = 0.0;
 
-    dmatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), m, B.data(), k, beta, C.data(), m);
+    dmatmul_cpu_op()(device::cpu_device, "N", "N", m, n, k, alpha, A.data(), k, B.data(), n, beta, C.data(), n);
 
     std::vector<double> C_expected(m * n, 0.0);
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int p = 0; p < k; ++p) {
-                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+                C_expected[i * n + j] += A[i * k + p] * B[p * n + j];
             }
         }
     }
@@ -186,9 +188,9 @@ TEST_F(TestOps, TestEyeOp_cpu) {
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
             if (i == j) {
-                EXPECT_EQ(vt_out[i + j * dim], 1.0);
+                EXPECT_EQ(vt_out[i * dim + j], 1.0);
             } else {
-                EXPECT_EQ(vt_out[i + j * dim], 0.0);
+                EXPECT_EQ(vt_out[i * dim + j], 0.0);
             }
         }
     }
@@ -201,7 +203,7 @@ TEST_F(TestOps, TestTransposeOp_cpu) {
 
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
-            At[j + i * n] = A[i + j * m];
+            At[j * m + i] = A[i * n + j];
         }
     }
 
@@ -210,6 +212,40 @@ TEST_F(TestOps, TestTransposeOp_cpu) {
 
     for (int i = 0; i < m * n; ++i) {
         EXPECT_NEAR(At_out[i], At[i], 1e-6);
+    }
+}
+
+TEST_F(TestOps, TestIm2ColOp_cpu) {
+    /**
+     * example img is 
+     * [
+     *  1, 2, 3;
+     *  4, 5, 6;
+     *  7, 8, 9
+     * ]
+     * 
+     * so data_im is
+     * [1, 4, 7, 2, 5, 8, 3, 6, 9]
+     * 
+     * im2col(img)(2X2 kernel, 1X1 stride, 0 padding) is
+     * [
+     *  1, 2, 4, 5;
+     *  2, 3, 5, 6;
+     *  4, 5, 7, 8;
+     *  5, 6, 8, 9
+     * ]
+     * 
+     * so data_col is
+     * [1, 2, 4, 5, 2, 3, 5, 6, 4, 5, 7, 8, 5, 6, 8, 9]
+     */
+    int data_im[9] = {1, 4, 7, 2, 5, 8, 3, 6, 9};
+    int data_col[16] = {0};
+    int gt_col[16] = {1, 2, 4, 5, 2, 3, 5, 6, 4, 5, 7, 8, 5, 6, 8, 9};
+
+    im2col_cpu_op()(device::cpu_device, data_im, data_col, 1, 3, 3, 2, 2, 0, 0, 1, 1);
+
+    for (int i = 0; i < 16; ++i) {
+        EXPECT_EQ(data_col[i], gt_col[i]);
     }
 }
 

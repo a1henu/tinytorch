@@ -23,7 +23,6 @@
     i < (n);                                            \
     i += blockDim.x * gridDim.x)                        
 
-
 // Define the type getter of the tensor
 template <typename Tp>
 struct get_device_type { };

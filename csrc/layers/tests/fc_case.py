@@ -3,10 +3,8 @@ import torch.nn as nn
 
 def format_as_c_array(array):
     c_array_str = "{"
-    flat_array = array.flatten(order='F')
+    flat_array = array.flatten(order='C')
     for i, x in enumerate(flat_array):
-        if i > 0 and i % 5 == 0:
-            c_array_str += "\n "
         c_array_str += f"{x:.6f}, "
     c_array_str = c_array_str.rstrip(", ")  
     c_array_str += "};"

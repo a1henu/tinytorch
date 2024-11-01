@@ -141,7 +141,7 @@ TEST_F(TestOps, TestMatmulOp_gpu_float) {
     const float alpha = 1.0f;
     const float beta = 0.0f;
 
-    smatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, m, d_B, k, beta, d_C, m);
+    smatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, k, d_B, n, beta, d_C, n);
 
     cudaMemcpy(h_C, d_C, m * n * sizeof(float), cudaMemcpyDeviceToHost);
 
@@ -149,7 +149,7 @@ TEST_F(TestOps, TestMatmulOp_gpu_float) {
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int p = 0; p < k; ++p) {
-                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+                C_expected[i * n + j] += A[i * k + p] * B[p * n + j];
             }
         }
     }
@@ -183,7 +183,7 @@ TEST_F(TestOps, TestMatmulOp_gpu_double) {
     const double alpha = 1.0;
     const double beta = 0.0;
 
-    dmatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, m, d_B, k, beta, d_C, m);
+    dmatmul_gpu_op()(device::gpu_device, "N", "N", m, n, k, alpha, d_A, k, d_B, n, beta, d_C, n);
 
     cudaMemcpy(h_C, d_C, m * n * sizeof(double), cudaMemcpyDeviceToHost);
 
@@ -191,7 +191,7 @@ TEST_F(TestOps, TestMatmulOp_gpu_double) {
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int p = 0; p < k; ++p) {
-                C_expected[i + j * m] += A[i + p * m] * B[j * k + p];
+                C_expected[i * n + j] += A[i * k + p] * B[p * n + j];
             }
         }
     }
@@ -265,9 +265,9 @@ TEST_F(TestOps, TestEyeOp_gpu) {
     for (int i = 0; i < dim; ++i) {
         for (int j = 0; j < dim; ++j) {
             if (i == j) {
-                EXPECT_EQ(vt_out_cpu[i + j * dim], 1.0);
+                EXPECT_EQ(vt_out_cpu[i * dim + j], 1.0);
             } else {
-                EXPECT_EQ(vt_out_cpu[i + j * dim], 0.0);
+                EXPECT_EQ(vt_out_cpu[i * dim + j], 0.0);
             }
         }
     }
