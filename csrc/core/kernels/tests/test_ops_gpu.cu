@@ -73,6 +73,7 @@ protected:
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
     using ones_cpu_op = ops::ones_op<double, device::CPU>;
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
+    using im2col_cpu_op = ops::im2col_op<int, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
@@ -81,6 +82,7 @@ protected:
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
     using ones_gpu_op = ops::ones_op<double, device::GPU>;
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
+    using im2col_gpu_op = ops::im2col_op<int, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_gpu_1) {
@@ -270,6 +272,50 @@ TEST_F(TestOps, TestEyeOp_gpu) {
                 EXPECT_EQ(vt_out_cpu[i * dim + j], 0.0);
             }
         }
+    }
+}
+
+TEST_F(TestOps, TestIm2ColOp_gpu) {
+    /**
+     * example img is 
+     * [
+     * [1, 2, 3;
+     *  4, 5, 6;
+     *  7, 8, 9],
+     * [3, 2, 1;
+     *  6, 5, 4;
+     *  9, 8, 7]
+     * ]
+     * 
+     * so data_im is
+     * [1, 2, 3, 4, 5, 6, 7, 8, 9, 3, 2, 1, 6, 5, 4, 9, 8, 7]
+     * 
+     * im2col(img)(2X2 kernel, 1X1 stride, 0 padding) is
+     * [
+     *  1, 2, 4, 5, 3, 2, 6, 5;
+     *  2, 3, 5, 6, 2, 1, 5, 4;
+     *  4, 5, 7, 8, 6, 5, 9, 8;
+     *  5, 6, 8, 9, 5, 4, 8, 7
+     * ]
+     * 
+     * so data_col is
+     * [1, 2, 4, 5, 3, 2, 6, 5, 2, 3, 5, 6, 2, 1, 5, 4, 4, 5, 7, 8, 6, 5, 9, 8, 5, 6, 8, 9, 5, 4, 8, 7]
+     */
+    int data_im[18] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 3, 2, 1, 6, 5, 4, 9, 8, 7};
+    int data_col[32] = {0};
+    int gt_col[32] = {1, 2, 4, 5, 3, 2, 6, 5, 2, 3, 5, 6, 2, 1, 5, 4, 4, 5, 7, 8, 6, 5, 9, 8, 5, 6, 8, 9, 5, 4, 8, 7};
+
+    int* gdata_im;
+    int* gdata_col;
+    cudaMalloc(&gdata_im, 18 * sizeof(int));
+    cudaMalloc(&gdata_col, 32 * sizeof(int));
+
+    cudaMemcpy(gdata_im, data_im, 18 * sizeof(int), cudaMemcpyHostToDevice);
+    im2col_gpu_op()(device::gpu_device, gdata_im, gdata_col, 2, 3, 3, 2, 2, 0, 0, 1, 1);
+    cudaMemcpy(data_col, gdata_col, 32 * sizeof(int), cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < 32; ++i) {
+        EXPECT_EQ(data_col[i], gt_col[i]);
     }
 }
 

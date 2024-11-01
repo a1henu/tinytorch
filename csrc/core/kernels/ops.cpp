@@ -184,32 +184,30 @@ struct im2col_op<Tp, device::CPU> {
         const int stride_w
     ) {
         // calculate the size of the output img
-        int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
-        int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
 
         // calculate the size of the col matrix(row-major) for each channel
-        int width_col = kernel_h * kernel_w;
-        int height_col = height_out * width_out;
+        const int width_col = kernel_h * kernel_w;
+        const int height_col = height_out * width_out;
 
         // for each channel
         for (int c = 0; c < channels; ++c) {
             const Tp* img = data_im + c * height * width;
-            Tp* col = data_col + c * width_col * height_col;
+            Tp* col = data_col + c * width_col;
 
             // for each point in the output col matrix
-            for (int j = 0; j < width_col; ++j) {
-                for (int i = 0; i < height_col; ++i) {
+            for (int i = 0; i < height_col; ++i) {
+                for (int j = 0; j < width_col; ++j) {
                     int h_offset = i / width_out * stride_h - pad_h;
                     int w_offset = i % width_out * stride_w - pad_w;
 
-                    int kh_offset = j / kernel_w;
-                    int kw_offset = j % kernel_w;
+                    int h = h_offset + j / kernel_w;
+                    int w = w_offset + j % kernel_w;
 
-                    if (h_offset >= 0 && h_offset < height && w_offset >= 0 && w_offset < width) {
-                        col[i + j * height_col] = img[h_offset + kh_offset + (w_offset + kw_offset) * height];
-                    } else {
-                        col[i + j * height_col] = 0;
-                    }
+                    col[i * width_col * channels + j] = 
+                        (h_offset >= 0 && h_offset < height && w_offset >= 0 && w_offset < width) ?
+                        img[h * width + w] : 0;
                 }
             }
         }

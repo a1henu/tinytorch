@@ -72,6 +72,47 @@ kernel_trans(const Tp* input, Tp* output, const int m, const int n) {
 }
 
 template <typename Tp>
+__global__ void
+kernel_im2col(
+    const Tp* data_im,
+    Tp* data_col,
+    const int channels,
+    const int height,
+    const int width,
+    const int kernel_h,
+    const int kernel_w,
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w,
+    const int height_out,
+    const int width_out,
+    const int height_col,
+    const int width_col
+) {
+    // for each point in the output col matrix
+    CUDA_KERNEL_LOOP(k, channels * height_col) {
+        int c = k / height_col;
+        int i = k % height_col;
+        const Tp* img = data_im + c * height * width;
+        Tp* col = data_col + c * width_col;
+
+        for (int j = 0; j < width_col; ++j) {
+            int h_offset = i / width_out * stride_h - pad_h;
+            int w_offset = i % width_out * stride_w - pad_w;
+            
+            int h = h_offset + j / kernel_w;
+            int w = w_offset + j % kernel_w;
+
+            col[i * width_col * channels + j] = 
+                (h_offset >= 0 && h_offset < height && w_offset >= 0 && w_offset < width) ?
+                img[h * width + w] : 0;
+        }
+    }
+    
+}
+
+template <typename Tp>
 struct add_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
@@ -211,6 +252,50 @@ struct transpose_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct im2col_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* data_im,
+        Tp* data_col,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        // calculate the size of the output img
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+
+        // calculate the size of the col matrix(row-major) for each channel
+        const int height_col = height_out * width_out;
+        const int width_col = kernel_h * kernel_w;
+        
+        kernel_im2col<Tp><<<CUDA_GET_BLOCKS(channels * height_out), CUDA_K_THREADS>>>(
+            data_im,
+            data_col,
+            channels,
+            height,
+            width,
+            kernel_h,
+            kernel_w,
+            pad_h,
+            pad_w,
+            stride_h,
+            stride_w,
+            height_out,
+            width_out,
+            height_col,
+            width_col
+        );
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -238,5 +323,9 @@ template struct eye_op<double, device::GPU>;
 template struct transpose_op<int, device::GPU>;
 template struct transpose_op<float, device::GPU>;
 template struct transpose_op<double, device::GPU>;
+
+template struct im2col_op<int, device::GPU>;
+template struct im2col_op<float, device::GPU>;
+template struct im2col_op<double, device::GPU>;
 
 } // namespace ops

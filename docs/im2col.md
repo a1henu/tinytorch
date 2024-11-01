@@ -59,10 +59,10 @@ for (int c = 0; c < channels; ++c) {
 
 首先，第`i`个卷积核在二维图像中事实上是第`(i / width_out, i % width_out)`个卷积核，因此它在原图像中的位置为`(i / width_out * stride_h - pad_h, i % width_out * stride_w - pad_w)`，分别记作`h_offset`和`w_offset`。
 
-而一个卷积核中的第`j`个元素在卷积核中的位置为`(j / kernel_w, j % kernel_w)`，因此它在原图像中的位置为`(i / width_out * stride_h + j / kernel_w, i % width_out * stride_w + j % kernel_w)`
+而一个卷积核中的第`j`个元素在卷积核中的位置为`(j / kernel_w, j % kernel_w)`，因此它在原图像中的位置为`(h_offset + j / kernel_w, w_offset + j % kernel_w)`
 
 于是，我们可以得到
-`data_col(c, i, j) = data_im(c, h_offset + j / kernel_w, w_offset + j % kernel_w)`
+`data_col(i, j + c * kernel_h * kernel_w) = data_im(c, h_offset + j / kernel_w, w_offset + j % kernel_w)`
 
 ```cpp
 template <typename Tp>

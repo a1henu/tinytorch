@@ -45,17 +45,6 @@ protected:
         output_grad = tensor::Tensor<double>({batch_size, out_features}, tensor::DeviceType::CPU, dy.data());
         weight_grad = tensor::Tensor<double>({in_features, out_features}, tensor::DeviceType::CPU);
         bias_grad = tensor::Tensor<double>({1, out_features}, tensor::DeviceType::CPU);
-
-#ifdef __CUDA
-        tensor::Tensor<double> input = input.gpu();
-        tensor::Tensor<double> weight = weight.gpu();
-        tensor::Tensor<double> bias = bias.gpu();
-        tensor::Tensor<double> output = output.gpu();
-        tensor::Tensor<double> output_grad = output_grad.gpu();
-        tensor::Tensor<double> input_grad = input_grad.gpu();
-        tensor::Tensor<double> weight_grad = weight_grad.gpu();
-        tensor::Tensor<double> bias_grad = bias_grad.gpu();
-#endif
     }
     void TearDown() override {
     }
