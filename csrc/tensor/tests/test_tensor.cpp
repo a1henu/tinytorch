@@ -44,6 +44,52 @@ TEST_F(TestTensor, shape_data_t_device_d_device_constructor) {
     }
 }
 
+TEST_F(TestTensor, tensor_cpu_to_cpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_cpu = t.cpu();
+
+    ASSERT_EQ(t_cpu.in_cpu(), true);
+}
+
+#ifdef __CUDA
+
+TEST_F(TestTensor, tensor_gpu_to_cpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::GPU);
+    tensor::Tensor<double> t_cpu = t.cpu();
+    
+    ASSERT_EQ(t_cpu.in_cpu(), true);
+}
+
+TEST_F(TestTensor, tensor_cpu_to_gpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    tensor::Tensor<double> t_gpu = t.gpu();
+    
+    ASSERT_EQ(t_gpu.in_gpu(), true);
+}
+
+TEST_F(TestTensor, tensor_gpu_to_gpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::GPU);
+    tensor::Tensor<double> t_gpu = t.gpu();
+    
+    ASSERT_EQ(t_gpu.in_gpu(), true);
+}
+
+TEST_F(TestTensor, tensor_to_cpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::GPU);
+    t.to_cpu();
+    
+    ASSERT_EQ(t.in_cpu(), true);
+}
+
+TEST_F(TestTensor, tensor_to_gpu) {
+    tensor::Tensor<double> t(shape, tensor::DeviceType::CPU);
+    t.to_gpu();
+    
+    ASSERT_EQ(t.in_gpu(), true);
+}
+
+#endif
+
 TEST_F(TestTensor, assignment_operator) {
     tensor::Tensor<double> t1;
     t1 = tensor::Tensor<double>(shape, tensor::DeviceType::CPU);

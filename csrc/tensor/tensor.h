@@ -52,8 +52,11 @@ public:
 
     ~Tensor();
 
-    Tensor<Tp>& cpu();
-    Tensor<Tp>& gpu();
+    Tensor<Tp> cpu() const;
+    Tensor<Tp> gpu() const;
+
+    void to_cpu();
+    void to_gpu();
 
     bool in_cpu() const;
     bool in_gpu() const;
