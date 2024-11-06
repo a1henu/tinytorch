@@ -12,6 +12,7 @@
 #include <cstddef>
 
 #include "core/device/device.h"
+#include "macros.h"
 
 namespace ops {
 

@@ -1,5 +1,6 @@
 set(LAYERS_SOURCES
     fc_layer.cpp
+    softmax_layer.cpp
 )
 
 add_library(layers STATIC ${LAYERS_SOURCES})

@@ -50,5 +50,5 @@ else
 fi
 
 echo "=== Running tests... ==="
-ctest --verbose --output-on-failure -C Debug -T test
+ctest
 cd ../scripts

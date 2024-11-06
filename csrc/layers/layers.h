@@ -43,6 +43,16 @@ void fc_backward(
     const tensor::Tensor<Tp>& grad_output   // dY(batch_size, out_features)
 );
 
+/**
+ * @brief forward function for softmax layer
+ *       - Y = softmax(X)
+ */
+template <typename Tp>
+void softmax_forward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
+    tensor::Tensor<Tp>& output          // Y(batch_size, num_classes)
+);
+
 } // namespace layers
 
 #endif

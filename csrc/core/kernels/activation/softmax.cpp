@@ -10,6 +10,8 @@
 
 #include "core/kernels/activation/softmax.h"
 
+#include "error/error.h"
+
 namespace ops { 
 
 template <typename Tp>
@@ -39,5 +41,30 @@ struct softmax_forward<Tp, device::CPU> {
         }
     }
 };
+
+#ifndef __CUDA
+
+template <typename Tp>
+struct softmax_forward<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* output,
+        const Tp* input,
+        size_t batch_size,
+        size_t num_classes
+    ) {
+        throw error::DeviceError("softmax_forward<GPU> can not be called without CUDA support.");
+    }
+};
+
+template struct softmax_forward<int, device::GPU>;
+template struct softmax_forward<float, device::GPU>;
+template struct softmax_forward<double, device::GPU>;
+
+#endif
+
+template struct softmax_forward<int, device::CPU>;
+template struct softmax_forward<float, device::CPU>;
+template struct softmax_forward<double, device::CPU>;
 
 } // namespace ops

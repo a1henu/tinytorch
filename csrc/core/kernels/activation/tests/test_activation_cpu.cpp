@@ -12,6 +12,7 @@
 #include "core/device/device.h"
 #include "core/kernels/activation/relu.h"
 #include "core/kernels/activation/sigmoid.h"
+#include "core/kernels/activation/softmax.h"
 
 class TestReLU : public ::testing::Test {
 protected:
@@ -113,7 +114,36 @@ protected:
 
 };
 
-TEST_F(TestReLU, forward) {
+class TestSoftmax : public ::testing::Test {
+protected:
+    std::vector<double> y;
+
+    std::vector<double> y_softmax;
+
+    int y_dim;
+
+    void SetUp() override {
+        y = {
+            -1.028684, 0.856440, 1.369762, -1.437391, 1.551560, 1.139737, -1.240337, -0.648702, -0.400014, 1.586942, 
+            2.365771, 2.535360, -0.772002, 0.039393, -1.142135, 1.507503, 0.550930, 0.630071, -0.746441, 0.497415, 
+            -0.382562, -1.579024, 1.228670, -0.061057, -0.585326, -1.225693, -0.035275, 0.099546, 0.465645, 0.714231, 
+            -0.739603, 0.209539, 0.564118, 0.357420, -0.649761, 1.078385, -0.351789, -1.801129, -0.612122, -0.219620, 
+            0.764168, -1.062313, 0.094680, -0.484254, -1.003578, 0.560764, -0.030785, 0.453219, 0.187955, 0.185473
+        };
+        y_softmax = {
+            0.016942, 0.111600, 0.186465, 0.011258, 0.223640, 0.148149, 0.013710, 0.024774, 0.031768, 0.231695, 
+            0.301412, 0.357118, 0.013075, 0.029432, 0.009030, 0.127767, 0.049089, 0.053132, 0.013414, 0.046531, 
+            0.057797, 0.017470, 0.289503, 0.079714, 0.047189, 0.024874, 0.081795, 0.093601, 0.134982, 0.173075, 
+            0.045141, 0.116621, 0.166253, 0.135208, 0.049384, 0.278044, 0.066527, 0.015616, 0.051279, 0.075927, 
+            0.190346, 0.030642, 0.097452, 0.054621, 0.032495, 0.155313, 0.085961, 0.139477, 0.106979, 0.106714
+        };
+        y_dim = y.size();
+    }
+    void TearDown() override {
+    }
+};
+
+TEST_F(TestReLU, relu_forward) {
     std::vector<double> vt_relu_f(v_dim);
     ops::relu_forward<double, device::CPU>()(device::cpu_device, vt_relu_f.data(), v.data(), v_dim);
     for (int i = 0; i < v_dim; i++) {
@@ -121,7 +151,7 @@ TEST_F(TestReLU, forward) {
     }
 }
 
-TEST_F(TestReLU, backward) {
+TEST_F(TestReLU, relu_backward) {
     std::vector<double> vt_relu_b(v_dim);
     ops::relu_backward<double, device::CPU>()(device::cpu_device, vt_relu_b.data(), v.data(), g.data(), v_dim);
     for (int i = 0; i < v_dim; i++) {
@@ -129,7 +159,7 @@ TEST_F(TestReLU, backward) {
     }
 }
 
-TEST_F(TestSigmoid, forward) {
+TEST_F(TestSigmoid, sigmoid_forward) {
     std::vector<double> xt_sigmoid_f(x_dim);
     ops::sigmoid_forward<double, device::CPU>()(device::cpu_device, xt_sigmoid_f.data(), x.data(), x_dim);
     for (int i = 0; i < x_dim; i++) {
@@ -137,11 +167,19 @@ TEST_F(TestSigmoid, forward) {
     }
 }
 
-TEST_F(TestSigmoid, backward) {
+TEST_F(TestSigmoid, sigmoid_backward) {
     std::vector<double> xt_sigmoid_b(x_dim);
     ops::sigmoid_backward<double, device::CPU>()(device::cpu_device, xt_sigmoid_b.data(), x.data(), g.data(), x_dim);
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_b[i], x_sigmoid_b[i], 1e-6);
+    }
+}
+
+TEST_F(TestSoftmax, softmax_forward) {
+    std::vector<double> yt_softmax(y_dim);
+    ops::softmax_forward<double, device::CPU>()(device::cpu_device, yt_softmax.data(), y.data(), 5, 10);
+    for (int i = 0; i < y_dim; i++) {
+        EXPECT_NEAR(yt_softmax[i], y_softmax[i], 1e-6);
     }
 }
 

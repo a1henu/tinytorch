@@ -12,7 +12,7 @@
 #include "tensor/tensor.h"
 #include "layers/layers.h"
 
-class TestFC : public ::testing::Test {
+class TestFCLayer : public ::testing::Test {
 protected:
     std::vector<double> x, w, b, y, dy, dx, dw, db;
     tensor::Tensor<double> input, weight_, weight, bias, o, output, input_grad, output_grad, weight_grad, bias_grad;
@@ -50,7 +50,38 @@ protected:
     }
 };
 
-TEST_F(TestFC, TestFCForward) {
+class TestSoftmaxLayer : public ::testing::Test {
+protected:
+    std::vector<double> x, y;
+    tensor::Tensor<double> input, output;
+
+    int batch_size = 5, num_classes = 10;
+
+    void SetUp() override {
+        x = {
+            -1.028684, 0.856440, 1.369762, -1.437391, 1.551560, 1.139737, -1.240337, -0.648702, -0.400014, 1.586942, 
+            2.365771, 2.535360, -0.772002, 0.039393, -1.142135, 1.507503, 0.550930, 0.630071, -0.746441, 0.497415, 
+            -0.382562, -1.579024, 1.228670, -0.061057, -0.585326, -1.225693, -0.035275, 0.099546, 0.465645, 0.714231, 
+            -0.739603, 0.209539, 0.564118, 0.357420, -0.649761, 1.078385, -0.351789, -1.801129, -0.612122, -0.219620, 
+            0.764168, -1.062313, 0.094680, -0.484254, -1.003578, 0.560764, -0.030785, 0.453219, 0.187955, 0.185473
+        };
+
+        y = {
+            0.016942, 0.111600, 0.186465, 0.011258, 0.223640, 0.148149, 0.013710, 0.024774, 0.031768, 0.231695, 
+            0.301412, 0.357118, 0.013075, 0.029432, 0.009030, 0.127767, 0.049089, 0.053132, 0.013414, 0.046531, 
+            0.057797, 0.017470, 0.289503, 0.079714, 0.047189, 0.024874, 0.081795, 0.093601, 0.134982, 0.173075, 
+            0.045141, 0.116621, 0.166253, 0.135208, 0.049384, 0.278044, 0.066527, 0.015616, 0.051279, 0.075927, 
+            0.190346, 0.030642, 0.097452, 0.054621, 0.032495, 0.155313, 0.085961, 0.139477, 0.106979, 0.106714
+        };
+
+        input = tensor::Tensor<double>({batch_size, num_classes}, tensor::DeviceType::CPU, x.data());
+        output = tensor::Tensor<double>({batch_size, num_classes}, tensor::DeviceType::CPU);
+    }
+    void TearDown() override {
+    }
+};
+
+TEST_F(TestFCLayer, TestFCForward) {
     layers::fc_forward(input, weight, bias, o);
 
     for (int i = 0; i < batch_size * out_features; ++i) {
@@ -58,7 +89,7 @@ TEST_F(TestFC, TestFCForward) {
     }
 }
 
-TEST_F(TestFC, TestFCBackward) {
+TEST_F(TestFCLayer, TestFCBackward) {
     layers::fc_backward(input, weight, bias, output, input_grad, weight_grad, bias_grad, output_grad);
 
     for (int i = 0; i < batch_size * in_features; ++i) {
@@ -71,6 +102,14 @@ TEST_F(TestFC, TestFCBackward) {
 
     for (int i = 0; i < out_features; ++i) {
         EXPECT_NEAR(bias_grad.get_data()[i], db[i], 1e-4);
+    }
+}
+
+TEST_F(TestSoftmaxLayer, TestSoftmaxForward) {
+    layers::softmax_forward(input, output);
+
+    for (int i = 0; i < batch_size * num_classes; ++i) {
+        EXPECT_NEAR(output.get_data()[i], y[i], 1e-4);
     }
 }
 

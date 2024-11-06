@@ -1,6 +1,6 @@
 /**
- * @file layers.cpp
- * @brief Layers implementation
+ * @file fc_layers.cpp
+ * @brief Fully Connected Layers implementation
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -102,7 +102,6 @@ template void fc_forward<float>(
     const tensor::Tensor<float>& bias,     // b(1, out_features)
     tensor::Tensor<float>& output          // Y(batch_size, out_features)
 );
-
 template void fc_forward<double>(
     const tensor::Tensor<double>& input,    // X(batch_size, in_features)
     const tensor::Tensor<double>& weight,   // W(in_features, out_features)
@@ -120,7 +119,6 @@ template void fc_backward<float>(
     tensor::Tensor<float>& grad_bias,          // db(1, out_features)
     const tensor::Tensor<float>& grad_output   // dY(batch_size, out_features)
 );
-
 template void fc_backward<double>(
     const tensor::Tensor<double>& input,        // X(batch_size, in_features)
     const tensor::Tensor<double>& weight,       // W(in_features, out_features)
