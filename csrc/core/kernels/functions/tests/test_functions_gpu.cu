@@ -13,6 +13,7 @@
 #include "core/kernels/functions/relu.h"
 #include "core/kernels/functions/sigmoid.h"
 #include "core/kernels/functions/softmax.h"
+#include "core/kernels/functions/cross_entropy.h"
 
 class TestReLU : public ::testing::Test {
 protected:
@@ -187,6 +188,43 @@ protected:
     }
 };
 
+class TestCrossEntropy : public ::testing::Test {
+protected:
+    std::vector<double> z;
+    std::vector<int> t;
+
+    double* z_g;
+    int* t_g;
+
+    double expected_loss = 2.6912;
+
+    int batch_size = 5;
+    int num_classes = 10;
+
+    void SetUp() override {
+        z = {
+            0.016942, 0.111600, 0.186465, 0.011258, 0.223640, 0.148149, 0.013710, 0.024774, 0.031768, 0.231695, 
+            0.301412, 0.357118, 0.013075, 0.029432, 0.009030, 0.127767, 0.049089, 0.053132, 0.013414, 0.046531, 
+            0.057797, 0.017470, 0.289503, 0.079714, 0.047189, 0.024874, 0.081795, 0.093601, 0.134982, 0.173075, 
+            0.045141, 0.116621, 0.166253, 0.135208, 0.049384, 0.278044, 0.066527, 0.015616, 0.051279, 0.075927, 
+            0.190346, 0.030642, 0.097452, 0.054621, 0.032495, 0.155313, 0.085961, 0.139477, 0.106979, 0.106714
+        };
+        t = {
+            3, 7, 8, 2, 9
+        };
+
+        cudaMalloc(&z_g, batch_size * num_classes * sizeof(double));
+        cudaMalloc(&t_g, batch_size * sizeof(int));
+
+        cudaMemcpy(z_g, z.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(t_g, t.data(), batch_size * sizeof(int), cudaMemcpyHostToDevice);
+    }
+    void TearDown() override {
+        cudaFree(z_g);
+        cudaFree(t_g);
+    }
+};
+
 TEST_F(TestReLU, relu_forward) {
     double* vt_relu_f_g;
     cudaMalloc(&vt_relu_f_g, v_dim * sizeof(double));
@@ -247,6 +285,15 @@ TEST_F(TestSoftmax, softmax_forward) {
     }
 }
 
+TEST_F(TestCrossEntropy, cross_entropy_forward) {
+    double* loss_g;
+    cudaMalloc(&loss_g, sizeof(double));
+    ops::cross_entropy_forward<double, device::GPU>()(device::gpu_device, loss_g, z_g, t_g, batch_size, num_classes);
+
+    double loss = 0;
+    cudaMemcpy(&loss, loss_g, sizeof(double), cudaMemcpyDeviceToHost);
+    EXPECT_NEAR(loss, expected_loss, 1e-4);
+}
 
 int main(int argc, char** argv) {
     std::cout << "run test for CORE::KERNELS::FUNCTIONS::GPU" << std::endl << std::endl;

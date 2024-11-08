@@ -26,8 +26,9 @@ struct cross_entropy_forward<Tp, device::CPU> {
     ) {
         *output = static_cast<Tp>(0);
         for (int i = 0; i < batch_size; ++i) {
-            *output += -log(input[i * num_classes + target[i]]);
+            *output -= log(input[i * num_classes + target[i]]);
         }
+        *output /= batch_size;
     }
 };
 

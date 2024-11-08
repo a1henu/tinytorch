@@ -12,6 +12,7 @@ if(CUDA)
         relu.cu
         sigmoid.cu
         softmax.cu
+        cross_entropy.cu
     )
 endif()
 
