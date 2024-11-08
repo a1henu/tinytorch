@@ -37,6 +37,28 @@ struct cross_entropy_forward {
     );
 };
 
+template <typename Tp, typename Device>
+struct cross_entropy_backward {
+    /// @brief cross entropy backward operator for multi-device
+    ///        this operator is used with softmax operator
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer (N, C)
+    /// @param input  : the input array pointer  (N, C)
+    /// @param target : the target array pointer (N)
+    /// @param batch_size   : the number of samples
+    /// @param num_classes  : the number of classes
+    void operator()(
+        Device* device, 
+        Tp* output, 
+        const Tp* input, 
+        const int* target, 
+        size_t batch_size,
+        size_t num_classes
+    );
+};
+
 } // namespace ops
 
 #endif

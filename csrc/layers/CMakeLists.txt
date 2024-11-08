@@ -1,6 +1,7 @@
 set(LAYERS_SOURCES
     fc_layer.cpp
     softmax_layer.cpp
+    cross_entropy_layer.cpp
 )
 
 add_library(layers STATIC ${LAYERS_SOURCES})

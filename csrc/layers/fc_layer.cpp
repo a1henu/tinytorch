@@ -45,7 +45,7 @@ void fc_forward(
     tensor::Tensor<Tp> ones_;
     if (input.in_cpu()) {
         ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::CPU);
-    } else {
+    } else if (input.in_gpu()) {
         ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::GPU);
     }
     output = input * weight + ones_ * bias; 

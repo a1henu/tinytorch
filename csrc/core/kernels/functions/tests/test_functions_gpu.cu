@@ -190,10 +190,14 @@ protected:
 
 class TestCrossEntropy : public ::testing::Test {
 protected:
+    std::vector<double> z_o;
     std::vector<double> z;
+    std::vector<double> grad; 
     std::vector<int> t;
 
+    double* z_o_g;
     double* z_g;
+    double* grad_g;
     int* t_g;
 
     double expected_loss = 2.6912;
@@ -202,6 +206,13 @@ protected:
     int num_classes = 10;
 
     void SetUp() override {
+        z_o = {
+            -1.028684, 0.856440, 1.369762, -1.437391, 1.551560, 1.139737, -1.240337, -0.648702, -0.400014, 1.586942, 
+            2.365771, 2.535360, -0.772002, 0.039393, -1.142135, 1.507503, 0.550930, 0.630071, -0.746441, 0.497415, 
+            -0.382562, -1.579024, 1.228670, -0.061057, -0.585326, -1.225693, -0.035275, 0.099546, 0.465645, 0.714231, 
+            -0.739603, 0.209539, 0.564118, 0.357420, -0.649761, 1.078385, -0.351789, -1.801129, -0.612122, -0.219620, 
+            0.764168, -1.062313, 0.094680, -0.484254, -1.003578, 0.560764, -0.030785, 0.453219, 0.187955, 0.185473
+        };
         z = {
             0.016942, 0.111600, 0.186465, 0.011258, 0.223640, 0.148149, 0.013710, 0.024774, 0.031768, 0.231695, 
             0.301412, 0.357118, 0.013075, 0.029432, 0.009030, 0.127767, 0.049089, 0.053132, 0.013414, 0.046531, 
@@ -209,18 +220,31 @@ protected:
             0.045141, 0.116621, 0.166253, 0.135208, 0.049384, 0.278044, 0.066527, 0.015616, 0.051279, 0.075927, 
             0.190346, 0.030642, 0.097452, 0.054621, 0.032495, 0.155313, 0.085961, 0.139477, 0.106979, 0.106714
         };
+        grad = {
+            0.0034, 0.0223, 0.0373, -0.1977, 0.0447, 0.0296, 0.0027, 0.0050, 0.0064, 0.0463,
+            0.0603, 0.0714, 0.0026, 0.0059, 0.0018, 0.0256, 0.0098, -0.1894, 0.0027, 0.0093,
+            0.0116, 0.0035, 0.0579, 0.0159, 0.0094, 0.0050, 0.0164, 0.0187, -0.1730, 0.0346,
+            0.0090, 0.0233, -0.1667, 0.0270, 0.0099, 0.0556, 0.0133, 0.0031, 0.0103, 0.0152,
+            0.0381, 0.0061, 0.0195, 0.0109, 0.0065, 0.0311, 0.0172, 0.0279, 0.0214, -0.1787
+        };
         t = {
             3, 7, 8, 2, 9
         };
 
+        cudaMalloc(&z_o_g, batch_size * num_classes * sizeof(double));
         cudaMalloc(&z_g, batch_size * num_classes * sizeof(double));
+        cudaMalloc(&grad_g, batch_size * num_classes * sizeof(double));
         cudaMalloc(&t_g, batch_size * sizeof(int));
 
+        cudaMemcpy(z_o_g, z_o.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(z_g, z.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(grad_g, grad.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(t_g, t.data(), batch_size * sizeof(int), cudaMemcpyHostToDevice);
     }
     void TearDown() override {
+        cudaFree(z_o_g);
         cudaFree(z_g);
+        cudaFree(grad_g);
         cudaFree(t_g);
     }
 };
@@ -293,6 +317,18 @@ TEST_F(TestCrossEntropy, cross_entropy_forward) {
     double loss = 0;
     cudaMemcpy(&loss, loss_g, sizeof(double), cudaMemcpyDeviceToHost);
     EXPECT_NEAR(loss, expected_loss, 1e-4);
+}
+
+TEST_F(TestCrossEntropy, cross_entropy_backward) {
+    double* z_grad_g;
+    cudaMalloc(&z_grad_g, batch_size * num_classes * sizeof(double));
+    ops::cross_entropy_backward<double, device::GPU>()(device::gpu_device, z_grad_g, z_o_g, t_g, batch_size, num_classes);
+
+    double* z_grad = new double[batch_size * num_classes];
+    cudaMemcpy(z_grad, z_grad_g, batch_size * num_classes * sizeof(double), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < batch_size * num_classes; i++) {
+        EXPECT_NEAR(z_grad[i], grad[i], 1e-4);
+    }
 }
 
 int main(int argc, char** argv) {
