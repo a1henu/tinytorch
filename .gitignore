@@ -39,3 +39,6 @@ build/
 
 # test files
 Testing/
+
+# pytest cache
+.pytest_cache/
