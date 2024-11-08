@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-#include "core/kernels/activation/sigmoid.h"
+#include "core/kernels/functions/sigmoid.h"
 #include "macros.h"
 
 namespace ops {

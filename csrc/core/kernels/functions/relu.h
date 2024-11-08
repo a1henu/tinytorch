@@ -6,8 +6,8 @@
  * Licensed under the MIT License.
  */
 
-#ifndef CSRC_CORE_KERNELS_ACTIVATION_RELU_H
-#define CSRC_CORE_KERNELS_ACTIVATION_RELU_H
+#ifndef CSRC_CORE_KERNELS_FUNCTIONS_RELU_H
+#define CSRC_CORE_KERNELS_FUNCTIONS_RELU_H
 
 # include <cstddef>
 

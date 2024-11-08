@@ -11,8 +11,8 @@
 #include "error/error.h"
 #include "tensor/tensor.h"
 
-#include "core/kernels/activation/relu.h"
-#include "core/kernels/activation/sigmoid.h"
+#include "core/kernels/functions/relu.h"
+#include "core/kernels/functions/sigmoid.h"
 
 #include "tensor/operators/tensor_activation.h"
 

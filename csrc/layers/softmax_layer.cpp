@@ -8,7 +8,7 @@
 
 #include "error/error.h"
 #include "layers/layers.h"
-#include "core/kernels/activation/softmax.h"
+#include "core/kernels/functions/softmax.h"
 
 namespace layers {
 

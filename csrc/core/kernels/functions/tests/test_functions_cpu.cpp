@@ -1,6 +1,6 @@
 /**
- * @file test_activation_cpu.cpp
- * @brief Activation function test cases for CPU
+ * @file test_functions_cpu.cpp
+ * @brief Functions function test cases for CPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "core/device/device.h"
-#include "core/kernels/activation/relu.h"
-#include "core/kernels/activation/sigmoid.h"
-#include "core/kernels/activation/softmax.h"
+#include "core/kernels/functions/relu.h"
+#include "core/kernels/functions/sigmoid.h"
+#include "core/kernels/functions/softmax.h"
 
 class TestReLU : public ::testing::Test {
 protected:

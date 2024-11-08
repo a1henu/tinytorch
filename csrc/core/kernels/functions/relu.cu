@@ -7,7 +7,7 @@
  */
 
 #include "core/device/device.h"
-#include "core/kernels/activation/relu.h"
+#include "core/kernels/functions/relu.h"
 #include "macros.h"
 
 namespace ops {

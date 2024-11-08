@@ -8,7 +8,7 @@
 
 #include <cmath>
 
-#include "core/kernels/activation/softmax.h"
+#include "core/kernels/functions/softmax.h"
 
 namespace ops {
 

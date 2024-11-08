@@ -18,7 +18,7 @@ else()
     target_link_libraries(kernels PUBLIC ${BLAS_LIBRARIES})
 endif()
 
-add_subdirectory(activation)
+add_subdirectory(functions)
 
 if(TEST)
     add_subdirectory(tests)

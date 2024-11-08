@@ -1,6 +1,6 @@
 /**
- * @file test_activation_gpu.cu
- * @brief Activation function test cases for GPU
+ * @file test_functions_gpu.cu
+ * @brief Functions function test cases for GPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai
  * Licensed under the MIT License.
@@ -10,9 +10,9 @@
 #include <vector>
 
 #include "core/device/device.h"
-#include "core/kernels/activation/relu.h"
-#include "core/kernels/activation/sigmoid.h"
-#include "core/kernels/activation/softmax.h"
+#include "core/kernels/functions/relu.h"
+#include "core/kernels/functions/sigmoid.h"
+#include "core/kernels/functions/softmax.h"
 
 class TestReLU : public ::testing::Test {
 protected:
@@ -249,7 +249,7 @@ TEST_F(TestSoftmax, softmax_forward) {
 
 
 int main(int argc, char** argv) {
-    std::cout << "run test for CORE::KERNELS::ACTIVATION::GPU" << std::endl << std::endl;
+    std::cout << "run test for CORE::KERNELS::FUNCTIONS::GPU" << std::endl << std::endl;
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
