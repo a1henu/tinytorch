@@ -64,6 +64,8 @@ protected:
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
     using trans_cpu_op = ops::transpose_op<double, device::CPU>;
     using im2col_cpu_op = ops::im2col_op<int, device::CPU>;
+    using max_pool_cpu_op = ops::max_pool_forward_op<double, device::CPU>;
+    using max_pool_backward_cpu_op = ops::max_pool_backward_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
@@ -74,6 +76,8 @@ protected:
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
     using trans_gpu_op = ops::transpose_op<double, device::GPU>;
     using im2col_gpu_op = ops::im2col_op<int, device::GPU>;
+    using max_pool_gpu_op = ops::max_pool_forward_op<double, device::GPU>;
+    using max_pool_backward_gpu_op = ops::max_pool_backward_op<double, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_cpu_1) {
@@ -245,11 +249,160 @@ TEST_F(TestOps, TestIm2ColOp_cpu) {
     int data_col[32] = {0};
     int gt_col[32] = {1, 2, 4, 5, 3, 2, 6, 5, 2, 3, 5, 6, 2, 1, 5, 4, 4, 5, 7, 8, 6, 5, 9, 8, 5, 6, 8, 9, 5, 4, 8, 7};
 
-    im2col_cpu_op()(device::cpu_device, data_im, data_col, 2, 3, 3, 2, 2, 0, 0, 1, 1);
+    im2col_cpu_op()(
+        device::cpu_device, 
+        data_im, 
+        data_col, 
+        2, 
+        3, 3, 
+        2, 2, 
+        0, 0, 
+        1, 1
+    );
 
     for (int i = 0; i < 32; ++i) {
-        std::cout << data_col[i] << " ";
         EXPECT_EQ(data_col[i], gt_col[i]);
+    }
+}
+
+TEST_F(TestOps, TestMaxPoolingOp_cpu) {
+    /**
+     * example img is 
+     * [
+     *  [[-0.5752,  1.1023,  0.8327, -0.3337],
+     *   [-0.0532,  0.8745,  1.4135, -0.4422],
+     *   [-0.4538,  0.2952,  0.4086, -0.3135],
+     *   [ 0.6764,  0.3422, -0.1896,  0.3065]],
+     *  [[-0.3942,  1.3151,  0.5020,  0.7686],
+     *   [-1.7310,  0.8545, -1.3705, -0.3178],
+     *   [-2.5553,  1.1632,  0.4868, -0.1809],
+     *   [ 0.0281,  1.2346,  0.3800,  0.2100]]
+     * ]
+     * 
+     * so data_im is
+     * [-0.5752, 1.1023, 0.8327, -0.3337, 
+     *  -0.0532, 0.8745, 1.4135, -0.4422, 
+     *  -0.4538, 0.2952, 0.4086, -0.3135, 
+     *  0.6764, 0.3422, -0.1896, 0.3065, 
+     *  -0.3942, 1.3151, 0.5020, 0.7686, 
+     *  -1.7310, 0.8545, -1.3705, -0.3178, 
+     *  -2.5553, 1.1632, 0.4868, -0.1809,  
+     *  0.0281, 1.2346, 0.3800, 0.2100]
+     * 
+     * max_pool(img)(2X2 kernel, 2X2 stride, 0 padding) is
+     * [
+     * [[1.1023, 1.4135],
+     * [0.6764, 0.4086]],
+     * [[1.3151, 0.7686],
+     * [1.2346, 0.4868]]
+     * ]
+     * 
+     * so data_col is
+     * [1.1023, 1.4135, 0.6764, 0.4086, 1.3151, 0.7686, 1.2346, 0.4868]
+     * 
+     * and mask_out is
+     * [1, 2, 2, 0, 1, 1, 3, 0]
+     */ 
+    double data_im[32] = {
+        // 1 channels
+        -0.5752, 1.1023, 0.8327, -0.3337, 
+        -0.0532, 0.8745, 1.4135, -0.4422, 
+        -0.4538, 0.2952, 0.4086, -0.3135, 
+        0.6764, 0.3422, -0.1896, 0.3065,
+        // 2 channels 
+        -0.3942, 1.3151, 0.5020, 0.7686, 
+        -1.7310, 0.8545, -1.3705, -0.3178, 
+        -2.5553, 1.1632, 0.4868, -0.1809,  
+        0.0281, 1.2346, 0.3800, 0.2100
+    };
+    double data_out[8] = {0.0};
+    int mask_out[8] = {0};
+
+    double gt_out[8] = {
+        1.1023, 1.4135, 
+        0.6764, 0.4086, 
+        1.3151, 0.7686, 
+        1.2346, 0.4868
+    };
+    int gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+
+    max_pool_cpu_op()(
+        device::cpu_device, 
+        data_out, 
+        mask_out, 
+        data_im, 
+        1, 2, 
+        4, 4, 
+        2, 2, 
+        0, 0, 
+        2, 2
+    );
+
+    for (int i = 0; i < 8; ++i) {
+        EXPECT_NEAR(data_out[i], gt_out[i], 1e-4);
+        EXPECT_EQ(mask_out[i], gt_mask[i]);
+    }
+}
+
+TEST_F(TestOps, TestMaxPoolingBackwardOp_cpu) {
+    /**
+     * example img is 
+     * [
+     *  [[-0.5752,  1.1023,  0.8327, -0.3337],
+     *   [-0.0532,  0.8745,  1.4135, -0.4422],
+     *   [-0.4538,  0.2952,  0.4086, -0.3135],
+     *   [ 0.6764,  0.3422, -0.1896,  0.3065]],
+     *  [[-0.3942,  1.3151,  0.5020,  0.7686],
+     *   [-1.7310,  0.8545, -1.3705, -0.3178],
+     *   [-2.5553,  1.1632,  0.4868, -0.1809],
+     *   [ 0.0281,  1.2346,  0.3800,  0.2100]]
+     * ]
+     * 
+     * so mask_out is
+     * [1, 2, 2, 0, 1, 1, 3, 0]
+     *
+     * if grad_out is
+     * [1, 1, 1, 1, 1, 1, 1, 1]
+     * 
+     * then grad_im is
+     * [0, 1, 0, 0, 
+     *  0, 0, 1, 0, 
+     *  0, 0, 1, 0, 
+     *  1, 0, 0, 0, 
+     *  0, 1, 0, 1, 
+     *  0, 0, 0, 0, 
+     *  0, 0, 1, 0, 
+     *  0, 1, 0, 0]
+     */
+    int mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double grad_out[8] = {1, 1, 1, 1, 1, 1, 1, 1};
+    double grad_im[32] = {0};
+
+    double gt_grad_im[32] = {
+        0, 1, 0, 0, 
+        0, 0, 1, 0, 
+        0, 0, 1, 0, 
+        1, 0, 0, 0, 
+        0, 1, 0, 1, 
+        0, 0, 0, 0, 
+        0, 0, 1, 0, 
+        0, 1, 0, 0
+    };
+
+    max_pool_backward_cpu_op()(
+        device::cpu_device, 
+        grad_im, 
+        mask_out, 
+        grad_out, 
+        1, 2, 
+        4, 4, 
+        2, 2, 
+        0, 0, 
+        2, 2
+    );
+
+    for (int i = 0; i < 32; ++i) {
+        EXPECT_NEAR(grad_im[i], gt_grad_im[i], 1e-4);
     }
 }
 

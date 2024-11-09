@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [--cpu | --gpu]"
+    echo "Usage: $0 [--cpu | --gpu | --all]"
     exit 1
 fi
 

@@ -74,6 +74,8 @@ protected:
     using ones_cpu_op = ops::ones_op<double, device::CPU>;
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
     using im2col_cpu_op = ops::im2col_op<int, device::CPU>;
+    using max_pool_cpu_op = ops::max_pool_forward_op<double, device::CPU>;
+    using max_pool_backward_cpu_op = ops::max_pool_backward_op<double, device::CPU>;
 
     using add_gpu_op = ops::add_op<double, device::GPU>;
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
@@ -83,6 +85,8 @@ protected:
     using ones_gpu_op = ops::ones_op<double, device::GPU>;
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
     using im2col_gpu_op = ops::im2col_op<int, device::GPU>;
+    using max_pool_gpu_op = ops::max_pool_forward_op<double, device::GPU>;
+    using max_pool_backward_gpu_op = ops::max_pool_backward_op<double, device::GPU>;
 };
 
 TEST_F(TestOps, TestAddOp_gpu_1) {
@@ -317,6 +321,114 @@ TEST_F(TestOps, TestIm2ColOp_gpu) {
     for (int i = 0; i < 32; ++i) {
         EXPECT_EQ(data_col[i], gt_col[i]);
     }
+}
+
+TEST_F(TestOps, TestMaxPoolOp_gpu) {
+    double data_im[32] = {
+        // 1 channels
+        -0.5752, 1.1023, 0.8327, -0.3337, 
+        -0.0532, 0.8745, 1.4135, -0.4422, 
+        -0.4538, 0.2952, 0.4086, -0.3135, 
+        0.6764, 0.3422, -0.1896, 0.3065,
+        // 2 channels 
+        -0.3942, 1.3151, 0.5020, 0.7686, 
+        -1.7310, 0.8545, -1.3705, -0.3178, 
+        -2.5553, 1.1632, 0.4868, -0.1809,  
+        0.0281, 1.2346, 0.3800, 0.2100
+    };
+    double gt_out[8] = {
+        1.1023, 1.4135, 
+        0.6764, 0.4086, 
+        1.3151, 0.7686, 
+        1.2346, 0.4868
+    };
+    int gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+
+    double* d_data_im;
+    double* d_data_out;
+    int* d_mask_out;
+
+    double data_out[8] = {0.0};
+    int mask_out[8] = {0};
+    
+    cudaMalloc(&d_data_im, 32 * sizeof(double));
+    cudaMalloc(&d_data_out, 8 * sizeof(double));
+    cudaMalloc(&d_mask_out, 8 * sizeof(int));
+
+    cudaMemcpy(d_data_im, data_im, 32 * sizeof(double), cudaMemcpyHostToDevice);
+    max_pool_gpu_op()(
+        device::gpu_device, 
+        d_data_out, 
+        d_mask_out, 
+        d_data_im, 
+        1, 2, 
+        4, 4, 
+        2, 2, 
+        0, 0, 
+        2, 2
+    );
+    cudaMemcpy(data_out, d_data_out, 8 * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(mask_out, d_mask_out, 8 * sizeof(int), cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < 8; ++i) {
+        EXPECT_NEAR(data_out[i], gt_out[i], 1e-4);
+        EXPECT_EQ(mask_out[i], gt_mask[i]);
+    }
+
+    cudaFree(d_data_im);
+    cudaFree(d_data_out);
+    cudaFree(d_mask_out);
+}
+
+TEST_F(TestOps, TestMaxPoolBackwardOp_gpu) {
+    int mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double grad_out[8] = {1, 1, 1, 1, 1, 1, 1, 1};
+    double grad_im[32] = {0};
+    
+    double gt_grad_im[32] = {
+        0, 1, 0, 0, 
+        0, 0, 1, 0, 
+        0, 0, 1, 0, 
+        1, 0, 0, 0, 
+        0, 1, 0, 1, 
+        0, 0, 0, 0, 
+        0, 0, 1, 0, 
+        0, 1, 0, 0
+    };
+
+    int* d_mask_out;
+    double* d_grad_out;
+    double* d_grad_im;
+    
+    cudaMalloc(&d_mask_out, 8 * sizeof(int));
+    cudaMalloc(&d_grad_out, 8 * sizeof(double));
+    cudaMalloc(&d_grad_im, 32 * sizeof(double));
+
+    cudaMemcpy(d_mask_out, mask_out, 8 * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_grad_out, grad_out, 8 * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemset(d_grad_im, 0, 32 * sizeof(double));  // 初始化为0
+
+    max_pool_backward_gpu_op()(
+        device::gpu_device, 
+        d_grad_im,  
+        d_mask_out,   
+        d_grad_out,  
+        1, 2,           
+        4, 4,         
+        2, 2,         
+        0, 0,         
+        2, 2          
+    );
+
+    cudaMemcpy(grad_im, d_grad_im, 32 * sizeof(double), cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < 32; ++i) {
+        EXPECT_NEAR(grad_im[i], gt_grad_im[i], 1e-4);
+    }
+
+    cudaFree(d_mask_out);
+    cudaFree(d_grad_out);
+    cudaFree(d_grad_im);
 }
 
 int main(int argc, char** argv) {

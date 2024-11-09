@@ -162,6 +162,80 @@ struct im2col_op {
     );
 };
 
+template <typename Tp, typename Device>
+struct max_pool_forward_op {
+    /// @brief max pooling forward operator
+    ///
+    /// Inputs:
+    /// @param device    : the type of device
+    /// @param img_out   : the output image array pointer
+    /// @param mask_out  : the output mask array pointer
+    /// @param img_in    : the input image array pointer
+    /// @param batch_size : the batch size of the image
+    /// @param channels  : the number of channels of the image
+    /// @param height    : the height of the image
+    /// @param width     : the width of the image
+    /// @param kernel_h  : the height of the kernel
+    /// @param kernel_w  : the width of the kernel
+    /// @param pad_h     : the height of the padding
+    /// @param pad_w     : the width of the padding
+    /// @param stride_h  : the height of the stride
+    /// @param stride_w  : the width of the stride
+    void operator()(
+        Device* device,
+        Tp* img_out,
+        int* mask_out,
+        const Tp* img_in,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
+};
+
+template <typename Tp, typename Device>
+struct max_pool_backward_op {
+    /// @brief max pooling backward operator
+    ///
+    /// Inputs:
+    /// @param device    : the type of device
+    /// @param grad_im   : the input image array pointer
+    /// @param mask_out  : the mask array pointer
+    /// @param grad_out  : the gradient of the output image array pointer
+    /// @param batch_size : the batch size of the image
+    /// @param channels  : the number of channels of the image
+    /// @param height    : the height of the image
+    /// @param width     : the width of the image
+    /// @param kernel_h  : the height of the kernel
+    /// @param kernel_w  : the width of the kernel
+    /// @param pad_h     : the height of the padding
+    /// @param pad_w     : the width of the padding
+    /// @param stride_h  : the height of the stride
+    /// @param stride_w  : the width of the stride
+    void operator()(
+        Device* device,
+        Tp* grad_im,
+        const int* mask_out,
+        const Tp* grad_out,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
+};
+
 } // namespace ops
 
 #endif

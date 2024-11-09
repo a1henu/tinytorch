@@ -7,6 +7,8 @@
  */
 
 #include <cblas.h>
+#include <limits>
+#include <cstring>
 
 #include "core/device/device.h"
 #include "core/kernels/ops.h"
@@ -214,6 +216,121 @@ struct im2col_op<Tp, device::CPU> {
     }
 };
 
+template <typename Tp>
+struct max_pool_forward_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        Tp* img_out,
+        int* mask_out,
+        const Tp* img_in,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        // calculate the size of the output img
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+
+        // for each batch
+        for (int b = 0; b < batch_size; ++b) {
+            // for each channel
+            for (int c = 0; c < channels; ++c) {
+                const int batch_channel_offset = (b * channels + c);
+                const Tp* img = img_in + batch_channel_offset * height * width;
+                Tp* out = img_out + batch_channel_offset * height_out * width_out;
+                int* mask = mask_out + batch_channel_offset * height_out * width_out;
+
+                // for each point in the output img
+                for (int i = 0; i < height_out; ++i) {
+                    for (int j = 0; j < width_out; ++j) {
+                        Tp max_val = img[(i * stride_h - pad_h) * width + j * stride_w - pad_w];
+                        int max_idx = 0;
+
+                        // for each point in the kernel
+                        for (int ii = 0; ii < kernel_h; ++ii) {
+                            for (int jj = 0; jj < kernel_w; ++jj) {
+                                int h = i * stride_h + ii - pad_h;
+                                int w = j * stride_w + jj - pad_w;
+
+                                if (h >= 0 && h < height && w >= 0 && w < width) {
+                                    Tp val = img[h * width + w];
+                                    if (val > max_val) {
+                                        max_val = val;
+                                        max_idx = ii * kernel_w + jj;
+                                    }
+                                }
+                            }
+                        }
+
+                        out[i * width_out + j] = max_val;
+                        mask[i * width_out + j] = max_idx;
+                    }
+                }
+            }
+        }
+    }
+};
+
+template <typename Tp>
+struct max_pool_backward_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        Tp* grad_im,
+        const int* mask_out,
+        const Tp* grad_out,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        // calculate the size of the output img
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+
+        // set input img to zero
+        memset(grad_im, 0, batch_size * channels * height * width * sizeof(Tp));
+
+        // for each batch
+        for (int b = 0; b < batch_size; ++b) {
+            // for each channel
+            for (int c = 0; c < channels; ++c) {
+                const int batch_channel_offset = (b * channels + c);
+                Tp* img = grad_im + batch_channel_offset * height * width;
+                const Tp* grad = grad_out + batch_channel_offset * height_out * width_out;
+                const int* mask = mask_out + batch_channel_offset * height_out * width_out;
+
+                // for each point in the output img
+                for (int i = 0; i < height_out; ++i) {
+                    for (int j = 0; j < width_out; ++j) {
+                        const int max_idx = mask[i * width_out + j];
+
+                        const int ii = max_idx / kernel_w;
+                        const int jj = max_idx % kernel_w;
+
+                        const int h = i * stride_h + ii - pad_h;
+                        const int w = j * stride_w + jj - pad_w;
+
+                        img[h * width + w] += grad[i * width_out + j];
+                    }
+                }
+            }
+        }
+    }
+};
+
 #ifndef __CUDA
 
 template <typename Tp>
@@ -332,6 +449,50 @@ struct im2col_op<Tp, device::GPU> {
     }
 };
 
+template <typename Tp>
+struct max_pool_forward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* img_out,
+        int* mask_out,
+        const Tp* img_in,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        throw error::DeviceError("max_pool_forward_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct max_pool_backward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* img_in,
+        const int* mask_out,
+        const Tp* grad_out,
+        const int batch_size,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        throw error::DeviceError("max_pool_backward_op<GPU> can not be called without CUDA support.");
+    }
+};
+
 template struct add_op<int, device::GPU>;
 template struct add_op<float, device::GPU>;
 template struct add_op<double, device::GPU>;
@@ -363,6 +524,14 @@ template struct transpose_op<double, device::GPU>;
 template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;
 template struct im2col_op<double, device::GPU>;
+
+template struct max_pool_forward_op<int, device::GPU>;
+template struct max_pool_forward_op<float, device::GPU>;
+template struct max_pool_forward_op<double, device::GPU>;
+
+template struct max_pool_backward_op<int, device::GPU>;
+template struct max_pool_backward_op<float, device::GPU>;
+template struct max_pool_backward_op<double, device::GPU>;
 
 #endif
 
@@ -397,5 +566,13 @@ template struct transpose_op<double, device::CPU>;
 template struct im2col_op<int, device::CPU>;
 template struct im2col_op<float, device::CPU>;
 template struct im2col_op<double, device::CPU>;
+
+template struct max_pool_forward_op<int, device::CPU>;
+template struct max_pool_forward_op<float, device::CPU>;
+template struct max_pool_forward_op<double, device::CPU>;
+
+template struct max_pool_backward_op<int, device::CPU>;
+template struct max_pool_backward_op<float, device::CPU>;
+template struct max_pool_backward_op<double, device::CPU>;
 
 } // namespace ops

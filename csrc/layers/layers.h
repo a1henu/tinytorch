@@ -75,6 +75,37 @@ void cross_entropy_backward(
     tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
 );
 
+/**
+ * @brief forward function for max pooling layer
+ */
+template <typename Tp>
+void max_pool_forward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, channels, height, width)
+    tensor::Tensor<int>& mask,          // mask(batch_size, channels, height_out, width_out)
+    tensor::Tensor<Tp>& output,         // Y(batch_size, channels, height_out, width_out)
+    const int kernel_h,
+    const int kernel_w,
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w
+);
+
+/**
+ * @brief backward function for max pooling layer
+ */
+template <typename Tp>
+void max_pool_backward(
+    tensor::Tensor<Tp>& grad_input,        // dX(batch_size, channels, height, width)
+    const tensor::Tensor<int>& mask,       // mask(batch_size, channels, height_out, width_out)
+    const tensor::Tensor<Tp>& grad_output, // dY(batch_size, channels, height_out, width_out)
+    const int kernel_h,
+    const int kernel_w,
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w
+);
 
 } // namespace layers
 

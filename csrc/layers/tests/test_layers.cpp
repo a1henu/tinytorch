@@ -62,6 +62,66 @@ protected:
     }
 };
 
+class TestPoolingLayer : public ::testing::Test {
+protected:
+    std::vector<double> x, y, dy, dx;
+    tensor::Tensor<double> input, output, output_grad, input_grad;
+    std::vector<int> mask;
+    tensor::Tensor<int> mask_out, mask_in;
+
+    int batch_size = 1, channels = 2, height = 4, width = 4;
+    int kernel_h = 2, kernel_w = 2, pad_h = 0, pad_w = 0, stride_h = 2, stride_w = 2;
+
+    void SetUp() override {
+        x = {
+            // 1 channels
+            -0.5752, 1.1023, 0.8327, -0.3337, 
+            -0.0532, 0.8745, 1.4135, -0.4422, 
+            -0.4538, 0.2952, 0.4086, -0.3135, 
+            0.6764, 0.3422, -0.1896, 0.3065,
+            // 2 channels 
+            -0.3942, 1.3151, 0.5020, 0.7686, 
+            -1.7310, 0.8545, -1.3705, -0.3178, 
+            -2.5553, 1.1632, 0.4868, -0.1809,  
+            0.0281, 1.2346, 0.3800, 0.2100
+        };
+        y = {
+            1.1023, 1.4135, 
+            0.6764, 0.4086, 
+            1.3151, 0.7686, 
+            1.2346, 0.4868
+        };
+        dy = {1, 1, 1, 1, 1, 1, 1, 1};
+        dx = {
+            0, 1, 0, 0, 
+            0, 0, 1, 0, 
+            0, 0, 1, 0, 
+            1, 0, 0, 0, 
+            0, 1, 0, 1, 
+            0, 0, 0, 0, 
+            0, 0, 1, 0, 
+            0, 1, 0, 0
+        };
+        mask = {1, 2, 2, 0, 1, 1, 3, 0};
+
+        input = tensor::Tensor<double>({batch_size, channels, height, width}, tensor::DeviceType::CPU, x.data());
+        output = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU);
+        output_grad = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU, dy.data());
+        input_grad = tensor::Tensor<double>({batch_size, channels, height, width}, tensor::DeviceType::CPU);
+        mask_out = tensor::Tensor<int>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU);
+
+        mask_in = tensor::Tensor<int>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU, mask.data());
+#ifdef __CUDA
+        input.to_gpu();
+        output.to_gpu();
+        output_grad.to_gpu();
+        input_grad.to_gpu();
+        mask_out.to_gpu();
+        mask_in.to_gpu();
+#endif
+    }
+};
+
 class TestSoftmaxLayer : public ::testing::Test {
 protected:
     std::vector<double> x, y;
@@ -220,6 +280,53 @@ TEST_F(TestCrossEntropyLayer, TestCrossEntropyBackward) {
 
     for (int i = 0; i < batch_size * num_classes; ++i) {
         EXPECT_NEAR(grad.get_data()[i], g[i], 1e-4);
+    }
+}
+
+TEST_F(TestPoolingLayer, TestPoolingForward) {
+    layers::max_pool_forward(
+        input,
+        mask_out,
+        output,
+        kernel_h,
+        kernel_w,
+        pad_h,
+        pad_w,
+        stride_h,
+        stride_w
+    );
+
+#ifdef __CUDA
+    output.to_cpu();
+    mask_out.to_cpu();
+#endif
+
+    for (int i = 0; i < batch_size * channels * height/2 * width/2; ++i) {
+        EXPECT_NEAR(output.get_data()[i], y[i], 1e-4);
+        EXPECT_EQ(mask_out.get_data()[i], mask[i]);
+    }
+}
+
+TEST_F(TestPoolingLayer, TestPoolingBackward) {
+    layers::max_pool_backward(
+        input_grad,
+        mask_in,
+        output_grad,
+        kernel_h,
+        kernel_w,
+        pad_h,
+        pad_w,
+        stride_h,
+        stride_w
+    );
+
+#ifdef __CUDA
+    input_grad.to_cpu();
+#endif
+
+    for (int i = 0; i < batch_size * channels * height * width; ++i) {
+        std::cout << input_grad.get_data()[i] << " " << dx[i] << std::endl;
+        EXPECT_NEAR(input_grad.get_data()[i], dx[i], 1e-4);
     }
 }
 
