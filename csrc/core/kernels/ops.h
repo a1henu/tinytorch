@@ -163,6 +163,30 @@ struct im2col_op {
 };
 
 template <typename Tp, typename Device>
+struct conv2d_forward_op {
+    void operator()(
+        Device* device,
+        Tp* output,             // (batch_size, out_channels, height_out, width_out)
+        const Tp* input,        // (batch_size, in_channels, height, width)
+        const Tp* weight,       // (out_channels, in_channels, kernel_h, kernel_w)
+        const Tp* bias,         // (out_channels)
+        const int batch_size,
+        const int in_channels,
+        const int out_channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
+};
+
+
+
+template <typename Tp, typename Device>
 struct max_pool_forward_op {
     /// @brief max pooling forward operator
     ///
