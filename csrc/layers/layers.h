@@ -72,7 +72,11 @@ void conv2d_backward(
     tensor::Tensor<Tp>& grad_input,         // dX(batch_size, in_channels, height, width)
     tensor::Tensor<Tp>& grad_weight,        // dW(out_channels, in_channels, kernel_h, kernel_w)
     tensor::Tensor<Tp>& grad_bias,          // db(1, out_channels)
-    const tensor::Tensor<Tp>& grad_output   // dY(batch_size, out_channels, height_out, width_out)
+    const tensor::Tensor<Tp>& grad_output,  // dY(batch_size, out_channels, height_out, width_out)
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w
 );
 
 /**
