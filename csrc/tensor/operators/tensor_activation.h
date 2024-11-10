@@ -11,16 +11,20 @@
 
 #include "tensor/tensor.h"
 
-template <typename Tp>
-tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input);
+namespace tensor {
 
 template <typename Tp>
-tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
+void relu_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input);
 
 template <typename Tp>
-tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input);
+void relu_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
 
 template <typename Tp>
-tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
+void sigmoid_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input);
+
+template <typename Tp>
+void sigmoid_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
+
+} // namespace tensor
 
 #endif

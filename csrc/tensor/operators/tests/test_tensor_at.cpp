@@ -170,28 +170,32 @@ protected:
 #ifndef __CUDA
 
 TEST_F(TestTensorReLU, tensor_relu_forward_cpu) {
-    tensor::Tensor<double> vt_relu_f = t_relu_f(v);
+    tensor::Tensor<double> vt_relu_f({v_dim}, tensor::DeviceType::CPU);
+    tensor::relu_forward(vt_relu_f, v);
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_f.get_data()[i], v_relu_f.get_data()[i], 1e-6);
     }
 }
 
 TEST_F(TestTensorReLU, tensor_relu_backward_cpu) {
-    tensor::Tensor<double> vt_relu_b = t_relu_b(v, g);
+    tensor::Tensor<double> vt_relu_b({v_dim}, tensor::DeviceType::CPU);
+    tensor::relu_backward(vt_relu_b, v, g);
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_b.get_data()[i], v_relu_b.get_data()[i], 1e-6);
     }
 }
 
 TEST_F(TestTensorSigmoid, tensor_sigmoid_forward_cpu) {
-    tensor::Tensor<double> xt_sigmoid_f = t_sigmoid_f(x);
+    tensor::Tensor<double> xt_sigmoid_f({x_dim}, tensor::DeviceType::CPU);
+    tensor::sigmoid_forward(xt_sigmoid_f, x);
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_f.get_data()[i], x_sigmoid_f.get_data()[i], 1e-6);
     }
 }
 
 TEST_F(TestTensorSigmoid, tensor_sigmoid_backward_cpu) {
-    tensor::Tensor<double> xt_sigmoid_b = t_sigmoid_b(x, g);
+    tensor::Tensor<double> xt_sigmoid_b({x_dim}, tensor::DeviceType::CPU);
+    tensor::sigmoid_backward(xt_sigmoid_b, x, g);
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_b.get_data()[i], x_sigmoid_b.get_data()[i], 1e-6);
     }
@@ -200,7 +204,8 @@ TEST_F(TestTensorSigmoid, tensor_sigmoid_backward_cpu) {
 #else
 
 TEST_F(TestTensorReLU, tensor_relu_forward_gpu) {
-    tensor::Tensor<double> vt_relu_f = t_relu_f(v);
+    tensor::Tensor<double> vt_relu_f({v_dim}, tensor::DeviceType::GPU);
+    tensor::relu_forward(vt_relu_f, v);
     tensor::Tensor<double> vt_relu_f_c = vt_relu_f.cpu();
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_f_c.get_data()[i], v_relu_f.get_data()[i], 1e-6);
@@ -208,7 +213,8 @@ TEST_F(TestTensorReLU, tensor_relu_forward_gpu) {
 }
 
 TEST_F(TestTensorReLU, tensor_relu_backward_gpu) {
-    tensor::Tensor<double> vt_relu_b = t_relu_b(v, g);
+    tensor::Tensor<double> vt_relu_b({v_dim}, tensor::DeviceType::GPU);
+    tensor::relu_backward(vt_relu_b, v, g);
     tensor::Tensor<double> vt_relu_b_c = vt_relu_b.cpu();
     for (int i = 0; i < v_dim; i++) {
         EXPECT_NEAR(vt_relu_b_c.get_data()[i], v_relu_b.get_data()[i], 1e-6);
@@ -216,7 +222,8 @@ TEST_F(TestTensorReLU, tensor_relu_backward_gpu) {
 }
 
 TEST_F(TestTensorSigmoid, tensor_sigmoid_forward_gpu) {
-    tensor::Tensor<double> xt_sigmoid_f = t_sigmoid_f(x);
+    tensor::Tensor<double> xt_sigmoid_f({x_dim}, tensor::DeviceType::GPU);
+    tensor::sigmoid_forward(xt_sigmoid_f, x);
     tensor::Tensor<double> xt_sigmoid_f_c = xt_sigmoid_f.cpu();
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_f_c.get_data()[i], x_sigmoid_f.get_data()[i], 1e-6);
@@ -224,7 +231,8 @@ TEST_F(TestTensorSigmoid, tensor_sigmoid_forward_gpu) {
 }
 
 TEST_F(TestTensorSigmoid, tensor_sigmoid_backward_gpu) {
-    tensor::Tensor<double> xt_sigmoid_b = t_sigmoid_b(x, g);
+    tensor::Tensor<double> xt_sigmoid_b({x_dim}, tensor::DeviceType::GPU);
+    tensor::sigmoid_backward(xt_sigmoid_b, x, g);
     tensor::Tensor<double> xt_sigmoid_b_c = xt_sigmoid_b.cpu();
     for (int i = 0; i < x_dim; i++) {
         EXPECT_NEAR(xt_sigmoid_b_c.get_data()[i], x_sigmoid_b.get_data()[i], 1e-6);

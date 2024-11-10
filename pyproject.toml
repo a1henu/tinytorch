@@ -34,6 +34,9 @@ test = ["pytest", "numpy"]
 wheel.expand-macos-universal-tags = true
 cmake.verbose = true
 
+[tool.scikit-build.cmake.define]
+CUDA = { env = "CUDA_BUILD", default = "ON" }
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]

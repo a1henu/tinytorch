@@ -20,7 +20,7 @@ jobs:
 
     - name: Build
       run: |
-        pip install -v .[test]
+        CUDA_BUILD=OFF pip install -v .[test]
 
 
     - name: Run tests

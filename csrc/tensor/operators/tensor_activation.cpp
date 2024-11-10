@@ -16,193 +16,134 @@
 
 #include "tensor/operators/tensor_activation.h"
 
+namespace tensor {
+
 template <typename Tp>
-tensor::Tensor<Tp> t_relu_f(const tensor::Tensor<Tp>& input) {
-    size_t size = input.get_tol_size();
-    if (input.in_cpu()) {
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::CPU>()(
-            device::cpu_device, output, size
-        );
-        ops::relu_forward<Tp, device::CPU>()(
-            device::cpu_device, output, input.get_data(), size
-        );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::CPU, 
-            output
-        );
-
-        return output_t;
-    } else if (input.in_gpu()) {
-#ifdef __CUDA
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::GPU>()(
-            device::gpu_device, output, size
-        );
-        ops::relu_forward<Tp, device::GPU>()(
-            device::gpu_device, output, input.get_data(), size
-        );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::GPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
-
-        return output_t;
-#else
-        throw error::DeviceError("GPU is not supported");
-#endif
-    } else {
-        throw error::DeviceError("Unknown device type");
+void relu_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input) {
+    if (output.get_shape() != input.get_shape()) {
+        throw error::InvalidArgumentError("Output shape must be the same as input shape");
     }
-}
-
-template <typename Tp>
-tensor::Tensor<Tp> t_relu_b(const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad) {
-    size_t size = input.get_tol_size();
-    if (input.in_cpu()) {
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::CPU>()(
-            device::cpu_device, output, size
-        );
-        ops::relu_backward<Tp, device::CPU>()(
-            device::cpu_device, output, input.get_data(), grad.get_data(), size
-        );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::CPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
-
-        return output_t;
-    } else if (input.in_gpu()) {
-#ifdef __CUDA
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::GPU>()(
-            device::gpu_device, output, size
-        );
-        ops::relu_backward<Tp, device::GPU>()(
-            device::gpu_device, output, input.get_data(), grad.get_data(), size
-        );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::GPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
     
-        return output_t;
-#else
-        throw error::DeviceError("GPU is not supported");
-#endif
+    const size_t size = input.get_tol_size();
+
+    if (input.in_cpu()) {
+        ops::relu_forward<Tp, device::CPU>()(
+            device::cpu_device, 
+            output.get_data(), 
+            input.get_data(), 
+            size
+        );
+    } else if (input.in_gpu()) {
+        ops::relu_forward<Tp, device::GPU>()(
+            device::gpu_device,
+            output.get_data(),
+            input.get_data(),
+            size
+        );
     } else {
         throw error::DeviceError("Unknown device type");
     }
 }
 
 template <typename Tp>
-tensor::Tensor<Tp> t_sigmoid_f(const tensor::Tensor<Tp>& input) {
-    size_t size = input.get_tol_size();
+void relu_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad) {
+    if (output.get_shape() != input.get_shape()) {
+        throw error::InvalidArgumentError("Output shape must be the same as input shape");
+    }
+
+    const size_t size = input.get_tol_size();
+    
     if (input.in_cpu()) {
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::CPU>()(
-            device::cpu_device, output, size
+        ops::relu_backward<Tp, device::CPU>()(
+            device::cpu_device,
+            output.get_data(),
+            input.get_data(),
+            grad.get_data(),
+            size
         );
+    } else if (input.in_gpu()) {
+        ops::relu_backward<Tp, device::GPU>()(
+            device::gpu_device,
+            output.get_data(),
+            input.get_data(),
+            grad.get_data(),
+            size
+        );
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
+}
+
+template <typename Tp>
+void sigmoid_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input) {
+    if (output.get_shape() != input.get_shape()) {
+        throw error::InvalidArgumentError("Output shape must be the same as input shape");
+    }
+
+    const size_t size = input.get_tol_size();
+    
+    if (input.in_cpu()) {
         ops::sigmoid_forward<Tp, device::CPU>()(
-            device::cpu_device, output, input.get_data(), size
+            device::cpu_device,
+            output.get_data(),
+            input.get_data(),
+            size
         );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::CPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
-
-        return output_t;
     } else if (input.in_gpu()) {
-#ifdef __CUDA
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::GPU>()(
-            device::gpu_device, output, size
-        );
         ops::sigmoid_forward<Tp, device::GPU>()(
-            device::gpu_device, output, input.get_data(), size
+            device::gpu_device,
+            output.get_data(),
+            input.get_data(),
+            size
         );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::GPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
-
-        return output_t;
-#else
-        throw error::DeviceError("GPU is not supported");
-#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }
 }
 
 template <typename Tp>
-tensor::Tensor<Tp> t_sigmoid_b(const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad) {
-    size_t size = input.get_tol_size();
+void sigmoid_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad) {
+    if (output.get_shape() != input.get_shape()) {
+        throw error::InvalidArgumentError("Output shape must be the same as input shape");
+    }
+
+    const size_t size = input.get_tol_size();
+    
     if (input.in_cpu()) {
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::CPU>()(
-            device::cpu_device, output, size
-        );
         ops::sigmoid_backward<Tp, device::CPU>()(
-            device::cpu_device, output, input.get_data(), grad.get_data(), size
+            device::cpu_device,
+            output.get_data(),
+            input.get_data(),
+            grad.get_data(),
+            size
         );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::CPU, 
-            output
-        );
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, output);
-
-        return output_t;
     } else if (input.in_gpu()) {
-#ifdef __CUDA
-        Tp* output;
-        memory::malloc_mem_op<Tp, device::GPU>()(
-            device::gpu_device, output, size
-        );
         ops::sigmoid_backward<Tp, device::GPU>()(
-            device::gpu_device, output, input.get_data(), grad.get_data(), size
+            device::gpu_device,
+            output.get_data(),
+            input.get_data(),
+            grad.get_data(),
+            size
         );
-        tensor::Tensor<Tp> output_t(
-            input.get_shape(), 
-            tensor::DeviceType::GPU,
-            output
-        );
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, output);
-
-        return output_t;
-#else
-        throw error::DeviceError("GPU is not supported");
-#endif
     } else {
         throw error::DeviceError("Unknown device type");
     }
 }
 
-template tensor::Tensor<int> t_relu_f(const tensor::Tensor<int>& input);
-template tensor::Tensor<float> t_relu_f(const tensor::Tensor<float>& input);
-template tensor::Tensor<double> t_relu_f(const tensor::Tensor<double>& input);
+template void relu_forward(tensor::Tensor<int>&, const tensor::Tensor<int>&);
+template void relu_forward(tensor::Tensor<float>&, const tensor::Tensor<float>&);
+template void relu_forward(tensor::Tensor<double>&, const tensor::Tensor<double>&);
 
-template tensor::Tensor<int> t_relu_b(const tensor::Tensor<int>& input, const tensor::Tensor<int>& grad);
-template tensor::Tensor<float> t_relu_b(const tensor::Tensor<float>& input, const tensor::Tensor<float>& grad);
-template tensor::Tensor<double> t_relu_b(const tensor::Tensor<double>& input, const tensor::Tensor<double>& grad);
+template void relu_backward(tensor::Tensor<int>&, const tensor::Tensor<int>&, const tensor::Tensor<int>&);
+template void relu_backward(tensor::Tensor<float>&, const tensor::Tensor<float>&, const tensor::Tensor<float>&);
+template void relu_backward(tensor::Tensor<double>&, const tensor::Tensor<double>&, const tensor::Tensor<double>&);
 
-template tensor::Tensor<int> t_sigmoid_f(const tensor::Tensor<int>& input);
-template tensor::Tensor<float> t_sigmoid_f(const tensor::Tensor<float>& input);
-template tensor::Tensor<double> t_sigmoid_f(const tensor::Tensor<double>& input);
+template void sigmoid_forward(tensor::Tensor<int>&, const tensor::Tensor<int>&);
+template void sigmoid_forward(tensor::Tensor<float>&, const tensor::Tensor<float>&);
+template void sigmoid_forward(tensor::Tensor<double>&, const tensor::Tensor<double>&);
 
-template tensor::Tensor<int> t_sigmoid_b(const tensor::Tensor<int>& input, const tensor::Tensor<int>& grad);
-template tensor::Tensor<float> t_sigmoid_b(const tensor::Tensor<float>& input, const tensor::Tensor<float>& grad);
-template tensor::Tensor<double> t_sigmoid_b(const tensor::Tensor<double>& input, const tensor::Tensor<double>& grad);
+template void sigmoid_backward(tensor::Tensor<int>&, const tensor::Tensor<int>&, const tensor::Tensor<int>&);
+template void sigmoid_backward(tensor::Tensor<float>&, const tensor::Tensor<float>&, const tensor::Tensor<float>&);
+template void sigmoid_backward(tensor::Tensor<double>&, const tensor::Tensor<double>&, const tensor::Tensor<double>&);
+
+} // namespace tensor
