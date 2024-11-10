@@ -86,30 +86,95 @@ kernel_im2col(
     const int stride_h,
     const int stride_w,
     const int height_out,
-    const int width_out,
-    const int height_col,
-    const int width_col
+    const int width_out
 ) {
-    // for each point in the output col matrix
-    CUDA_KERNEL_LOOP(k, channels * height_col) {
-        int c = k / height_col;
-        int i = k % height_col;
-        const Tp* img = data_im + c * height * width;
-        Tp* col = data_col + c * width_col;
+    const int channels_col = channels * kernel_h * kernel_w;
+    CUDA_KERNEL_LOOP(index, channels_col * height_out * width_out) {
+        int w = index % width_out;
+        int h = (index / width_out) % height_out;
+        int c = index / (height_out * width_out);
+        
+        int w_offset = c % kernel_w;
+        int h_offset = (c / kernel_w) % kernel_h;
+        int c_im = c / (kernel_h * kernel_w);
+        
+        int h_pad = h * stride_h - pad_h + h_offset;
+        int w_pad = w * stride_w - pad_w + w_offset;
+        
+        data_col[index] = 
+            (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width) ?
+            data_im[(c_im * height + h_pad) * width + w_pad] : 0;
+    }
+}
 
-        for (int j = 0; j < width_col; ++j) {
-            int h_offset = i / width_out * stride_h - pad_h;
-            int w_offset = i % width_out * stride_w - pad_w;
-            
-            int h = h_offset + j / kernel_w;
-            int w = w_offset + j % kernel_w;
+template <typename Tp>
+__global__ void
+kernel_add_bias(
+    Tp* output,
+    const Tp* bias,
+    const int batch_size,
+    const int channels,
+    const int height,
+    const int width
+) {
+    const int size = batch_size * channels * height * width;
+    CUDA_KERNEL_LOOP(index, size) {
+        const int c = (index / (height * width)) % channels;
+        output[index] += bias[c];
+    }
+}
 
-            col[i * width_col * channels + j] = 
-                (h_offset >= 0 && h_offset < height && w_offset >= 0 && w_offset < width) ?
-                img[h * width + w] : 0;
+template <typename Tp>
+__global__ void
+kernel_conv2d_forward(
+    Tp* output,
+    const Tp* input,
+    const Tp* weight,
+    const Tp* bias,
+    const int batch_size,
+    const int in_channels,
+    const int out_channels,
+    const int height,
+    const int width,
+    const int kernel_h,
+    const int kernel_w,
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w,
+    const int height_out,
+    const int width_out
+) {
+    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= batch_size * out_channels * height_out * width_out) return;
+    
+    const int w_out = idx % width_out;
+    const int h_out = (idx / width_out) % height_out;
+    const int c_out = (idx / (width_out * height_out)) % out_channels;
+    const int b = idx / (width_out * height_out * out_channels);
+    
+    Tp sum = 0;
+    
+    for (int c_in = 0; c_in < in_channels; ++c_in) {
+        for (int kh = 0; kh < kernel_h; ++kh) {
+            for (int kw = 0; kw < kernel_w; ++kw) {
+                const int h_in = h_out * stride_h - pad_h + kh;
+                const int w_in = w_out * stride_w - pad_w + kw;
+                
+                if (h_in >= 0 && h_in < height && w_in >= 0 && w_in < width) {
+                    const int input_idx = ((b * in_channels + c_in) * height + h_in) * width + w_in;
+                    const int weight_idx = ((c_out * in_channels + c_in) * kernel_h + kh) * kernel_w + kw;
+                    sum += input[input_idx] * weight[weight_idx];
+                }
+            }
         }
     }
     
+    if (bias != nullptr) {
+        sum += bias[c_out];
+    }
+    
+    output[idx] = sum;
 }
 
 template <typename Tp>
@@ -388,15 +453,11 @@ struct im2col_op<Tp, device::GPU> {
         const int stride_h,
         const int stride_w
     ) {
-        // calculate the size of the output img
         const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
         const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
-
-        // calculate the size of the col matrix(row-major) for each channel
-        const int height_col = height_out * width_out;
-        const int width_col = kernel_h * kernel_w;
+        const int channels_col = channels * kernel_h * kernel_w;
         
-        kernel_im2col<Tp><<<CUDA_GET_BLOCKS(channels * height_out), CUDA_K_THREADS>>>(
+        kernel_im2col<Tp><<<CUDA_GET_BLOCKS(channels_col * height_out * width_out), CUDA_K_THREADS>>>(
             data_im,
             data_col,
             channels,
@@ -409,9 +470,53 @@ struct im2col_op<Tp, device::GPU> {
             stride_h,
             stride_w,
             height_out,
-            width_out,
-            height_col,
-            width_col
+            width_out
+        );
+    }
+};
+
+template <typename Tp>
+struct conv2d_forward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_channels,
+        const int out_channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+        
+        const int total_threads = batch_size * out_channels * height_out * width_out;
+        kernel_conv2d_forward<Tp><<<CUDA_GET_BLOCKS(total_threads), CUDA_K_THREADS>>>(
+            output,
+            input,
+            weight,
+            bias,
+            batch_size,
+            in_channels,
+            out_channels,
+            height,
+            width,
+            kernel_h,
+            kernel_w,
+            pad_h,
+            pad_w,
+            stride_h,
+            stride_w,
+            height_out,
+            width_out
         );
     }
 };
@@ -536,6 +641,10 @@ template struct transpose_op<double, device::GPU>;
 template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;
 template struct im2col_op<double, device::GPU>;
+
+template struct conv2d_forward_op<int, device::GPU>;
+template struct conv2d_forward_op<float, device::GPU>;
+template struct conv2d_forward_op<double, device::GPU>;
 
 template struct max_pool_forward_op<int, device::GPU>;
 template struct max_pool_forward_op<float, device::GPU>;

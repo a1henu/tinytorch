@@ -44,6 +44,22 @@ void fc_backward(
 );
 
 /**
+ * @brief forward function for conv2d layer
+ *        - Y = W conv X + b
+ */
+template <typename Tp>
+void conv2d_forward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, in_channels, height, width)
+    const tensor::Tensor<Tp>& weight,   // W(out_channels, in_channels, kernel_h, kernel_w)
+    const tensor::Tensor<Tp>& bias,     // b(out_channels)
+    tensor::Tensor<Tp>& output,         // Y(batch_size, out_channels, height_out, width_out)
+    const int pad_h,
+    const int pad_w,
+    const int stride_h,
+    const int stride_w
+);
+
+/**
  * @brief forward function for softmax layer
  *        - Y = softmax(X)
  */

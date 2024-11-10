@@ -184,8 +184,6 @@ struct conv2d_forward_op {
     );
 };
 
-
-
 template <typename Tp, typename Device>
 struct max_pool_forward_op {
     /// @brief max pooling forward operator
