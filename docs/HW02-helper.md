@@ -214,6 +214,10 @@ void cross_entropy_backward(
 ## 测试方法
 本项目使用`CMake`构建，使用`Google Test`进行单元测试，我已经为项目内**所有**模块编写了单元测试，`CPU`代码实现可以通过`GitHub Action`自动测试，也可以手动编译进行测试。
 
+测试点共计126个，其中：
+- CPU测试点61个
+- GPU测试点65个
+
 可进入根目录下的`scripts`文件夹，运行：
 
 ```bash

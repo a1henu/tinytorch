@@ -42,3 +42,6 @@ Testing/
 
 # pytest cache
 .pytest_cache/
+
+# lab report
+docs/*.pdf
