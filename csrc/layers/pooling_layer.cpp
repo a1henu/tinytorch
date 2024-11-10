@@ -14,7 +14,7 @@ namespace layers {
 template <typename Tp>
 void max_pool_forward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, channels, height, width)
-    tensor::Tensor<int>& mask,          // mask(batch_size, channels, height_out, width_out)
+    tensor::Tensor<Tp>& mask,          // mask(batch_size, channels, height_out, width_out)
     tensor::Tensor<Tp>& output,         // Y(batch_size, channels, height_out, width_out)
     const int kernel_h,
     const int kernel_w,
@@ -94,7 +94,7 @@ void max_pool_forward(
 template <typename Tp>
 void max_pool_backward(
     tensor::Tensor<Tp>& grad_input,         // dX(batch_size, channels, height, width)
-    const tensor::Tensor<int>& mask,        // mask(batch_size, channels, height_out, width_out)
+    const tensor::Tensor<Tp>& mask,        // mask(batch_size, channels, height_out, width_out)
     const tensor::Tensor<Tp>& grad_output,  // dY(batch_size, channels, height_out, width_out)
     const int kernel_h,
     const int kernel_w,
@@ -170,7 +170,7 @@ void max_pool_backward(
 
 template void max_pool_forward<float>(
     const tensor::Tensor<float>& input,
-    tensor::Tensor<int>& mask,
+    tensor::Tensor<float>& mask,
     tensor::Tensor<float>& output,
     const int kernel_h,
     const int kernel_w,
@@ -181,7 +181,7 @@ template void max_pool_forward<float>(
 );
 template void max_pool_forward<double>(
     const tensor::Tensor<double>& input,
-    tensor::Tensor<int>& mask,
+    tensor::Tensor<double>& mask,
     tensor::Tensor<double>& output,
     const int kernel_h,
     const int kernel_w,
@@ -193,7 +193,7 @@ template void max_pool_forward<double>(
 
 template void max_pool_backward<float>(
     tensor::Tensor<float>& grad_input,
-    const tensor::Tensor<int>& mask,
+    const tensor::Tensor<float>& mask,
     const tensor::Tensor<float>& grad_output,
     const int kernel_h,
     const int kernel_w,
@@ -204,7 +204,7 @@ template void max_pool_backward<float>(
 );
 template void max_pool_backward<double>(
     tensor::Tensor<double>& grad_input,
-    const tensor::Tensor<int>& mask,
+    const tensor::Tensor<double>& mask,
     const tensor::Tensor<double>& grad_output,
     const int kernel_h,
     const int kernel_w,

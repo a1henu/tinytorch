@@ -303,7 +303,7 @@ struct max_pool_forward_op {
     void operator()(
         Device* device,
         Tp* img_out,
-        int* mask_out,
+        Tp* mask_out,
         const Tp* img_in,
         const int batch_size,
         const int channels,
@@ -340,7 +340,7 @@ struct max_pool_backward_op {
     void operator()(
         Device* device,
         Tp* grad_im,
-        const int* mask_out,
+        const Tp* mask_out,
         const Tp* grad_out,
         const int batch_size,
         const int channels,

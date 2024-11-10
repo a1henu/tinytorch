@@ -218,7 +218,7 @@ template <typename Tp>
 __global__ void
 kernel_max_pool(
     Tp* output,
-    int* mask,
+    Tp* mask,
     const Tp* data_im,
     const int batch_size,
     const int channels,
@@ -244,11 +244,11 @@ kernel_max_pool(
         // get the pointer of the current channel
         const Tp* img = data_im + c * height * width;
         Tp* out = output + b * channels * height_out * width_out + c * height_out * width_out;
-        int* mask_out = mask + b * channels * height_out * width_out + c * height_out * width_out;
+        Tp* mask_out = mask + b * channels * height_out * width_out + c * height_out * width_out;
         
         // find the max value in the kernel window
         Tp max_val = img[(i * stride_h - pad_h) * width + j * stride_w - pad_w];
-        int max_idx = 0;
+        Tp max_idx = 0;
         
         // iterate over the kernel window
         for (int ii = 0; ii < kernel_h; ++ii) {
@@ -275,7 +275,7 @@ template <typename Tp>
 __global__ void
 kernel_max_pool_backward(
     Tp* grad_im,
-    const int* mask_out,
+    const Tp* mask_out,
     const Tp* grad_out,
     const int batch_size,
     const int channels,
@@ -731,7 +731,7 @@ struct max_pool_forward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
         Tp* output,
-        int* mask,
+        Tp* mask,
         const Tp* data_im,
         const int batch_size,
         const int channels,
@@ -773,7 +773,7 @@ struct max_pool_backward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
         Tp* grad_im,
-        const int* mask_out,
+        const Tp* mask_out,
         const Tp* grad_out,
         const int batch_size,
         const int channels,

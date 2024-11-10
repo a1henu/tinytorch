@@ -149,7 +149,7 @@ protected:
     std::vector<double> z_o;
     std::vector<double> z;
     std::vector<double> grad; 
-    std::vector<int> t;
+    std::vector<double> t;
 
     double expected_loss = 2.6912;
 

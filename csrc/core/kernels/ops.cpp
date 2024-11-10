@@ -446,7 +446,7 @@ struct max_pool_forward_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device,
         Tp* img_out,
-        int* mask_out,
+        Tp* mask_out,
         const Tp* img_in,
         const int batch_size,
         const int channels,
@@ -470,7 +470,7 @@ struct max_pool_forward_op<Tp, device::CPU> {
                 const int batch_channel_offset = (b * channels + c);
                 const Tp* img = img_in + batch_channel_offset * height * width;
                 Tp* out = img_out + batch_channel_offset * height_out * width_out;
-                int* mask = mask_out + batch_channel_offset * height_out * width_out;
+                Tp* mask = mask_out + batch_channel_offset * height_out * width_out;
 
                 // for each point in the output img
                 for (int i = 0; i < height_out; ++i) {
@@ -508,7 +508,7 @@ struct max_pool_backward_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device,
         Tp* grad_im,
-        const int* mask_out,
+        const Tp* mask_out,
         const Tp* grad_out,
         const int batch_size,
         const int channels,
@@ -535,7 +535,7 @@ struct max_pool_backward_op<Tp, device::CPU> {
                 const int batch_channel_offset = (b * channels + c);
                 Tp* img = grad_im + batch_channel_offset * height * width;
                 const Tp* grad = grad_out + batch_channel_offset * height_out * width_out;
-                const int* mask = mask_out + batch_channel_offset * height_out * width_out;
+                const Tp* mask = mask_out + batch_channel_offset * height_out * width_out;
 
                 // for each point in the output img
                 for (int i = 0; i < height_out; ++i) {
@@ -749,7 +749,7 @@ struct max_pool_forward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
         Tp* img_out,
-        int* mask_out,
+        Tp* mask_out,
         const Tp* img_in,
         const int batch_size,
         const int channels,
@@ -771,7 +771,7 @@ struct max_pool_backward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
         Tp* img_in,
-        const int* mask_out,
+        const Tp* mask_out,
         const Tp* grad_out,
         const int batch_size,
         const int channels,

@@ -625,7 +625,7 @@ TEST_F(TestOps, TestMaxPoolingOp_cpu) {
         0.0281, 1.2346, 0.3800, 0.2100
     };
     double data_out[8] = {0.0};
-    int mask_out[8] = {0};
+    double mask_out[8] = {0};
 
     double gt_out[8] = {
         1.1023, 1.4135, 
@@ -633,7 +633,7 @@ TEST_F(TestOps, TestMaxPoolingOp_cpu) {
         1.3151, 0.7686, 
         1.2346, 0.4868
     };
-    int gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
 
     max_pool_cpu_op()(
         device::cpu_device, 
@@ -683,7 +683,7 @@ TEST_F(TestOps, TestMaxPoolingBackwardOp_cpu) {
      *  0, 0, 1, 0, 
      *  0, 1, 0, 0]
      */
-    int mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
     double grad_out[8] = {1, 1, 1, 1, 1, 1, 1, 1};
     double grad_im[32] = {0};
 

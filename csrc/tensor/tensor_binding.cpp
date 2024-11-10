@@ -40,6 +40,7 @@ PYBIND11_MODULE(_libtensor, m) {
         .def("to_gpu", &tensor::Tensor<double>::to_gpu)
         .def("in_cpu", &tensor::Tensor<double>::in_cpu)
         .def("in_gpu", &tensor::Tensor<double>::in_gpu)
+        .def("device", &tensor::Tensor<double>::device)
         // shape and dimension
         .def("dim", &tensor::Tensor<double>::dim)
         .def("shape", &tensor::Tensor<double>::get_shape)
@@ -50,7 +51,18 @@ PYBIND11_MODULE(_libtensor, m) {
         .def("__add__", &tensor::Tensor<double>::operator+)
         .def("__sub__", &tensor::Tensor<double>::operator-)
         .def("__matmul__", &tensor::Tensor<double>::operator*)
-        .def("__eq__", &tensor::Tensor<double>::operator==)
+        .def("__eq__", [](const tensor::Tensor<double>& self, py::object other) {
+            if (!py::isinstance<tensor::Tensor<double>>(other)) {
+                return false;
+            }
+            return self == other.cast<tensor::Tensor<double>>();
+        })
+        .def("__ne__", [](const tensor::Tensor<double>& self, py::object other) {
+            if (!py::isinstance<tensor::Tensor<double>>(other)) {
+                return true;
+            }
+            return self != other.cast<tensor::Tensor<double>>();
+        })
         .def("__assign__", [](tensor::Tensor<double> &self, const tensor::Tensor<double> &other) -> tensor::Tensor<double>& {
             self = other;
             return self;

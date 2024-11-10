@@ -21,13 +21,13 @@ struct cross_entropy_forward<Tp, device::CPU> {
         device::CPU* device,
         Tp* output,         // (scalar)
         const Tp* input,    // (batch_size, num_classes)
-        const int* target,   // (batch_size)
+        const Tp* target,   // (batch_size)
         size_t batch_size,
         size_t num_classes
     ) {
         *output = static_cast<Tp>(0);
         for (int i = 0; i < batch_size; ++i) {
-            *output -= log(input[i * num_classes + target[i]]);
+            *output -= log(input[i * num_classes + static_cast<int>(target[i])]);
         }
         *output /= batch_size;
     }
@@ -39,13 +39,13 @@ struct cross_entropy_backward<Tp, device::CPU> {
         device::CPU* device,
         Tp* output,         // (batch_size, num_classes)
         const Tp* input,    // (batch_size, num_classes)
-        const int* target,  // (batch_size)
+        const Tp* target,  // (batch_size)
         size_t batch_size,
         size_t num_classes
     ) {
         softmax_forward<Tp, device::CPU>()(device, output, input, batch_size, num_classes);
         for (int i = 0; i < batch_size; ++i) {
-            output[i * num_classes + target[i]] -= static_cast<Tp>(1);
+            output[i * num_classes + static_cast<int>(target[i])] -= static_cast<Tp>(1);
             for (int j = 0; j < num_classes; ++j) {
                 output[i * num_classes + j] /= batch_size;
             }
@@ -61,7 +61,7 @@ struct cross_entropy_forward<Tp, device::GPU> {
         device::GPU* device,
         Tp* output,
         const Tp* input,
-        const int* target,
+        const Tp* target,
         size_t batch_size,
         size_t num_classes
     ) {
@@ -75,7 +75,7 @@ struct cross_entropy_backward<Tp, device::GPU> {
         device::GPU* device, 
         Tp* output, 
         const Tp* input, 
-        const int* target, 
+        const Tp* target, 
         size_t batch_size,
         size_t num_classes
     ) {

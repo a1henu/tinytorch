@@ -131,6 +131,15 @@ class Tensor(_Tensor):
         """
         return super().in_gpu()
     
+    def device(self) -> DeviceType:
+        """
+        Get the device of the tensor.
+        
+        Returns:
+            DeviceType: The device of the tensor.
+        """
+        return super().device()
+    
     def dim(self) -> int:
         """
         Get the dimension of the tensor.
@@ -179,41 +188,55 @@ class Tensor(_Tensor):
         """
         return super().size()
     
-    def __add__(self, other: Tensor) -> Tensor:
+    def __add__(self, other) -> Tensor:
         """
         Add another tensor to the current tensor.
         
         Returns:
             Tensor: The result of addition.
         """
+        if isinstance(other, NDArray):
+            other = Tensor.from_numpy(other, self.device())
+        elif not isinstance(other, Tensor):
+            raise TypeError(f"Unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'")
         return super().__add__(other)
     
-    def __sub__(self, other: Tensor) -> Tensor:
+    def __sub__(self, other) -> Tensor:
         """
         Subtract another tensor from the current tensor.
         
         Returns:
             Tensor: The result of subtraction.
         """
+        if isinstance(other, NDArray):
+            other = Tensor.from_numpy(other, self.device())
+        elif not isinstance(other, Tensor):
+            raise TypeError(f"Unsupported operand type(s) for -: '{type(self).__name__}' and '{type(other).__name__}'")
         return super().__sub__(other)
     
-    def __matmul__(self, other: Tensor) -> Tensor:
+    def __matmul__(self, other) -> Tensor:
         """
         Matrix multiplication of two tensors.
         
         Returns:
             Tensor: The result of matrix multiplication.
         """
+        if isinstance(other, NDArray):
+            other = Tensor.from_numpy(other, self.device())
+        elif not isinstance(other, Tensor):
+            raise TypeError(f"Unsupported operand type(s) for @: '{type(self).__name__}' and '{type(other).__name__}'")
         return super().__matmul__(other)
     
-    def __eq__(self, other: Tensor) -> bool:
+    def __eq__(self, other) -> bool:
         """
         Check if the current tensor is equal to another tensor.
         
         Returns:
             bool: True if the tensors are equal, False otherwise.
         """
-        if not isinstance(other, Tensor):
+        if isinstance(other, NDArray):
+            other = Tensor.from_numpy(other, self.device())
+        elif not isinstance(other, Tensor):
             return False
         return super().__eq__(other)
     
@@ -248,15 +271,22 @@ class Tensor(_Tensor):
         return super().__str__()
     
     @staticmethod
-    def from_numpy(array: NDArray) -> Tensor:
+    def from_numpy(array: NDArray, device: DeviceType = DeviceType.CPU) -> Tensor:
         """
         Create a tensor from a numpy array.
         
+        Parameters:
+            array (NDArray): Input numpy array
+            device (DeviceType): Target device (default: CPU)
+            
         Returns:
-            Tensor: The tensor.
+            Tensor: New tensor on specified device
         """
         array = array.astype(np.float64, order="C")
-        return _Tensor.from_numpy(array)
+        t = _Tensor.from_numpy(array)
+        if device == DeviceType.GPU:
+            t.to_gpu()
+        return t
     
     def to_numpy(self) -> NDArray:
         """
@@ -293,4 +323,4 @@ class Tensor(_Tensor):
         Returns:
             Tensor: The tensor with elements drawn from a normal distribution.
         """
-        return _Tensor.from_numpy(np.random.randn(*shape), device)
+        return Tensor.from_numpy(np.random.randn(*shape), device)

@@ -15,7 +15,7 @@ namespace layers {
 template <typename Tp>
 void cross_entropy_forward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
+    const tensor::Tensor<Tp>& target,  // t(batch_size)
     tensor::Tensor<Tp>& output          // z(1)
 ) {
     if (!(input.in_cpu() && target.in_cpu() && output.in_cpu()) &&
@@ -38,7 +38,7 @@ void cross_entropy_forward(
             device::cpu_device, 
             output.get_data(), 
             input.get_data(), 
-            target.get_data(), 
+            reinterpret_cast<const Tp*>(target.get_data()), 
             input.get_shape()[0], 
             input.get_shape()[1]
         );
@@ -47,7 +47,7 @@ void cross_entropy_forward(
             device::gpu_device, 
             output.get_data(), 
             input.get_data(), 
-            target.get_data(), 
+            reinterpret_cast<const Tp*>(target.get_data()), 
             input.get_shape()[0], 
             input.get_shape()[1]
         );
@@ -57,7 +57,7 @@ void cross_entropy_forward(
 template <typename Tp>
 void cross_entropy_backward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
+    const tensor::Tensor<Tp>& target,  // t(batch_size)
     tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
 ) {
     if (!(input.in_cpu() && target.in_cpu() && grad.in_cpu()) &&
@@ -89,7 +89,7 @@ void cross_entropy_backward(
             device::gpu_device, 
             grad.get_data(), 
             input.get_data(), 
-            target.get_data(), 
+           target.get_data(), 
             input.get_shape()[0], 
             input.get_shape()[1]
         );
@@ -98,23 +98,23 @@ void cross_entropy_backward(
 
 template void cross_entropy_forward<float>(
     const tensor::Tensor<float>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,     // t(batch_size)
+    const tensor::Tensor<float>& target,   // t(batch_size)
     tensor::Tensor<float>& output          // z(1)
 );
 template void cross_entropy_forward<double>(
     const tensor::Tensor<double>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,      // t(batch_size)
+    const tensor::Tensor<double>& target,   // t(batch_size)
     tensor::Tensor<double>& output          // z(1)
 );
 
 template void cross_entropy_backward<float>(
     const tensor::Tensor<float>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,     // t(batch_size)
+    const tensor::Tensor<float>& target,   // t(batch_size)
     tensor::Tensor<float>& grad            // dX(batch_size, num_classes)
 );
 template void cross_entropy_backward<double>(
     const tensor::Tensor<double>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,      // t(batch_size)
+    const tensor::Tensor<double>& target,   // t(batch_size)
     tensor::Tensor<double>& grad            // dX(batch_size, num_classes)
 );
 

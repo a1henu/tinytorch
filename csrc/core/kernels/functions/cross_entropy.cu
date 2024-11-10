@@ -20,12 +20,12 @@ template <typename Tp>
 __global__ void kernel_log(
     const Tp* input, 
     Tp* output, 
-    const int* target, 
+    const Tp* target, 
     size_t batch_size, 
     size_t num_classes
 ) {
     CUDA_KERNEL_LOOP(i, batch_size) {
-        output[i] = logf(input[i * num_classes + target[i]]);
+        output[i] = logf(input[i * num_classes + static_cast<int>(target[i])]);
     }
 }
 
@@ -57,12 +57,12 @@ template <typename Tp>
 __global__ void
 kernel_sub_target(
     Tp* arr,
-    const int* target,
+    const Tp* target,
     size_t batch_size,
     size_t num_classes
 ) {
     CUDA_KERNEL_LOOP(i, batch_size) {
-        arr[i * num_classes + target[i]] -= static_cast<Tp>(1);
+        arr[i * num_classes + static_cast<int>(target[i])] -= static_cast<Tp>(1);
     }
 }
 
@@ -84,7 +84,7 @@ struct cross_entropy_forward<Tp, device::GPU> {
         device::GPU* device,
         Tp* output,          // (scalar)
         const Tp* input,     // (batch_size, num_classes)
-        const int* target,   // (batch_size)
+        const Tp* target,   // (batch_size)
         size_t batch_size,
         size_t num_classes
     ) {
@@ -113,7 +113,7 @@ struct cross_entropy_backward<Tp, device::GPU> {
         device::GPU* device,
         Tp* output,          // (batch_size, num_classes)
         const Tp* input,     // (batch_size, num_classes)
-        const int* target,   // (batch_size)
+        const Tp* target,   // (batch_size)
         size_t batch_size,
         size_t num_classes
     ) {

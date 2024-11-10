@@ -14,16 +14,30 @@
 namespace tensor {
 
 template <typename Tp>
-void relu_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input);
+void relu_forward(
+    tensor::Tensor<Tp>& output, 
+    const tensor::Tensor<Tp>& input
+);
 
 template <typename Tp>
-void relu_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
+void relu_backward(
+    tensor::Tensor<Tp>& output, 
+    const tensor::Tensor<Tp>& input, 
+    const tensor::Tensor<Tp>& grad
+);
 
 template <typename Tp>
-void sigmoid_forward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input);
+void sigmoid_forward(
+    tensor::Tensor<Tp>& output, 
+    const tensor::Tensor<Tp>& input
+);
 
 template <typename Tp>
-void sigmoid_backward(tensor::Tensor<Tp>& output, const tensor::Tensor<Tp>& input, const tensor::Tensor<Tp>& grad);
+void sigmoid_backward(
+    tensor::Tensor<Tp>& output, 
+    const tensor::Tensor<Tp>& input, 
+    const tensor::Tensor<Tp>& grad
+);
 
 } // namespace tensor
 

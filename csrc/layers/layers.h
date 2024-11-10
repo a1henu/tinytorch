@@ -85,7 +85,7 @@ void conv2d_backward(
 template <typename Tp>
 void max_pool_forward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, channels, height, width)
-    tensor::Tensor<int>& mask,          // mask(batch_size, channels, height_out, width_out)
+    tensor::Tensor<Tp>& mask,          // mask(batch_size, channels, height_out, width_out)
     tensor::Tensor<Tp>& output,         // Y(batch_size, channels, height_out, width_out)
     const int kernel_h,
     const int kernel_w,
@@ -101,7 +101,7 @@ void max_pool_forward(
 template <typename Tp>
 void max_pool_backward(
     tensor::Tensor<Tp>& grad_input,        // dX(batch_size, channels, height, width)
-    const tensor::Tensor<int>& mask,       // mask(batch_size, channels, height_out, width_out)
+    const tensor::Tensor<Tp>& mask,       // mask(batch_size, channels, height_out, width_out)
     const tensor::Tensor<Tp>& grad_output, // dY(batch_size, channels, height_out, width_out)
     const int kernel_h,
     const int kernel_w,
@@ -128,7 +128,7 @@ void softmax_forward(
 template <typename Tp>
 void cross_entropy_forward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
+    const tensor::Tensor<Tp>& target,  // t(batch_size)
     tensor::Tensor<Tp>& output          // z(1)
 );
 
@@ -139,7 +139,7 @@ void cross_entropy_forward(
 template <typename Tp>
 void cross_entropy_backward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
+    const tensor::Tensor<Tp>& target,  // t(batch_size)
     tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
 );
 

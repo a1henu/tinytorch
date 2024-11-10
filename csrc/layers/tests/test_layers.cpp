@@ -225,8 +225,8 @@ class TestPoolingLayer : public ::testing::Test {
 protected:
     std::vector<double> x, y, dy, dx;
     tensor::Tensor<double> input, output, output_grad, input_grad;
-    std::vector<int> mask;
-    tensor::Tensor<int> mask_out, mask_in;
+    std::vector<double> mask;
+    tensor::Tensor<double> mask_out, mask_in;
 
     int batch_size = 1, channels = 2, height = 4, width = 4;
     int kernel_h = 2, kernel_w = 2, pad_h = 0, pad_w = 0, stride_h = 2, stride_w = 2;
@@ -267,9 +267,9 @@ protected:
         output = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU);
         output_grad = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU, dy.data());
         input_grad = tensor::Tensor<double>({batch_size, channels, height, width}, tensor::DeviceType::CPU);
-        mask_out = tensor::Tensor<int>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU);
+        mask_out = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU);
 
-        mask_in = tensor::Tensor<int>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU, mask.data());
+        mask_in = tensor::Tensor<double>({batch_size, channels, height/2, width/2}, tensor::DeviceType::CPU, mask.data());
 #ifdef __CUDA
         input.to_gpu();
         output.to_gpu();
@@ -320,11 +320,11 @@ protected:
 class TestCrossEntropyLayer : public ::testing::Test {
 protected:
     std::vector<double> z_o, z, g;
-    std::vector<int> t;
+    std::vector<double> t;
 
     tensor::Tensor<double> input, input_softmax, grad;
     tensor::Tensor<double> output;
-    tensor::Tensor<int> target;
+    tensor::Tensor<double> target;
 
     double expected_loss = 2.6912;
 
@@ -359,7 +359,7 @@ protected:
         input = tensor::Tensor<double>({batch_size, num_classes}, tensor::DeviceType::CPU, z_o.data());
         input_softmax = tensor::Tensor<double>({batch_size, num_classes}, tensor::DeviceType::CPU, z.data());
         grad = tensor::Tensor<double>({batch_size, num_classes}, tensor::DeviceType::CPU);
-        target = tensor::Tensor<int>({batch_size}, tensor::DeviceType::CPU, t.data());
+        target = tensor::Tensor<double>({batch_size}, tensor::DeviceType::CPU, t.data());
         output = tensor::Tensor<double>({1}, tensor::DeviceType::CPU);
 
 #ifdef __CUDA

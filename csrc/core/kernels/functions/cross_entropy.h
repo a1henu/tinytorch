@@ -31,7 +31,7 @@ struct cross_entropy_forward {
         Device* device, 
         Tp* output, 
         const Tp* input, 
-        const int* target, 
+        const Tp* target, 
         size_t batch_size,
         size_t num_classes
     );
@@ -53,7 +53,7 @@ struct cross_entropy_backward {
         Device* device, 
         Tp* output, 
         const Tp* input, 
-        const int* target, 
+        const Tp* target, 
         size_t batch_size,
         size_t num_classes
     );

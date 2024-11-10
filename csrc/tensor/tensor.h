@@ -68,6 +68,8 @@ public:
     bool in_cpu() const;
     bool in_gpu() const;
 
+    DeviceType device() const;
+
     const int dim() const;
 
     const std::vector<int> get_shape() const;
@@ -86,6 +88,7 @@ public:
     Tensor operator*(const Tensor& other) const;
 
     bool operator==(const Tensor& other) const;
+    bool operator!=(const Tensor& other) const;
 
     Tp& operator[](const std::vector<int>& indices) const;
     Tp& operator[](const std::initializer_list<int>& indices) const;
@@ -97,7 +100,7 @@ public:
 
 private:
     std::vector<int> _shape;
-    device::BaseDevice* device = nullptr;
+    device::BaseDevice* _device = nullptr;
     Tp* p_data = nullptr;
 
     using malloc_cpu_op = memory::malloc_mem_op<Tp, device::CPU>;

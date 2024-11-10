@@ -19,7 +19,7 @@ target_link_libraries(_libfuncs PRIVATE pybind11::headers layers)
 target_compile_definitions(_libfuncs PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
 set_target_properties(_libfuncs PROPERTIES INSTALL_RPATH "$ORIGIN")
-install(TARGETS _libfuncs DESTINATION ${TARGET_PACK})
+install(TARGETS _libfuncs DESTINATION ${TARGET_PACK}/funcs)
 
 if(TEST)
     add_subdirectory(tests)
