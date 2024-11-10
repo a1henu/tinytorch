@@ -20,6 +20,12 @@ def test_tensor_from_numpy():
     t2 = Tensor.from_numpy(arr2)
     assert t2.shape() == [2, 3]
     
+def test_tensor_to_numpy():
+    data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+    t = Tensor([2, 3], DeviceType.CPU, data)
+    t_np = t.to_numpy()
+    assert np.array_equal(t_np, np.array(data).reshape([2, 3]))
+    
 def test_tensor_ops():
     a = np.random.randn(2, 3)
     b = np.random.randn(2, 3)
@@ -28,12 +34,13 @@ def test_tensor_ops():
     tb = Tensor.from_numpy(b)
     tc = Tensor.from_numpy(c)
     
-    assert ta + tb == Tensor.from_numpy(a + b)
-    assert ta - tb == Tensor.from_numpy(a - b)
-    assert ta @ tc == Tensor.from_numpy(a @ c)
+    np.testing.assert_allclose((ta + tb).to_numpy(), a + b)
+    np.testing.assert_allclose((ta - tb).to_numpy(), a - b)
+    np.testing.assert_allclose((ta @ tc).to_numpy(), a @ c)
     
 if __name__ == "__main__":
     test_tensor_constructor()
     test_tensor_from_numpy()
+    test_tensor_to_numpy()
     test_tensor_ops()
     

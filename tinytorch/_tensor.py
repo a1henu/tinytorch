@@ -81,6 +81,9 @@ class Tensor(_Tensor):
         array = array.astype(np.float64, order="C")
         return _Tensor.from_numpy(array)
     
+    def to_numpy(self) -> NDArray:
+        return super().to_numpy()
+    
     @staticmethod
     def ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
         return _Tensor.ones(shape, device)

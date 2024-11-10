@@ -88,5 +88,32 @@ PYBIND11_MODULE(_libtensor, m) {
                 return tensor::Tensor<double>(shape, tensor::DeviceType::CPU, data);
             },
             "Create a Tensor from numpy array"
-        );
+        )
+        .def("to_numpy", 
+            [] (const tensor::Tensor<double>& self) {
+                std::vector<int> shape = self.get_shape();
+                std::vector<ssize_t> numpy_shape(shape.begin(), shape.end());
+                size_t total_size = self.get_tol_size();
+                
+                py::array_t<double> result(numpy_shape);
+                
+                py::buffer_info buf = result.request();
+                double* ptr = static_cast<double*>(buf.ptr);
+                
+                if (self.in_cpu()) {
+                    std::memcpy(ptr, self.get_data(), total_size * sizeof(double));
+                } else {
+                    std::vector<double> cpu_data(total_size);
+                    memory::copy_mem_op<double, device::CPU, device::GPU>()(
+                        device::cpu_device, 
+                        device::gpu_device, 
+                        cpu_data.data(), 
+                        self.get_data(), 
+                        total_size
+                    );
+                    std::memcpy(ptr, cpu_data.data(), total_size * sizeof(double));
+                }
+                
+                return result;
+            }, "Convert Tensor to numpy array");
 }
