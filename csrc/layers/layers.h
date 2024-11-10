@@ -80,38 +80,6 @@ void conv2d_backward(
 );
 
 /**
- * @brief forward function for softmax layer
- *        - Y = softmax(X)
- */
-template <typename Tp>
-void softmax_forward(
-    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    tensor::Tensor<Tp>& output          // Y(batch_size, num_classes)
-);
-
-/**
- * @brief loss function for cross entropy
- *       - loss = -\sum y_i * log(p_i)
- */
-template <typename Tp>
-void cross_entropy_forward(
-    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
-    tensor::Tensor<Tp>& output          // z(1)
-);
-
-/**
- * @brief backward function for cross entropy
- *        - dX_i = p_i - y_i
- */
-template <typename Tp>
-void cross_entropy_backward(
-    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<int>& target,  // t(batch_size)
-    tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
-);
-
-/**
  * @brief forward function for max pooling layer
  */
 template <typename Tp>
@@ -141,6 +109,38 @@ void max_pool_backward(
     const int pad_w,
     const int stride_h,
     const int stride_w
+);
+
+/**
+ * @brief forward function for softmax layer
+ *        - Y = softmax(X)
+ */
+template <typename Tp>
+void softmax_forward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
+    tensor::Tensor<Tp>& output          // Y(batch_size, num_classes)
+);
+
+/**
+ * @brief loss function for cross entropy
+ *       - loss = -\sum y_i * log(p_i)
+ */
+template <typename Tp>
+void cross_entropy_forward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
+    const tensor::Tensor<int>& target,  // t(batch_size)
+    tensor::Tensor<Tp>& output          // z(1)
+);
+
+/**
+ * @brief backward function for cross entropy
+ *        - dX_i = p_i - y_i
+ */
+template <typename Tp>
+void cross_entropy_backward(
+    const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
+    const tensor::Tensor<int>& target,  // t(batch_size)
+    tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
 );
 
 } // namespace layers
