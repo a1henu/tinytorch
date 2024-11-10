@@ -7,8 +7,6 @@ if(CUDA)
     find_package(CUDA REQUIRED)
 endif()
 
-find_package(BLAS REQUIRED)
-
 add_library(kernels STATIC ${KERNELS_SOURCES})
 target_include_directories(kernels PUBLIC ${CMAKE_SOURCE_DIR}/csrc)
 

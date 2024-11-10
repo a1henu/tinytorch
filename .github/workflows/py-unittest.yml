@@ -1,0 +1,29 @@
+name: Unit test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true  
+
+    - name: Build
+      run: |
+        pip install -v .[test]
+
+
+    - name: Run tests
+      run: |
+        cd tests
+        pytest -v

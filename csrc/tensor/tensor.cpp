@@ -25,7 +25,7 @@ template <typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
     DeviceType device
-) : shape(shape) {
+) : _shape(shape) {
     size_t tol_size = get_tol_size();
     if (device == DeviceType::CPU) {
         this->device = new device::CPU();
@@ -42,8 +42,8 @@ template <typename Tp>
 Tensor<Tp>::Tensor(
     const std::vector<int>& shape, 
     DeviceType device,
-    Tp* data
-) : shape(shape) {
+    const Tp* data
+) : _shape(shape) {
     size_t tol_size = get_tol_size();
     if (device == DeviceType::CPU) {
         this->device = new device::CPU();
@@ -60,6 +60,13 @@ Tensor<Tp>::Tensor(
 
 template <typename Tp>
 Tensor<Tp>::Tensor(
+    const std::vector<int>& shape,
+    DeviceType device,
+    const std::vector<Tp>& data
+): Tensor(shape, device, data.data()) { }
+
+template <typename Tp>
+Tensor<Tp>::Tensor(
     const std::initializer_list<int>& shape,
     DeviceType device
 ): Tensor(std::vector<int>(shape), device) { }
@@ -68,11 +75,11 @@ template <typename Tp>
 Tensor<Tp>::Tensor(
     const std::initializer_list<int>& shape,
     DeviceType device,
-    Tp* data
+    const Tp* data
 ): Tensor(std::vector<int>(shape), device, data) { }
 
 template <typename Tp>
-Tensor<Tp>::Tensor(const Tensor<Tp>& other) : shape(other.shape) {
+Tensor<Tp>::Tensor(const Tensor<Tp>& other) : _shape(other._shape) {
     size_t tol_size = get_tol_size();
     if (other.in_cpu()) {
         this->device = new device::CPU();
@@ -98,7 +105,7 @@ Tensor<Tp>& Tensor<Tp>::operator=(const Tensor<Tp>& other) {
             }
         }
 
-        shape = other.shape;
+        _shape = other._shape;
         size_t tol_size = get_tol_size();
         if (other.in_cpu()) {
             this->device = new device::CPU();
@@ -129,7 +136,7 @@ Tensor<Tp>::~Tensor() {
 
 template <typename Tp>
 inline Tensor<Tp> Tensor<Tp>::cpu() const {
-    tensor::Tensor<Tp> out(shape, DeviceType::CPU);
+    tensor::Tensor<Tp> out(_shape, DeviceType::CPU);
     size_t tol_size = get_tol_size();
 
     if (device->is_cpu()) {
@@ -147,7 +154,7 @@ inline Tensor<Tp> Tensor<Tp>::cpu() const {
 
 template <typename Tp>
 inline Tensor<Tp> Tensor<Tp>::gpu() const {
-    tensor::Tensor<Tp> out(shape, DeviceType::GPU);
+    tensor::Tensor<Tp> out(_shape, DeviceType::GPU);
     size_t tol_size = get_tol_size();
 
     if (device->is_gpu()) {
@@ -215,12 +222,12 @@ bool Tensor<Tp>::in_gpu() const {
 
 template <typename Tp>
 const int Tensor<Tp>::dim() const {
-    return shape.size();
+    return _shape.size();
 }
 
 template <typename Tp>
 const std::vector<int> Tensor<Tp>::get_shape() const {
-    return shape;
+    return _shape;
 }
 
 template <typename Tp>
@@ -267,17 +274,17 @@ Tensor<Tp> Tensor<Tp>::reshape(const std::initializer_list<int>& shape) const {
 
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::transpose() const {
-    if (shape.size() != 2) {
+    if (_shape.size() != 2) {
         throw error::InvalidArgumentError("The shape of the tensor must be 2.");
     }
-    std::vector<int> new_shape {shape[1], shape[0]};
+    std::vector<int> new_shape {_shape[1], _shape[0]};
     if (this->in_cpu()) {
         tensor::Tensor<Tp> out(new_shape, DeviceType::CPU);
-        ops::transpose_op<Tp, device::CPU>()(device::cpu_device, this->get_data(), out.get_data(), shape[0], shape[1]);
+        ops::transpose_op<Tp, device::CPU>()(device::cpu_device, this->get_data(), out.get_data(), _shape[0], _shape[1]);
         return out;
     } else if (this->in_gpu()) {
         tensor::Tensor<Tp> out(new_shape, DeviceType::GPU);
-        ops::transpose_op<Tp, device::GPU>()(device::gpu_device, this->get_data(), out.get_data(), shape[0], shape[1]);
+        ops::transpose_op<Tp, device::GPU>()(device::gpu_device, this->get_data(), out.get_data(), _shape[0], _shape[1]);
         return out;
     } else {
         throw error::DeviceError("Unknown device type");
@@ -290,7 +297,7 @@ Tp* Tensor<Tp>::get_data() const {
 }
 
 template <typename Tp>
-void Tensor<Tp>::set_data(Tp* data, size_t size, DeviceType device_d) const {
+void Tensor<Tp>::set_data(const Tp* data, size_t size, DeviceType device_d) const {
     size_t tol_size = get_tol_size();
     assert(size <= tol_size);
     if (device->is_cpu() && device_d == DeviceType::CPU) {
@@ -310,7 +317,7 @@ void Tensor<Tp>::set_data(Tp* data, size_t size, DeviceType device_d) const {
 
 template <typename Tp>
 size_t Tensor<Tp>::get_tol_size() const {
-    return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+    return std::accumulate(_shape.begin(), _shape.end(), 1, std::multiplies<int>());
 }
 
 template <typename Tp>
@@ -320,20 +327,14 @@ Tensor<Tp> Tensor<Tp>::operator+(const Tensor<Tp>& other) const {
     }
 
     if (this->in_cpu() && other.in_cpu()) {
-        Tp* p_out;
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU);
         size_t tol_size = this->get_tol_size();
-        memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
-        ops::add_op<Tp, device::CPU>()(device::cpu_device, p_out, this->get_data(), other.get_data(), tol_size);
-        Tensor<Tp> out(this->get_shape(), DeviceType::CPU, p_out);
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
+        ops::add_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
         return out;
     } else if (this->in_gpu() && other.in_gpu()) {
-        Tp* p_out;
+        Tensor<Tp> out(this->get_shape(), DeviceType::GPU);
         size_t tol_size = this->get_tol_size();
-        memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
-        ops::add_op<Tp, device::GPU>()(device::gpu_device, p_out, this->get_data(), other.get_data(), tol_size);
-        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::GPU, p_out);
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
+        ops::add_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
         return out;
     } else {
         throw error::DeviceError("The device of two tensors must be the same.");
@@ -347,20 +348,14 @@ Tensor<Tp> Tensor<Tp>::operator-(const Tensor<Tp>& other) const {
     }
 
     if (this->in_cpu() && other.in_cpu()) {
-        Tp* p_out;
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU);
         size_t tol_size = this->get_tol_size();
-        memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
-        ops::sub_op<Tp, device::CPU>()(device::cpu_device, p_out, this->get_data(), other.get_data(), tol_size);
-        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::CPU, p_out);
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
+        ops::sub_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
         return out;
     } else if (this->in_gpu() && other.in_gpu()) {
-        Tp* p_out;
+        Tensor<Tp> out(this->get_shape(), DeviceType::GPU);
         size_t tol_size = this->get_tol_size();
-        memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
-        ops::sub_op<Tp, device::GPU>()(device::gpu_device, p_out, this->get_data(), other.get_data(), tol_size);
-        tensor::Tensor<Tp> out(this->get_shape(), DeviceType::GPU, p_out);
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
+        ops::sub_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
         return out;
     } else {
         throw error::DeviceError("The device of two tensors must be the same.");
@@ -381,11 +376,8 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
     }
 
     int k = k_1;
-    size_t tol_size = m * n;
-
     if (this->in_cpu() && other.in_cpu()) {
-        Tp* p_out;
-        memory::malloc_mem_op<Tp, device::CPU>()(device::cpu_device, p_out, tol_size);
+        Tensor<Tp> out({m, n}, DeviceType::CPU);
         ops::matmul_op<Tp, device::CPU>()(
             device::cpu_device,
             "N", "N",
@@ -394,14 +386,11 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
             this->get_data(), k,
             other.get_data(), n,
             0.0,
-            p_out, n
+            out.get_data(), n
         );
-        tensor::Tensor<Tp> out({m, n}, DeviceType::CPU, p_out);
-        memory::free_mem_op<Tp, device::CPU>()(device::cpu_device, p_out);
         return out;
     } else if (this->in_gpu() && other.in_gpu()) {
-        Tp* p_out;
-        memory::malloc_mem_op<Tp, device::GPU>()(device::gpu_device, p_out, tol_size);
+        Tensor<Tp> out({m, n}, DeviceType::GPU);
         ops::matmul_op<Tp, device::GPU>()(
             device::gpu_device,
             "N", "N",
@@ -410,10 +399,8 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
             this->get_data(), k,
             other.get_data(), n,
             0.0,
-            p_out, n
+            out.get_data(), n
         );
-        tensor::Tensor<Tp> out({m, n}, DeviceType::GPU, p_out);
-        memory::free_mem_op<Tp, device::GPU>()(device::gpu_device, p_out);
         return out;
     } else {
         throw error::DeviceError("The device of two tensors must be the same.");
@@ -434,14 +421,17 @@ bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
         ops::equal_op<Tp, device::CPU>()(device::cpu_device, &out, this->get_data(), other.get_data(), this->get_tol_size());
         return out;
     } else if (this->in_gpu() && other.in_gpu()) {
-        bool out_c = true;
-        bool* out_g;
+        bool out = true;
+        bool* out_device = nullptr;
         size_t tol_size = this->get_tol_size();
-        memory::malloc_mem_op<bool, device::GPU>()(device::gpu_device, out_g, 1);
-        ops::equal_op<Tp, device::GPU>()(device::gpu_device, out_g, this->get_data(), other.get_data(), tol_size);
-        memory::copy_mem_op<bool, device::CPU, device::GPU>()(device::cpu_device, device::gpu_device, &out_c, out_g, 1);
-        memory::free_mem_op<bool, device::GPU>()(device::gpu_device, out_g);
-        return out_c;
+        
+        Tensor<bool> device_result({1}, DeviceType::GPU);
+        out_device = device_result.get_data();
+        
+        ops::equal_op<Tp, device::GPU>()(device::gpu_device, out_device, this->get_data(), other.get_data(), tol_size);
+        memory::copy_mem_op<bool, device::CPU, device::GPU>()(device::cpu_device, device::gpu_device, &out, out_device, 1);
+
+        return out;
     } else {
         throw error::DeviceError("The device of two tensors must be the same.");
     }
@@ -449,7 +439,7 @@ bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
 
 template <typename Tp>
 Tp& Tensor<Tp>::operator[](const std::vector<int>& indices) const {
-    int index = get_index(shape, indices);
+    int index = get_index(_shape, indices);
     return p_data[index];
 }
 
@@ -494,6 +484,61 @@ Tensor<Tp> Tensor<Tp>::ones(const std::vector<int>& shape, DeviceType device) {
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::ones(const std::initializer_list<int>& shape, DeviceType device) {
     return ones(std::vector<int>(shape), device);
+}
+
+
+template <typename Tp>
+void print_tensor_data(
+    std::ostream& os, 
+    const Tp* data, 
+    const std::vector<int>& shape, 
+    const std::vector<int>& strides, 
+    int dim, 
+    int current_dim = 0, 
+    int offset = 0
+) {
+    if (current_dim == dim - 1) {
+        os << "[";
+        for (int i = 0; i < shape[current_dim]; ++i) {
+            os << data[offset + i * strides[current_dim]];
+            if (i != shape[current_dim] - 1) os << ", ";
+        }
+        os << "]";
+    } else {
+        os << "[";
+        for (int i = 0; i < shape[current_dim]; ++i) {
+            print_tensor_data(os, data, shape, strides, dim, current_dim + 1, 
+                            offset + i * strides[current_dim]);
+            if (i != shape[current_dim] - 1) os << ",\n" << std::string(current_dim + 1, ' ');
+        }
+        os << "]";
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Tensor<double>& tensor) {
+    os << "tensor(" << std::endl;
+    os << "shape = [";
+    for (size_t i = 0; i < tensor.dim(); ++i) {
+        os << tensor.get_shape()[i];
+        if (i != tensor.dim() - 1) {
+            os << ", ";
+        }
+    }
+    os << "], device = ";
+    os << tensor.in_cpu() ? "CPU" : "GPU";
+    os << ", " << std::endl << "data = " << std::endl;
+    
+    std::vector<int> strides(tensor.dim());
+    int stride = 1;
+    for (int i = tensor.dim() - 1; i >= 0; --i) {
+        strides[i] = stride;
+        stride *= tensor.get_shape()[i];
+    }
+    
+    print_tensor_data(os, tensor.get_data(), tensor.get_shape(), strides, tensor.dim());
+    
+    os << ")";
+    return os;
 }
 
 template class Tensor<int>;

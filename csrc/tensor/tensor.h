@@ -10,6 +10,7 @@
 #define CSRC_TENSOR_TENSOR_H
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -37,13 +38,19 @@ public:
     Tensor(
         const std::vector<int>& shape, 
         DeviceType device,
-        Tp* data
+        const Tp* data
+    );
+
+    Tensor(
+        const std::vector<int>& shape,
+        DeviceType device,
+        const std::vector<Tp>& data
     );
 
     Tensor(
         const std::initializer_list<int>& shape,
         DeviceType device,
-        Tp* data
+        const Tp* data
     );
 
     Tensor(const Tensor& other);
@@ -70,7 +77,7 @@ public:
     Tensor<Tp> transpose() const;
 
     Tp* get_data() const;
-    void set_data(Tp* data, size_t size, DeviceType device_d) const;
+    void set_data(const Tp* data, size_t size, DeviceType device_d) const;
 
     size_t get_tol_size() const;
 
@@ -89,7 +96,7 @@ public:
     static Tensor<Tp> ones(const std::initializer_list<int>& shape, DeviceType device);
 
 private:
-    std::vector<int> shape;
+    std::vector<int> _shape;
     device::BaseDevice* device = nullptr;
     Tp* p_data = nullptr;
 
@@ -107,6 +114,8 @@ private:
     using set_cpu_op = memory::set_mem_op<Tp, device::CPU>;
     using set_gpu_op = memory::set_mem_op<Tp, device::GPU>;
 };
+
+std::ostream& operator<<(std::ostream& os, const Tensor<double>& tensor);
 
 }
 
