@@ -15,6 +15,49 @@
 namespace ops {
 
 template <typename Tp>
+__device__ void atomicAddWrapper(Tp* address, Tp val) {
+    atomicAdd(address, val);
+}
+
+template <>
+__device__ void atomicAddWrapper<double>(double* address, double val) {
+    #if __CUDA_ARCH__ >= 600
+        atomicAdd(address, val);
+    #else
+        unsigned long long int* address_as_ull = (unsigned long long int*)address;
+        unsigned long long int old = *address_as_ull;
+        unsigned long long int assumed;
+        do {
+            assumed = old;
+            old = atomicCAS(address_as_ull, assumed,
+                           __double_as_longlong(val + __longlong_as_double(assumed)));
+        } while (assumed != old);
+    #endif
+}
+
+template <typename Tp>
+__global__ void reduce_sum(Tp* output, const Tp* input, int size) {
+    __shared__ Tp sdata[CUDA_K_THREADS];
+    
+    int tid = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    sdata[tid] = (i < size) ? input[i] : 0;
+    __syncthreads();
+    
+    for (int s = blockDim.x/2; s > 0; s >>= 1) {
+        if (tid < s) {
+            sdata[tid] += sdata[tid + s];
+        }
+        __syncthreads();
+    }
+    
+    if (tid == 0) {
+        atomicAddWrapper(output, sdata[0]);
+    }
+}
+
+template <typename Tp>
 __global__ void
 kernel_add(Tp* output, const Tp* input1, const Tp* input2, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
@@ -108,32 +151,10 @@ kernel_im2col(
 }
 
 template <typename Tp>
-__global__ void
-kernel_add_bias(
-    Tp* output,
-    const Tp* bias,
-    const int batch_size,
+__global__ void kernel_col2im(
+    const Tp* data_col,
+    Tp* data_im,
     const int channels,
-    const int height,
-    const int width
-) {
-    const int size = batch_size * channels * height * width;
-    CUDA_KERNEL_LOOP(index, size) {
-        const int c = (index / (height * width)) % channels;
-        output[index] += bias[c];
-    }
-}
-
-template <typename Tp>
-__global__ void
-kernel_conv2d_forward(
-    Tp* output,
-    const Tp* input,
-    const Tp* weight,
-    const Tp* bias,
-    const int batch_size,
-    const int in_channels,
-    const int out_channels,
     const int height,
     const int width,
     const int kernel_h,
@@ -145,36 +166,52 @@ kernel_conv2d_forward(
     const int height_out,
     const int width_out
 ) {
-    const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx >= batch_size * out_channels * height_out * width_out) return;
-    
-    const int w_out = idx % width_out;
-    const int h_out = (idx / width_out) % height_out;
-    const int c_out = (idx / (width_out * height_out)) % out_channels;
-    const int b = idx / (width_out * height_out * out_channels);
-    
-    Tp sum = 0;
-    
-    for (int c_in = 0; c_in < in_channels; ++c_in) {
-        for (int kh = 0; kh < kernel_h; ++kh) {
-            for (int kw = 0; kw < kernel_w; ++kw) {
-                const int h_in = h_out * stride_h - pad_h + kh;
-                const int w_in = w_out * stride_w - pad_w + kw;
-                
-                if (h_in >= 0 && h_in < height && w_in >= 0 && w_in < width) {
-                    const int input_idx = ((b * in_channels + c_in) * height + h_in) * width + w_in;
-                    const int weight_idx = ((c_out * in_channels + c_in) * kernel_h + kh) * kernel_w + kw;
-                    sum += input[input_idx] * weight[weight_idx];
-                }
-            }
+    const int channels_col = channels * kernel_h * kernel_w;
+    CUDA_KERNEL_LOOP(index, channels_col * height_out * width_out) {
+        // parse the position in the col
+        int w = index % width_out;
+        int h = (index / width_out) % height_out;
+        int c = index / (height_out * width_out);
+        
+        // calculate the offset in the kernel
+        int w_offset = c % kernel_w;
+        int h_offset = (c / kernel_w) % kernel_h;
+        int c_im = c / (kernel_h * kernel_w);
+        
+        // calculate the position in the original image
+        int h_pad = h * stride_h - pad_h + h_offset;
+        int w_pad = w * stride_w - pad_w + w_offset;
+        
+        if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width) {
+            atomicAddWrapper(
+                &data_im[(c_im * height + h_pad) * width + w_pad],
+                data_col[index]
+            );
         }
     }
-    
-    if (bias != nullptr) {
-        sum += bias[c_out];
+}
+
+template <typename Tp>
+__global__ void
+kernel_add_bias(
+    Tp* output,
+    const Tp* bias,
+    const int batch_size,
+    const int channels,
+    const int height,
+    const int width
+) {
+    CUDA_KERNEL_LOOP(index, batch_size * channels * height * width) {
+        const int b = index / (channels * height * width);
+        const int c = (index / (height * width)) % channels;
+        const int h = (index / width) % height;
+        const int w = index % width;
+        output[
+            b * channels * height * width +
+            c * height * width +
+            h * width + w
+        ] += bias[c];
     }
-    
-    output[idx] = sum;
 }
 
 template <typename Tp>
@@ -232,27 +269,6 @@ kernel_max_pool(
         out[i * width_out + j] = max_val;
         mask_out[i * width_out + j] = max_idx;
     }
-}
-
-template <typename Tp>
-__device__ void atomicAddWrapper(Tp* address, Tp val) {
-    atomicAdd(address, val);
-}
-
-template <>
-__device__ void atomicAddWrapper<double>(double* address, double val) {
-    #if __CUDA_ARCH__ >= 600
-        atomicAdd(address, val);
-    #else
-        unsigned long long int* address_as_ull = (unsigned long long int*)address;
-        unsigned long long int old = *address_as_ull;
-        unsigned long long int assumed;
-        do {
-            assumed = old;
-            old = atomicCAS(address_as_ull, assumed,
-                           __double_as_longlong(val + __longlong_as_double(assumed)));
-        } while (assumed != old);
-    #endif
 }
 
 template <typename Tp>
@@ -476,6 +492,43 @@ struct im2col_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct col2im_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* data_col,
+        Tp* data_im,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+
+        kernel_col2im<Tp><<<CUDA_GET_BLOCKS(channels * height_out * width_out), CUDA_K_THREADS>>>(
+            data_col,
+            data_im,
+            channels,
+            height,
+            width,
+            kernel_h,
+            kernel_w,
+            pad_h,
+            pad_w,
+            stride_h,
+            stride_w,
+            height_out,
+            width_out
+        );
+    }
+};
+
+template <typename Tp>
 struct conv2d_forward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
@@ -495,29 +548,181 @@ struct conv2d_forward_op<Tp, device::GPU> {
         const int stride_h,
         const int stride_w
     ) {
+        // calculate the size of the output img
         const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
         const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
-        
-        const int total_threads = batch_size * out_channels * height_out * width_out;
-        kernel_conv2d_forward<Tp><<<CUDA_GET_BLOCKS(total_threads), CUDA_K_THREADS>>>(
+
+        const int col_size = in_channels * kernel_h * kernel_w * height_out * width_out;
+        Tp* col;
+        cudaMalloc(&col, col_size * sizeof(Tp));
+
+        // for each batch
+        for (int b = 0; b < batch_size; ++b) {
+            im2col_op<Tp, device::GPU>()(
+                device,
+                input + b * in_channels * height * width,
+                col,
+                in_channels,
+                height,
+                width,
+                kernel_h,
+                kernel_w,
+                pad_h,
+                pad_w,
+                stride_h,
+                stride_w
+            );
+
+            matmul_op<Tp, device::GPU>()(
+                device,
+                "N", "N",
+                out_channels,
+                height_out * width_out,
+                in_channels * kernel_h * kernel_w,
+                1.0,
+                weight,
+                in_channels * kernel_h * kernel_w,
+                col,
+                height_out * width_out,
+                0.0,
+                output + b * out_channels * height_out * width_out,
+                height_out * width_out
+            );
+        }
+
+        kernel_add_bias<Tp><<<CUDA_GET_BLOCKS(batch_size * out_channels * height_out * width_out), CUDA_K_THREADS>>>(
             output,
-            input,
-            weight,
             bias,
             batch_size,
-            in_channels,
             out_channels,
-            height,
-            width,
-            kernel_h,
-            kernel_w,
-            pad_h,
-            pad_w,
-            stride_h,
-            stride_w,
             height_out,
             width_out
         );
+
+        cudaFree(col);
+    }
+};
+
+template <typename Tp>
+struct conv2d_backward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_channels,
+        const int out_channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+        const int channels_col = in_channels * kernel_h * kernel_w;
+        
+        Tp* col;
+        Tp* grad_col;
+        cudaMalloc(&col, sizeof(Tp) * channels_col * height_out * width_out);
+        cudaMalloc(&grad_col, sizeof(Tp) * channels_col * height_out * width_out);
+        
+        if (grad_bias != nullptr) {
+            cudaMemset(grad_bias, 0, sizeof(Tp) * out_channels);
+            for (int b = 0; b < batch_size; ++b) {
+                for (int c = 0; c < out_channels; ++c) {
+                    Tp* grad_bias_c = grad_bias + c;
+                    const Tp* grad_output_c = grad_output + 
+                        (b * out_channels + c) * height_out * width_out;
+                    
+                    reduce_sum<<<1, CUDA_K_THREADS>>>(
+                        grad_bias_c,
+                        grad_output_c,
+                        height_out * width_out
+                    );
+                }
+            }
+        }
+        
+        cudaMemset(grad_weight, 0, sizeof(Tp) * out_channels * channels_col);
+        for (int b = 0; b < batch_size; ++b) {
+            im2col_op<Tp, device::GPU>()(
+                device,
+                input + b * in_channels * height * width,
+                col,
+                in_channels,
+                height,
+                width,
+                kernel_h,
+                kernel_w,
+                pad_h,
+                pad_w,
+                stride_h,
+                stride_w
+            );
+            
+            // grad_weight += grad_output * col^T
+            matmul_op<Tp, device::GPU>()(
+                device,
+                "N", "T",
+                out_channels,
+                channels_col,
+                height_out * width_out,
+                1.0,
+                grad_output + b * out_channels * height_out * width_out,
+                height_out * width_out,
+                col,
+                height_out * width_out,
+                1.0,
+                grad_weight,
+                channels_col
+            );
+        }
+        
+        cudaMemset(grad_input, 0, sizeof(Tp) * batch_size * in_channels * height * width);
+        for (int b = 0; b < batch_size; ++b) {
+            // weight^T * grad_output
+            matmul_op<Tp, device::GPU>()(
+                device,
+                "T", "N",
+                channels_col,
+                height_out * width_out,
+                out_channels,
+                1.0,
+                weight,
+                channels_col,
+                grad_output + b * out_channels * height_out * width_out,
+                height_out * width_out,
+                0.0,
+                grad_col,
+                height_out * width_out
+            );
+            
+            col2im_op<Tp, device::GPU>()(
+                device,
+                grad_col,
+                grad_input + b * in_channels * height * width,
+                in_channels,
+                height,
+                width,
+                kernel_h,
+                kernel_w,
+                pad_h,
+                pad_w,
+                stride_h,
+                stride_w
+            );
+        }
+        
+        cudaFree(col);
+        cudaFree(grad_col);
     }
 };
 
@@ -642,9 +847,17 @@ template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;
 template struct im2col_op<double, device::GPU>;
 
+template struct col2im_op<int, device::GPU>;
+template struct col2im_op<float, device::GPU>;
+template struct col2im_op<double, device::GPU>;
+
 template struct conv2d_forward_op<int, device::GPU>;
 template struct conv2d_forward_op<float, device::GPU>;
 template struct conv2d_forward_op<double, device::GPU>;
+
+template struct conv2d_backward_op<int, device::GPU>;
+template struct conv2d_backward_op<float, device::GPU>;
+template struct conv2d_backward_op<double, device::GPU>;
 
 template struct max_pool_forward_op<int, device::GPU>;
 template struct max_pool_forward_op<float, device::GPU>;

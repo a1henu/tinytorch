@@ -209,6 +209,48 @@ struct im2col_op<Tp, device::CPU> {
 };
 
 template <typename Tp>
+struct col2im_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        const Tp* data_col,
+        Tp* data_im,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+        const int channels_col = channels * kernel_h * kernel_w;
+        
+        memset(data_im, 0, sizeof(Tp) * height * width * channels);
+        
+        for (int c = 0; c < channels_col; ++c) {
+            int w_offset = c % kernel_w;
+            int h_offset = (c / kernel_w) % kernel_h;
+            int c_im = c / (kernel_h * kernel_w);
+            
+            for (int h = 0; h < height_out; ++h) {
+                for (int w = 0; w < width_out; ++w) {
+                    int h_pad = h * stride_h - pad_h + h_offset;
+                    int w_pad = w * stride_w - pad_w + w_offset;
+                    
+                    if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width) {
+                        data_im[(c_im * height + h_pad) * width + w_pad] +=
+                            data_col[(c * height_out + h) * width_out + w];
+                    }
+                }
+            }
+        }
+    }
+};
+
+template <typename Tp>
 struct conv2d_forward_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device,
@@ -279,6 +321,123 @@ struct conv2d_forward_op<Tp, device::CPU> {
         }
 
         delete[] col;
+    }
+};
+
+
+template <typename Tp>
+struct conv2d_backward_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_channels,
+        const int out_channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        const int height_out = (height + 2 * pad_h - kernel_h) / stride_h + 1;
+        const int width_out = (width + 2 * pad_w - kernel_w) / stride_w + 1;
+        const int channels_col = in_channels * kernel_h * kernel_w;
+        
+        Tp* col = new Tp[channels_col * height_out * width_out];
+        Tp* grad_col = new Tp[channels_col * height_out * width_out];
+        
+        if (grad_bias != nullptr) {
+            memset(grad_bias, 0, sizeof(Tp) * out_channels);
+            for (int b = 0; b < batch_size; ++b) {
+                for (int c = 0; c < out_channels; ++c) {
+                    for (int hw = 0; hw < height_out * width_out; ++hw) {
+                        grad_bias[c] += grad_output[b * out_channels * height_out * width_out + 
+                                                  c * height_out * width_out + hw];
+                    }
+                }
+            }
+        }
+        
+        memset(grad_weight, 0, sizeof(Tp) * out_channels * channels_col);
+        for (int b = 0; b < batch_size; ++b) {
+            im2col_op<Tp, device::CPU>()(
+                device,
+                input + b * in_channels * height * width,
+                col,
+                in_channels,
+                height,
+                width,
+                kernel_h,
+                kernel_w,
+                pad_h,
+                pad_w,
+                stride_h,
+                stride_w
+            );
+            
+            // grad_weight += grad_output * col^T
+            matmul_op<Tp, device::CPU>()(
+                device,
+                "N", "T",
+                out_channels,
+                channels_col,
+                height_out * width_out,
+                1.0,
+                grad_output + b * out_channels * height_out * width_out,
+                height_out * width_out,
+                col,
+                height_out * width_out,
+                1.0,
+                grad_weight,
+                channels_col
+            );
+        }
+        
+        memset(grad_input, 0, sizeof(Tp) * batch_size * in_channels * height * width);
+        for (int b = 0; b < batch_size; ++b) {
+            // weight^T * grad_output
+            matmul_op<Tp, device::CPU>()(
+                device,
+                "T", "N",
+                channels_col,
+                height_out * width_out,
+                out_channels,
+                1.0,
+                weight,
+                channels_col,
+                grad_output + b * out_channels * height_out * width_out,
+                height_out * width_out,
+                0.0,
+                grad_col,
+                height_out * width_out
+            );
+            
+            col2im_op<Tp, device::CPU>()(
+                device,
+                grad_col,
+                grad_input + b * in_channels * height * width,
+                in_channels,
+                height,
+                width,
+                kernel_h,
+                kernel_w,
+                pad_h,
+                pad_w,
+                stride_h,
+                stride_w
+            );
+        }
+        
+        delete[] col;
+        delete[] grad_col;
     }
 };
 
@@ -516,6 +675,26 @@ struct im2col_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct col2im_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        const Tp* data_col,
+        Tp* data_im,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        throw error::DeviceError("col2im_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
 struct conv2d_forward_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
@@ -536,6 +715,32 @@ struct conv2d_forward_op<Tp, device::GPU> {
         const int stride_w
     ) {
         throw error::DeviceError("conv2d_forward_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct conv2d_backward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_channels,
+        const int height,
+        const int width,
+        const int out_channels,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    ) {
+        throw error::DeviceError("conv2d_backward_op<GPU> can not be called without CUDA support.");
     }
 };
 
@@ -615,9 +820,17 @@ template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;
 template struct im2col_op<double, device::GPU>;
 
+template struct col2im_op<int, device::GPU>;
+template struct col2im_op<float, device::GPU>;
+template struct col2im_op<double, device::GPU>;
+
 template struct conv2d_forward_op<int, device::GPU>;
 template struct conv2d_forward_op<float, device::GPU>;
 template struct conv2d_forward_op<double, device::GPU>;
+
+template struct conv2d_backward_op<int, device::GPU>;
+template struct conv2d_backward_op<float, device::GPU>;
+template struct conv2d_backward_op<double, device::GPU>;
 
 template struct max_pool_forward_op<int, device::GPU>;
 template struct max_pool_forward_op<float, device::GPU>;
@@ -661,9 +874,17 @@ template struct im2col_op<int, device::CPU>;
 template struct im2col_op<float, device::CPU>;
 template struct im2col_op<double, device::CPU>;
 
+template struct col2im_op<int, device::CPU>;
+template struct col2im_op<float, device::CPU>;
+template struct col2im_op<double, device::CPU>;
+
 template struct conv2d_forward_op<int, device::CPU>;
 template struct conv2d_forward_op<float, device::CPU>;
 template struct conv2d_forward_op<double, device::CPU>;
+
+template struct conv2d_backward_op<int, device::CPU>;
+template struct conv2d_backward_op<float, device::CPU>;
+template struct conv2d_backward_op<double, device::CPU>;
 
 template struct max_pool_forward_op<int, device::CPU>;
 template struct max_pool_forward_op<float, device::CPU>;

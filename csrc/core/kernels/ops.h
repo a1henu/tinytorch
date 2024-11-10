@@ -163,13 +163,110 @@ struct im2col_op {
 };
 
 template <typename Tp, typename Device>
-struct conv2d_forward_op {
+struct col2im_op {
+    /// @brief convert the column matrix back to image
+    ///
+    /// Inputs:
+    /// @param device    : the type of device
+    /// @param data_col  : the input column matrix array pointer
+    /// @param data_im   : the output image array pointer
+    /// @param channels  : the number of channels of the image
+    /// @param height    : the height of the image
+    /// @param width     : the width of the image
+    /// @param kernel_h  : the height of the kernel
+    /// @param kernel_w  : the width of the kernel
+    /// @param pad_h     : the height of the padding
+    /// @param pad_w     : the width of the padding
+    /// @param stride_h  : the height of the stride
+    /// @param stride_w  : the width of the stride
     void operator()(
         Device* device,
-        Tp* output,             // (batch_size, out_channels, height_out, width_out)
-        const Tp* input,        // (batch_size, in_channels, height, width)
-        const Tp* weight,       // (out_channels, in_channels, kernel_h, kernel_w)
-        const Tp* bias,         // (out_channels)
+        const Tp* data_col,
+        Tp* data_im,
+        const int channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
+};
+
+template <typename Tp, typename Device>
+struct conv2d_forward_op {
+    /// @brief convolution forward operator
+    ///
+    /// Inputs:
+    /// @param device       : the type of device
+    /// @param output       : the output array pointer
+    /// @param input        : the input array pointer
+    /// @param weight       : the weight array pointer
+    /// @param bias         : the bias array pointer
+    /// @param batch_size   : the batch size
+    /// @param in_channels  : the number of input channels
+    /// @param out_channels : the number of output channels
+    /// @param height       : the height of the input image
+    /// @param width        : the width of the input image
+    /// @param kernel_h     : the height of the kernel
+    /// @param kernel_w     : the width of the kernel
+    /// @param pad_h        : the height of the padding
+    /// @param pad_w        : the width of the padding
+    /// @param stride_h     : the height of the stride
+    /// @param stride_w     : the width of the stride
+    void operator()(
+        Device* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_channels,
+        const int out_channels,
+        const int height,
+        const int width,
+        const int kernel_h,
+        const int kernel_w,
+        const int pad_h,
+        const int pad_w,
+        const int stride_h,
+        const int stride_w
+    );
+};
+
+template <typename Tp, typename Device>
+struct conv2d_backward_op {
+    /// @brief convolution backward operator
+    ///
+    /// Inputs:
+    /// @param device       : the type of device
+    /// @param grad_input   : gradient w.r.t input
+    /// @param grad_weight  : gradient w.r.t weight
+    /// @param grad_bias    : gradient w.r.t bias
+    /// @param grad_output  : gradient w.r.t output
+    /// @param input        : input data
+    /// @param weight       : weight data
+    /// @param batch_size   : batch size
+    /// @param in_channels  : input channels
+    /// @param out_channels : output channels
+    /// @param height       : input height
+    /// @param width        : input width
+    /// @param kernel_h     : kernel height
+    /// @param kernel_w     : kernel width
+    /// @param pad_h        : padding height
+    /// @param pad_w        : padding width
+    /// @param stride_h     : stride height
+    /// @param stride_w     : stride width
+    void operator()(
+        Device* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
         const int batch_size,
         const int in_channels,
         const int out_channels,

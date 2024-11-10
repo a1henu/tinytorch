@@ -88,7 +88,6 @@ template void conv2d_forward<float>(
     tensor::Tensor<float>& output,
     const int pad_h, const int pad_w, const int stride_h, const int stride_w
 );
-
 template void conv2d_forward<double>(
     const tensor::Tensor<double>& input,
     const tensor::Tensor<double>& weight,

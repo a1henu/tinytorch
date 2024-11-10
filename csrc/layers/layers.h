@@ -60,6 +60,22 @@ void conv2d_forward(
 );
 
 /**
+ * @brief backward function for conv2d layer
+ *        - dX = dY conv W^T
+ *        - dW = dY conv X
+ *        - db = \sum dY
+ */
+template <typename Tp>
+void conv2d_backward(
+    const tensor::Tensor<Tp>& input,        // X(batch_size, in_channels, height, width)
+    const tensor::Tensor<Tp>& weight,       // W(out_channels, in_channels, kernel_h, kernel_w)
+    tensor::Tensor<Tp>& grad_input,         // dX(batch_size, in_channels, height, width)
+    tensor::Tensor<Tp>& grad_weight,        // dW(out_channels, in_channels, kernel_h, kernel_w)
+    tensor::Tensor<Tp>& grad_bias,          // db(1, out_channels)
+    const tensor::Tensor<Tp>& grad_output   // dY(batch_size, out_channels, height_out, width_out)
+);
+
+/**
  * @brief forward function for softmax layer
  *        - Y = softmax(X)
  */
