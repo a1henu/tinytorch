@@ -85,7 +85,14 @@ public:
 
     Tensor operator+(const Tensor& other) const;
     Tensor operator-(const Tensor& other) const;
-    Tensor operator*(const Tensor& other) const;
+
+    // matrix multiplication
+    Tensor operator*(const Tensor& other) const;  
+    // Scalar multiplication
+    Tensor operator*(const double scalar) const;
+
+    template<typename T>
+    friend Tensor<T> operator*(const double scalar, const Tensor<T>& tensor);
 
     bool operator==(const Tensor& other) const;
     bool operator!=(const Tensor& other) const;
@@ -119,6 +126,11 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& os, const Tensor<double>& tensor);
+
+template<typename Tp>
+Tensor<Tp> operator*(const double scalar, const Tensor<Tp>& tensor) {
+    return tensor * scalar;
+}
 
 }
 

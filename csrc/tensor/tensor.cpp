@@ -413,6 +413,21 @@ Tensor<Tp> Tensor<Tp>::operator*(const Tensor<Tp>& other) const {
 }
 
 template <typename Tp>
+Tensor<Tp> Tensor<Tp>::operator*(const double scalar) const {
+    if (this->in_cpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU);
+        ops::mul_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), this->get_data(), scalar, this->get_tol_size());
+        return out;
+    } else if (this->in_gpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::GPU);
+        ops::mul_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), this->get_data(), scalar, this->get_tol_size());
+        return out;
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
+}
+
+template <typename Tp>
 bool Tensor<Tp>::operator==(const Tensor<Tp>& other) const {
     if (this == &other) {
         return true;

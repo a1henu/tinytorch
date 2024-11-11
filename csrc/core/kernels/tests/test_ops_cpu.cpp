@@ -59,6 +59,7 @@ protected:
     using sub_cpu_op = ops::sub_op<double, device::CPU>;
     using smatmul_cpu_op = ops::matmul_op<float, device::CPU>;
     using dmatmul_cpu_op = ops::matmul_op<double, device::CPU>;
+    using mul_cpu_op = ops::mul_op<double, device::CPU>;
     using equal_cpu_op = ops::equal_op<double, device::CPU>;
     using ones_cpu_op = ops::ones_op<double, device::CPU>;
     using eye_cpu_op = ops::eye_op<double, device::CPU>;
@@ -74,6 +75,7 @@ protected:
     using sub_gpu_op = ops::sub_op<double, device::GPU>;
     using smatmul_gpu_op = ops::matmul_op<float, device::GPU>;
     using dmatmul_gpu_op = ops::matmul_op<double, device::GPU>;
+    using mul_gpu_op = ops::mul_op<double, device::GPU>;
     using equal_gpu_op = ops::equal_op<double, device::GPU>;
     using ones_gpu_op = ops::ones_op<double, device::GPU>;
     using eye_gpu_op = ops::eye_op<double, device::GPU>;
@@ -107,6 +109,14 @@ TEST_F(TestOps, TestSubOp_cpu) {
     sub_cpu_op()(device::cpu_device, vt_out.data(), vt_1.data(), vt_2.data(), vt_dim);
     for (int i = 0; i < vt_dim; ++i) {
         EXPECT_EQ(vt_out[i], vt_1[i] - vt_2[i]);
+    }
+}
+
+TEST_F(TestOps, TestMulOp_cpu) {
+    std::vector<double> vt_out(vt_dim);
+    mul_cpu_op()(device::cpu_device, vt_out.data(), vt_1.data(), 2.0, vt_dim);
+    for (int i = 0; i < vt_dim; ++i) {
+        EXPECT_EQ(vt_out[i], vt_1[i] * 2.0);
     }
 }
 

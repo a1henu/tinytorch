@@ -48,6 +48,15 @@ struct sub_op<Tp, device::CPU> {
 };
 
 template <typename Tp>
+struct mul_op<Tp, device::CPU> {
+    void operator()(device::CPU* device, Tp* output, const Tp* arr, const Tp num, size_t size) {
+        for (int i = 0; i < size; ++i) {
+            output[i] = arr[i] * num;
+        }
+    }
+};
+
+template <typename Tp>
 struct matmul_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device,
@@ -585,6 +594,19 @@ struct sub_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct mul_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* output, 
+        const Tp* arr, 
+        const Tp num, 
+        size_t size
+    ) {
+        throw error::DeviceError("mul_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
 struct matmul_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
@@ -796,6 +818,10 @@ template struct sub_op<int, device::GPU>;
 template struct sub_op<float, device::GPU>;
 template struct sub_op<double, device::GPU>;
 
+template struct mul_op<int, device::GPU>;
+template struct mul_op<float, device::GPU>;
+template struct mul_op<double, device::GPU>;
+
 template struct matmul_op<int, device::GPU>;
 template struct matmul_op<float, device::GPU>;
 template struct matmul_op<double, device::GPU>;
@@ -849,6 +875,10 @@ template struct add_op<double, device::CPU>;
 template struct sub_op<int, device::CPU>;
 template struct sub_op<float, device::CPU>;
 template struct sub_op<double, device::CPU>;
+
+template struct mul_op<int, device::CPU>;
+template struct mul_op<float, device::CPU>;
+template struct mul_op<double, device::CPU>;
 
 template struct matmul_op<int, device::CPU>;
 template struct matmul_op<float, device::CPU>;

@@ -51,9 +51,20 @@ def test_tensor_ops():
     assert result.device() == DeviceType.CPU
     assert_allclose(result.to_numpy(), a - b)
     
+    # Test matrix multiplication
     result = ta @ tc
     assert result.device() == DeviceType.CPU
     assert_allclose(result.to_numpy(), a @ c)
+    
+    # Test scalar multiplication
+    scalar = 2.5
+    result = ta * scalar
+    assert result.device() == DeviceType.CPU
+    assert_allclose(result.to_numpy(), a * scalar)
+    
+    result = scalar * ta
+    assert result.device() == DeviceType.CPU
+    assert_allclose(result.to_numpy(), scalar * a)
 
 @skip_if_no_cuda
 def test_tensor_ops_gpu():
@@ -82,10 +93,23 @@ def test_tensor_ops_gpu():
     result.to_cpu()
     assert_allclose(result.to_numpy(), a - b)
     
+    # Test matrix multiplication
     result = ta @ tc
     assert result.device() == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), a @ c)
+    
+    # Test scalar multiplication
+    scalar = 2.5
+    result = ta * scalar
+    assert result.device() == DeviceType.GPU
+    result.to_cpu()
+    assert_allclose(result.to_numpy(), a * scalar)
+    
+    result = scalar * ta
+    assert result.device() == DeviceType.GPU
+    result.to_cpu()
+    assert_allclose(result.to_numpy(), scalar * a)
 
 def test_tensor_device():
     """Test basic device operations (CPU)"""

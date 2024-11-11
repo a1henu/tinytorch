@@ -1,4 +1,6 @@
-from ._funcs import (
+from __future__ import annotations
+
+from .funcs import (
     relu_forward, relu_backward,
     sigmoid_forward, sigmoid_backward,
     fc_forward, fc_backward,

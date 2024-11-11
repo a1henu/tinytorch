@@ -50,7 +50,9 @@ PYBIND11_MODULE(_libtensor, m) {
         // operators
         .def("__add__", &tensor::Tensor<double>::operator+)
         .def("__sub__", &tensor::Tensor<double>::operator-)
-        .def("__matmul__", &tensor::Tensor<double>::operator*)
+        .def("__matmul__", py::overload_cast<const tensor::Tensor<double>&>(&tensor::Tensor<double>::operator*, py::const_))
+        .def("__mul__", py::overload_cast<const double>(&tensor::Tensor<double>::operator*, py::const_))
+        .def("__rmul__", &tensor::operator*<double>)
         .def("__eq__", [](const tensor::Tensor<double>& self, py::object other) {
             if (!py::isinstance<tensor::Tensor<double>>(other)) {
                 return false;

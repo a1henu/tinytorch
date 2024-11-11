@@ -73,6 +73,14 @@ kernel_sub(Tp* output, const Tp* input1, const Tp* input2, size_t size) {
     }
 }
 
+template <typename Tp>
+__global__ void
+kernel_mul(Tp* output, const Tp* input, const Tp* num, size_t size) {
+    CUDA_KERNEL_LOOP(i, size) {
+        output[i] = input[i] * *num;
+    }
+}
+
 __global__ void
 assign_to_true(bool* flag) {
     *flag = true;
@@ -336,6 +344,17 @@ struct sub_op<Tp, device::GPU> {
         size_t size
     ) {
         kernel_sub<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input1, input2, size);
+    }
+};
+
+template <typename Tp>
+struct mul_op<Tp, device::GPU> {
+    void operator()(device::GPU* device, Tp* output, const Tp* arr, const Tp num, size_t size) {
+        Tp* d_num;
+        cudaMalloc(&d_num, sizeof(Tp));
+        cudaMemcpy(d_num, &num, sizeof(Tp), cudaMemcpyHostToDevice);
+        kernel_mul<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, arr, d_num, size);
+        cudaFree(d_num);
     }
 };
 
@@ -822,6 +841,10 @@ template struct add_op<double, device::GPU>;
 template struct sub_op<int, device::GPU>;
 template struct sub_op<float, device::GPU>;
 template struct sub_op<double, device::GPU>;
+
+template struct mul_op<int, device::GPU>;
+template struct mul_op<float, device::GPU>;
+template struct mul_op<double, device::GPU>;
 
 template struct matmul_op<int, device::GPU>;
 template struct matmul_op<float, device::GPU>;
