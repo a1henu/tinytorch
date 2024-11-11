@@ -40,6 +40,9 @@ build/
 # test files
 Testing/
 
+# example data
+examples/data/
+
 # pytest cache
 **/.pytest_cache/
 

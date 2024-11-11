@@ -85,7 +85,21 @@ TEST_F(TestOps, tensor_sub_cpu) {
     }
 }
 
-TEST_F(TestOps, tensor_mul_cpu) {
+TEST_F(TestOps, tensor_mul1_cpu) {
+    tensor::Tensor<double> vt_mul = tt_1 * 2.0;
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_NEAR(vt_mul.get_data()[i], vt_1[i] * 2.0, 1e-6);
+    }
+}
+
+TEST_F(TestOps, tensor_mul2_cpu) {
+    tensor::Tensor<double> vt_mul = 2.0 * tt_1;
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_NEAR(vt_mul.get_data()[i], vt_1[i] * 2.0, 1e-6);
+    }
+}
+
+TEST_F(TestOps, tensor_matmul_cpu) {
     int m = 20, n = 20, k = 5;
     tensor::Tensor<double> tt_1_reshape = tt_1.reshape({m, k});
     tensor::Tensor<double> tt_2_reshape = tt_2.reshape({k, n});
@@ -127,7 +141,23 @@ TEST_F(TestOps, tensor_sub_gpu) {
     }
 }
 
-TEST_F(TestOps, tensor_mul_gpu) {
+TEST_F(TestOps, tensor_mul1_gpu) {
+    tensor::Tensor<double> vt_mul = tt_1 * 2.0;
+    tensor::Tensor<double> vt_mc = vt_mul.cpu();
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_NEAR(vt_mc.get_data()[i], vt_1[i] * 2.0, 1e-6);
+    }
+}
+
+TEST_F(TestOps, tensor_mul2_gpu) {
+    tensor::Tensor<double> vt_mul = 2.0 * tt_1;
+    tensor::Tensor<double> vt_mc = vt_mul.cpu();
+    for (int i = 0; i < vt_dim; i++) {
+        EXPECT_NEAR(vt_mc.get_data()[i], vt_1[i] * 2.0, 1e-6);
+    }
+}
+
+TEST_F(TestOps, tensor_matmul_gpu) {
     int m = 20, n = 20, k = 5;
     tensor::Tensor<double> tt_1_reshape = tt_1.reshape({m, k});
     tensor::Tensor<double> tt_2_reshape = tt_2.reshape({k, n});

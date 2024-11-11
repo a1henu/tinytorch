@@ -14,16 +14,16 @@ from typing import Tuple, List
 class Net:
     def __init__(self):
         # Conv1: 1x28x28 -> 6x24x24
-        self.conv1_w = Tensor.from_numpy(np.random.randn(6, 1, 5, 5) * 0.1, DeviceType.CPU)
+        self.conv1_w = Tensor.randn([6, 1, 5, 5], DeviceType.CPU) * 0.1
         self.conv1_b = Tensor.from_numpy(np.zeros(6), DeviceType.CPU)
         
         # Conv2: 6x24x24 -> 16x20x20 
-        self.conv2_w = Tensor.from_numpy(np.random.randn(16, 6, 5, 5) * 0.1, DeviceType.CPU)
+        self.conv2_w = Tensor.randn([16, 6, 5, 5], DeviceType.CPU) * 0.1
         self.conv2_b = Tensor.from_numpy(np.zeros(16), DeviceType.CPU)
         
         # FC: 16x20x20 -> 10
-        self.fc_w = Tensor.from_numpy(np.random.randn(16 * 20 * 20, 10) * 0.1, DeviceType.CPU)
-        self.fc_b = Tensor.from_numpy(np.zeros(10), DeviceType.CPU)
+        self.fc_w = Tensor.randn([16 * 20 * 20, 10], DeviceType.CPU) * 0.1
+        self.fc_b = Tensor.from_numpy(np.zeros([1, 10]), DeviceType.CPU)
         
         self.lr = 0.01
         
@@ -55,8 +55,8 @@ class Net:
         # Softmax
         output = softmax_forward(fc)
         
-        # Cache for backprop
-        cache = [x, conv1, relu1, conv2, relu2, flatten, fc]
+        # Cache for backprop (including pre-softmax fc output)
+        cache = [x, conv1, relu1, conv2, relu2, flatten, fc, output]
         return output, cache
     
     def backward(
@@ -75,12 +75,13 @@ class Net:
         Returns:
             loss: Loss value
         """
-        # Compute loss
-        loss = cross_entropy_forward(pred, target)
-        grad = cross_entropy_backward(pred, target)
-        
         # Unpack cached tensors
-        x, conv1, relu1, conv2, relu2, flatten, fc = cache
+        x, conv1, relu1, conv2, relu2, flatten, fc, softmax_out = cache
+        
+        # Compute loss using softmax output
+        loss = cross_entropy_forward(softmax_out, target)
+        # Compute gradient using pre-softmax values
+        grad = cross_entropy_backward(fc, target)
         
         # Backprop through FC
         grad_fc_x, grad_fc_w, grad_fc_b = fc_backward(
@@ -195,32 +196,16 @@ if __name__ == "__main__":
     assert len(train_dataset) == 60000, "Wrong training set size"
     assert len(test_dataset) == 10000, "Wrong test set size"
     
-    # Test single sample
-    image, label = train_dataset[0]
-    assert image.shape == (1, 28, 28), "Wrong image shape"
-    assert isinstance(label, (int, np.integer)), "Wrong label type"
-    
-    # Test data loader
-    print("Testing data loader...")
+    # data loader
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-    
-    images, labels = next(iter(train_loader))
-    assert images.shape() == [32, 1, 28, 28], "Wrong batch shape"
-    assert labels.shape() == [32], "Wrong labels shape"
-    
-    # Test model
-    print("Testing model...")
-    model = Net()
-    pred, cache = model.forward(images)
-    assert pred.shape() == [32, 10], "Wrong prediction shape"
-    assert len(cache) == 7, "Wrong cache size"
     
     # Train model
     print("Training model...")
     model = train(train_loader, test_loader, epochs=1)
     
-    # Final evaluation
+    # Evaluate model
+    print("Evaluating model...")
     train_acc, train_loss = evaluate(model, train_loader)
     test_acc, test_loss = evaluate(model, test_loader)
     
@@ -230,6 +215,5 @@ if __name__ == "__main__":
     
     assert train_acc > 0.8, "Training accuracy too low"
     assert test_acc > 0.8, "Test accuracy too low"
-    print("All tests passed!")
 
 

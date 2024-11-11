@@ -188,6 +188,15 @@ class Tensor(_Tensor):
         """
         return super().size()
     
+    def __len__(self) -> int:
+        """
+        Get the length of the tensor.
+        
+        Returns:
+            int: The length of the tensor.
+        """
+        return super().__len__()
+    
     def __add__(self, other) -> Tensor:
         """
         Add another tensor to the current tensor.

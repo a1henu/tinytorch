@@ -47,12 +47,17 @@ PYBIND11_MODULE(_libtensor, m) {
         .def("reshape", py::overload_cast<const std::vector<int>&>(&tensor::Tensor<double>::reshape, py::const_))
         .def("transpose", &tensor::Tensor<double>::transpose)
         .def("size", &tensor::Tensor<double>::get_tol_size)
+        .def("__len__", [] (const tensor::Tensor<double>& self) {
+            return self.get_shape()[0];
+        })
         // operators
         .def("__add__", &tensor::Tensor<double>::operator+)
         .def("__sub__", &tensor::Tensor<double>::operator-)
         .def("__matmul__", py::overload_cast<const tensor::Tensor<double>&>(&tensor::Tensor<double>::operator*, py::const_))
         .def("__mul__", py::overload_cast<const double>(&tensor::Tensor<double>::operator*, py::const_))
-        .def("__rmul__", &tensor::operator*<double>)
+        .def("__rmul__", [](const tensor::Tensor<double>& self, double scalar) {
+            return self * scalar;  
+        })
         .def("__eq__", [](const tensor::Tensor<double>& self, py::object other) {
             if (!py::isinstance<tensor::Tensor<double>>(other)) {
                 return false;
