@@ -41,10 +41,11 @@ build/
 Testing/
 
 # pytest cache
-.pytest_cache/
+**/.pytest_cache/
 
-# python cache
-__pycache__/
+# Python cache
+**/__pycache__/
+*.py[cod]
 
 # lab report
 docs/*.pdf
