@@ -18,13 +18,7 @@ from tinytorch.funcs import (
     cross_entropy_forward, cross_entropy_backward
 )
 
-def is_cuda_available() -> bool:
-    return torch.cuda.is_available()
-
-skip_if_no_cuda = pytest.mark.skipif(
-    not is_cuda_available(),
-    reason="CUDA is not available"
-)
+from utils import skip_if_no_cuda
 
 def _test_fc_forward_backward(
     batch_size: int,
