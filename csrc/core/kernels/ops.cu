@@ -98,6 +98,14 @@ kernel_eq(bool* output, const Tp* input1, const Tp* input2, size_t size) {
 
 template <typename Tp>
 __global__ void
+kernel_zeros(Tp* arr, size_t size) {
+    CUDA_KERNEL_LOOP(i, size) {
+        arr[i] = 0;
+    }
+}
+
+template <typename Tp>
+__global__ void
 kernel_ones(Tp* arr, size_t size) {
     CUDA_KERNEL_LOOP(i, size) {
         arr[i] = 1;
@@ -434,6 +442,13 @@ struct equal_op<Tp, device::GPU> {
     ) {
         assign_to_true<<<1, 1>>>(output);
         kernel_eq<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, input1, input2, size);
+    }
+};
+
+template <typename Tp>
+struct zeros_op<Tp, device::GPU> {
+    void operator()(device::GPU* device, Tp* output, size_t size) {
+        kernel_zeros<Tp><<<CUDA_GET_BLOCKS(size), CUDA_K_THREADS>>>(output, size);
     }
 };
 
@@ -853,6 +868,10 @@ template struct matmul_op<double, device::GPU>;
 template struct equal_op<int, device::GPU>;
 template struct equal_op<float, device::GPU>;
 template struct equal_op<double, device::GPU>;
+
+template struct zeros_op<int, device::GPU>;
+template struct zeros_op<float, device::GPU>;
+template struct zeros_op<double, device::GPU>;
 
 template struct ones_op<int, device::GPU>;
 template struct ones_op<float, device::GPU>;

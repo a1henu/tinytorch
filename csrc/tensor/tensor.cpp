@@ -511,6 +511,20 @@ Tensor<Tp> Tensor<Tp>::ones(const std::initializer_list<int>& shape, DeviceType 
     return ones(std::vector<int>(shape), device);
 }
 
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::zeros(const std::vector<int>& shape, DeviceType device) {
+    tensor::Tensor<Tp> out(shape, device);
+    int tol_size = out.get_tol_size();
+    if (device == DeviceType::CPU) {
+        ops::zeros_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), tol_size);
+        return out;
+    } else if (device == DeviceType::GPU) {
+        ops::zeros_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), tol_size);
+        return out;
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
+}
 
 template <typename Tp>
 void print_tensor_data(

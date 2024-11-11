@@ -10,11 +10,32 @@ from utils import skip_if_no_cuda
 
 def test_tensor_constructor():
     """Test tensor constructor (CPU)"""
+    # Test empty constructor
     t1 = Tensor()
+    
+    # Test shape-only constructor
     t2 = Tensor([2, 3], DeviceType.CPU)
+    assert t2.shape() == [2, 3]
+    assert t2.device() == DeviceType.CPU
+    
+    # Test full constructor
     data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
     t3 = Tensor([2, 3], DeviceType.CPU, data)
+    assert t3.shape() == [2, 3]
     assert t3.device() == DeviceType.CPU
+    assert_allclose(t3.to_numpy(), np.array(data).reshape(2, 3))
+    
+    # Test zeros
+    t4 = Tensor.zeros([2, 3])
+    assert t4.shape() == [2, 3]
+    assert t4.device() == DeviceType.CPU
+    assert_allclose(t4.to_numpy(), np.zeros([2, 3]))
+    
+    # Test ones
+    t5 = Tensor.ones([2, 3])
+    assert t5.shape() == [2, 3]
+    assert t5.device() == DeviceType.CPU
+    assert_allclose(t5.to_numpy(), np.ones([2, 3]))
 
 def test_tensor_numpy():
     """Test numpy conversion methods (CPU)"""

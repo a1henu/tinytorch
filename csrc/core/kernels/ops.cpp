@@ -136,6 +136,13 @@ struct equal_op<Tp, device::CPU> {
 };
 
 template <typename Tp>
+struct zeros_op<Tp, device::CPU> {
+    void operator()(device::CPU* device, Tp* output, size_t size) {
+        memset(output, 0, sizeof(Tp) * size);
+    }
+};
+
+template <typename Tp>
 struct ones_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device, 
@@ -642,6 +649,13 @@ struct equal_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct zeros_op<Tp, device::GPU> {
+    void operator()(device::GPU* device, Tp* output, size_t size) {
+        throw error::DeviceError("zeros_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
 struct ones_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device, 
@@ -830,6 +844,10 @@ template struct equal_op<int, device::GPU>;
 template struct equal_op<float, device::GPU>;
 template struct equal_op<double, device::GPU>;
 
+template struct zeros_op<int, device::GPU>;
+template struct zeros_op<float, device::GPU>;
+template struct zeros_op<double, device::GPU>;
+
 template struct ones_op<int, device::GPU>;
 template struct ones_op<float, device::GPU>;
 template struct ones_op<double, device::GPU>;
@@ -887,6 +905,10 @@ template struct matmul_op<double, device::CPU>;
 template struct equal_op<int, device::CPU>;
 template struct equal_op<float, device::CPU>;
 template struct equal_op<double, device::CPU>;
+
+template struct zeros_op<int, device::CPU>;
+template struct zeros_op<float, device::CPU>;
+template struct zeros_op<double, device::CPU>;
 
 template struct ones_op<int, device::CPU>;
 template struct ones_op<float, device::CPU>;

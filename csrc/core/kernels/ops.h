@@ -108,6 +108,17 @@ struct equal_op {
 };
 
 template <typename Tp, typename Device>
+struct zeros_op {
+    /// @brief set all elements to 0
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer
+    /// @param size   : the size of the array 
+    void operator()(Device* device, Tp* output, size_t size);
+};
+
+template <typename Tp, typename Device>
 struct ones_op {
     /// @brief set all elements to 1
     ///

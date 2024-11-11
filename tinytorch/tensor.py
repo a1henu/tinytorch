@@ -325,6 +325,20 @@ class Tensor(_Tensor):
         return super().to_numpy()
     
     @staticmethod
+    def zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
+        """
+        Create a tensor with all elements set to 0.
+        
+        Parameters:
+            shape (List[int]): The shape of the tensor.
+            device (DeviceType): The device of the tensor.
+            
+        Returns:
+            Tensor: The tensor with all elements set to 0.
+        """
+        return _Tensor.zeros(shape, device)
+    
+    @staticmethod
     def ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
         """
         Create a tensor with all elements set to 1.

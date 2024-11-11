@@ -94,6 +94,7 @@ PYBIND11_MODULE(_libtensor, m) {
         )
         // static methods
         .def_static("ones", py::overload_cast<const std::vector<int>&, tensor::DeviceType>(&tensor::Tensor<double>::ones))
+        .def_static("zeros", &tensor::Tensor<double>::zeros)
         .def_static("from_numpy", 
             [] (py::array_t<double, py::array::c_style> array) {
                 py::buffer_info buf = array.request();

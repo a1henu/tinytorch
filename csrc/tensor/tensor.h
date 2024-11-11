@@ -105,6 +105,8 @@ public:
     static Tensor<Tp> ones(const std::vector<int>& shape, DeviceType device);
     static Tensor<Tp> ones(const std::initializer_list<int>& shape, DeviceType device);
 
+    static Tensor<Tp> zeros(const std::vector<int>& shape, DeviceType device);
+
 private:
     std::vector<int> _shape;
     device::BaseDevice* _device = nullptr;
