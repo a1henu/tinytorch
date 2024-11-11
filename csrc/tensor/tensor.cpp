@@ -535,7 +535,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor<double>& tensor) {
         }
     }
     os << "], device = ";
-    os << tensor.in_cpu() ? "CPU" : "GPU";
+    os << (tensor.in_cpu() ? "CPU" : "GPU");
     os << ", " << std::endl << "data = " << std::endl;
     
     std::vector<int> strides(tensor.dim());

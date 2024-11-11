@@ -193,12 +193,12 @@ protected:
     std::vector<double> z_o;
     std::vector<double> z;
     std::vector<double> grad; 
-    std::vector<int> t;
+    std::vector<double> t;
 
     double* z_o_g;
     double* z_g;
     double* grad_g;
-    int* t_g;
+    double* t_g;
 
     double expected_loss = 2.6912;
 
@@ -234,12 +234,12 @@ protected:
         cudaMalloc(&z_o_g, batch_size * num_classes * sizeof(double));
         cudaMalloc(&z_g, batch_size * num_classes * sizeof(double));
         cudaMalloc(&grad_g, batch_size * num_classes * sizeof(double));
-        cudaMalloc(&t_g, batch_size * sizeof(int));
+        cudaMalloc(&t_g, batch_size * sizeof(double));
 
         cudaMemcpy(z_o_g, z_o.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(z_g, z.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(grad_g, grad.data(), batch_size * num_classes * sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(t_g, t.data(), batch_size * sizeof(int), cudaMemcpyHostToDevice);
+        cudaMemcpy(t_g, t.data(), batch_size * sizeof(double), cudaMemcpyHostToDevice);
     }
     void TearDown() override {
         cudaFree(z_o_g);

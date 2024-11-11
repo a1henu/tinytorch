@@ -21,7 +21,7 @@ template <typename Tp>
 void fc_forward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, in_features)
     const tensor::Tensor<Tp>& weight,   // W(in_features, out_features)
-    const tensor::Tensor<Tp>& bias,     // b(out_features)
+    const tensor::Tensor<Tp>& bias,     // b(1, out_features)
     tensor::Tensor<Tp>& output          // Y(batch_size, out_features)
 );
 

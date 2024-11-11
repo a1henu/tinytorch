@@ -48,6 +48,10 @@ def relu_backward(
     Returns:
         Tensor: Output tensor.
     """
+    assert input.shape() == grad.shape(), (
+        f"Input shape {input.shape()} doesn't match gradient shape {grad.shape()}"
+    )
+    
     output = Tensor(input.shape(), input.device())
     _relu_backward(output, input, grad)
     return output
@@ -84,14 +88,18 @@ def sigmoid_backward(
     Returns:
         Tensor: Output tensor.
     """
+    assert input.shape() == grad.shape(), (
+        f"Input shape {input.shape()} doesn't match gradient shape {grad.shape()}"
+    )
+    
     output = Tensor(input.shape(), input.device())
     _sigmoid_backward(output, input, grad)
     return output
 
 def fc_forward(
-    input: Tensor,
-    weight: Tensor,
-    bias: Tensor
+    input: Tensor,    # (batch_size, in_features)
+    weight: Tensor,   # (in_features, out_features)
+    bias: Tensor      # (1, out_features)
 ) -> Tensor:
     """
     Fully connected layer forward propagation.
@@ -105,22 +113,31 @@ def fc_forward(
     Returns:
         Tensor: Output tensor.
     """
-    batch_size = input.shape()[0]
-    out_features = weight.shape()[1]
-    
+    if input.dim() == 1:
+        input = input.reshape([1, -1])
     if bias.dim() == 1:
         bias = bias.reshape([1, -1])
+    
+    batch_size, in_features =  input.shape()
+    in_weight, out_features =  weight.shape()
+    assert weight.dim() == 2, f"Weight tensor must be 2D, but got shape {weight.shape()}"
+    assert in_features == in_weight, (
+        f"Input feature dimension {in_features} doesn't match weight dimension {in_weight}"
+    )
+    assert bias.shape()[1] == out_features, (
+        f"Bias feature dimension {bias.shape()[1]} doesn't match weight output dimension {out_features}"
+    )
     
     output = Tensor([batch_size, out_features], input.device())
     _fc_forward(input, weight, bias, output)
     return output
 
 def fc_backward(
-    input: Tensor,
-    weight: Tensor,
-    bias: Tensor,
-    output: Tensor,
-    grad: Tensor
+    input: Tensor,    # (batch_size, in_features)
+    weight: Tensor,   # (in_features, out_features)
+    bias: Tensor,     # (1, out_features)
+    output: Tensor,   # (batch_size, out_features)
+    grad: Tensor      # (batch_size, out_features)
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """
     Fully connected layer backward propagation.
@@ -142,56 +159,31 @@ def fc_backward(
             Tensor       // Gradients of bias
         ]: Gradients of input, weight, and bias.
     """
-    input_shape = input.shape()
-    if len(input_shape) == 1:
+    if input.dim() == 1:
         input = input.reshape([1, -1])
-    elif len(input_shape) != 2:
-        raise ValueError(
-            f"Input tensor must be 1D or 2D, but got shape {input_shape}"
-        )
-    
-    # Handle weight dimensions
-    weight_shape = weight.shape()
-    if len(weight_shape) != 2:
-        raise ValueError(
-            f"Weight tensor must be 2D, but got shape {weight_shape}"
-        )
-    
-    # Handle bias dimensions
     if bias.dim() == 1:
         bias = bias.reshape([1, -1])
-    elif len(bias.shape()) != 2 or bias.shape()[0] != 1:
-        raise ValueError(
-            f"Bias tensor must be 1D or (1, out_features), but got shape {bias.shape()}"
-        )
+    if output.dim() == 1:
+        output = output.reshape([1, -1])
     
-    # Handle grad dimensions
-    grad_shape = grad.shape()
-    if len(grad_shape) != 2:
-        raise ValueError(
-            f"Gradient tensor must be 2D, but got shape {grad_shape}"
-        )
+    batch_size, in_features  =  input.shape()
+    in_weight, out_features  =  weight.shape()
     
-    # Check dimensions match
-    batch_size, in_features = input.shape()
-    in_features_w, out_features = weight.shape()
-    batch_size_g, out_features_g = grad.shape()
-    
-    if in_features != in_features_w:
-        raise ValueError(
-            f"Input features ({in_features}) doesn't match "
-            f"weight input features ({in_features_w})"
-        )
-    
-    if batch_size != batch_size_g:
-        raise ValueError(
-            f"Batch size mismatch: input {batch_size}, gradient {batch_size_g}"
-        )
-    
-    if out_features != out_features_g:
-        raise ValueError(
-            f"Output features mismatch: weight {out_features}, gradient {out_features_g}"
-        )
+    assert in_features == in_weight, (
+        f"Input feature dimension {in_features} doesn't match weight dimension {in_weight}"
+    )
+    assert bias.shape()[1] == out_features, (
+        f"Bias feature dimension {bias.shape()[1]} doesn't match weight output dimension {out_features}"
+    )
+    assert output.shape()[0] == batch_size, (
+        f"Output batch size {output.shape()[0]} doesn't match input batch size {batch_size}"
+    )
+    assert output.shape()[1] == out_features, (
+        f"Output feature dimension {output.shape()[1]} doesn't match weight output dimension {out_features}"
+    )
+    assert grad.shape() == output.shape(), (
+        f"Gradient shape {grad.shape()} doesn't match output shape {output.shape()}"
+    )
     
     grad_input = Tensor(input.shape(), input.device())
     grad_weight = Tensor(weight.shape(), weight.device())
@@ -201,13 +193,11 @@ def fc_backward(
     return grad_input, grad_weight, grad_bias
 
 def conv2d_forward(
-    input: Tensor,
-    weight: Tensor,
-    bias: Tensor,
-    pad_h: int,
-    pad_w: int,
-    stride_h: int,
-    stride_w: int
+    input: Tensor,   # (batch_size, in_channels, height, width)
+    weight: Tensor,  # (out_channels, in_channels, kernel_h, kernel_w)
+    bias: Tensor,    # (out_channels)
+    padding: Tuple[int, int],
+    stride: Tuple[int, int]
 ) -> Tensor:
     """
     2D convolution forward propagation.
@@ -217,37 +207,35 @@ def conv2d_forward(
         input: Input tensor (batch_size, in_channels, height, width)
         weight: Weight tensor (out_channels, in_channels, kernel_h, kernel_w)
         bias: Bias tensor (out_channels)
-        pad_h: Height padding
-        pad_w: Width padding
-        stride_h: Height stride
-        stride_w: Width stride
+        padding: Tuple of height and width padding
+        stride: Tuple of height and width stride
     
     Returns:
         Tensor: Output tensor (batch_size, out_channels, height_out, width_out)
-    """
-    input_shape = input.shape()
-    if len(input_shape) == 3:
-        # Add batch dimension
-        input = input.reshape([1] + input_shape)
-    elif len(input_shape) != 4:
-        raise ValueError(
-            f"Input tensor must be 3D or 4D, but got shape {input_shape}"
-        )
-    
-    # Handle weight dimensions
-    weight_shape = weight.shape()
-    if len(weight_shape) != 4:
-        raise ValueError(
-            f"Weight tensor must be 4D, but got shape {weight_shape}"
-        )
-    
-    # Handle bias dimensions
-    bias_shape = bias.shape()
-    if len(bias_shape) != 1:
-        bias = bias.reshape([-1])
+    """    
+    if input.dim() == 2:
+        height, width = input.shape()
+        input = input.reshape([1, 1, height, width])
+    if input.dim() == 3:
+        channels, height, width = input.shape()
+        input = input.reshape([1, channels, height, width])
         
     batch_size, in_channels, height, width = input.shape()
-    out_channels, _, kernel_h, kernel_w = weight.shape()
+    out_channels, in_channels_w, kernel_h, kernel_w = weight.shape()
+    out_channels_b = bias.shape()[0]
+    
+    assert input.dim() == 4, f"Input tensor must be 2D, 3D or 4D, but got shape {input.shape()}"
+    assert weight.dim() == 4, f"Weight tensor must be 4D, but got shape {weight.shape()}"
+    assert bias.dim() == 1, f"Bias tensor must be 1D, but got shape {bias.shape()}"
+    assert in_channels == in_channels_w, (
+        f"Input channel dimension {in_channels} doesn't match weight channel dimension {in_channels_w}"
+    )
+    assert out_channels == out_channels_b, (
+        f"Output channel dimension {out_channels} doesn't match bias dimension {out_channels_b}"
+    )
+    
+    pad_h, pad_w = padding
+    stride_h, stride_w = stride
     
     height_out = (height + 2 * pad_h - kernel_h) // stride_h + 1
     width_out = (width + 2 * pad_w - kernel_w) // stride_w + 1
@@ -257,13 +245,11 @@ def conv2d_forward(
     return output
 
 def conv2d_backward(
-    input: Tensor,
-    weight: Tensor,
-    grad_output: Tensor,
-    pad_h: int,
-    pad_w: int,
-    stride_h: int,
-    stride_w: int
+    input: Tensor,          # (batch_size, in_channels, height, width)
+    weight: Tensor,         # (out_channels, in_channels, kernel_h, kernel_w)
+    grad_output: Tensor,    # (batch_size, out_channels, height_out, width_out)
+    padding: Tuple[int, int],
+    stride: Tuple[int, int]
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """
     2D convolution backward propagation.
@@ -275,10 +261,8 @@ def conv2d_backward(
         input: Input tensor (batch_size, in_channels, height, width)
         weight: Weight tensor (out_channels, in_channels, kernel_h, kernel_w)
         grad_output: Output gradient tensor (batch_size, out_channels, height_out, width_out)
-        pad_h: Height padding
-        pad_w: Width padding
-        stride_h: Height stride
-        stride_w: Width stride
+        padding: Tuple of height and width padding
+        stride: Tuple of height and width stride
     
     Returns:
         Tuple[
@@ -287,49 +271,47 @@ def conv2d_backward(
             Tensor       // Gradients for bias
         ]: Gradients for input, weight, and bias
     """
-    # Handle input dimensions
-    input_shape = input.shape()
-    if len(input_shape) == 3:
-        input = input.reshape([1] + input_shape)
-    elif len(input_shape) != 4:
-        raise ValueError(
-            f"Input tensor must be 3D or 4D, but got shape {input_shape}"
-        )
+    if input.dim() == 2:
+        height, width = input.shape()
+        input = input.reshape([1, 1, height, width])
+    if input.dim() == 3:
+        channels, height, width = input.shape()
+        input = input.reshape([1, channels, height, width])
+    if grad_output.dim() == 2:
+        height_out, width_out = grad_output.shape()
+        grad_output = grad_output.reshape([1, 1, height_out, width_out])
+    if grad_output.dim() == 3:
+        batch_size, height_out, width_out = grad_output.shape()
+        grad_output = grad_output.reshape([batch_size, 1, height_out, width_out])
     
-    # Handle weight dimensions
-    weight_shape = weight.shape()
-    if len(weight_shape) != 4:
-        raise ValueError(
-            f"Weight tensor must be 4D, but got shape {weight_shape}"
-        )
-    
-    # Handle grad_output dimensions
-    grad_shape = grad_output.shape()
-    if len(grad_shape) != 4:
-        raise ValueError(
-            f"Gradient tensor must be 4D, but got shape {grad_shape}"
-        )
-    
-    # Check dimensions match
     batch_size, in_channels, height, width = input.shape()
     out_channels, in_channels_w, kernel_h, kernel_w = weight.shape()
-    batch_size_g, out_channels_g, height_out, width_out = grad_output.shape()
+    batch_size_d, out_channels_d, height_out_d, width_out_d = grad_output.shape()
     
-    if in_channels != in_channels_w:
-        raise ValueError(
-            f"Input channels ({in_channels}) doesn't match "
-            f"weight input channels ({in_channels_w})"
-        )
+    pad_h, pad_w = padding
+    stride_h, stride_w = stride
     
-    if batch_size != batch_size_g:
-        raise ValueError(
-            f"Batch size mismatch: input {batch_size}, gradient {batch_size_g}"
-        )
+    height_out = (height + 2 * pad_h - kernel_h) // stride_h + 1
+    width_out = (width + 2 * pad_w - kernel_w) // stride_w + 1
     
-    if out_channels != out_channels_g:
-        raise ValueError(
-            f"Output channels mismatch: weight {out_channels}, gradient {out_channels_g}"
-        )
+    assert input.dim()       == 4, f"Input tensor must be 4D, but got shape {input.shape()}"
+    assert weight.dim()      == 4, f"Weight tensor must be 4D, but got shape {weight.shape()}"
+    assert grad_output.dim() == 4, f"Gradient tensor must be 4D, but got shape {grad_output.shape()}"
+    assert in_channels       == in_channels_w, (
+        f"Input channel dimension {in_channels} doesn't match weight channel dimension {in_channels_w}"
+    )
+    assert batch_size        == batch_size_d, (
+        f"Input batch size {batch_size} doesn't match gradient batch size {batch_size_d}"
+    )
+    assert out_channels      == out_channels_d, (
+        f"Output channel dimension {out_channels} doesn't match gradient channel dimension {out_channels_d}"
+    )
+    assert height_out        == height_out_d, (
+        f"Output height {height_out} doesn't match gradient height {height_out_d}"
+    )
+    assert width_out         == width_out_d, (
+        f"Output width {width_out} doesn't match gradient width {width_out_d}"
+    )
     
     grad_input = Tensor(input.shape(), input.device())
     grad_weight = Tensor(weight.shape(), weight.device())
@@ -342,25 +324,19 @@ def conv2d_backward(
     return grad_input, grad_weight, grad_bias
 
 def max_pool_forward(
-    input: Tensor,
-    kernel_h: int,
-    kernel_w: int,
-    pad_h: int,
-    pad_w: int,
-    stride_h: int,
-    stride_w: int
+    input: Tensor,   # (batch_size, channels, height, width)
+    kernel_size: Tuple[int, int],
+    padding: Tuple[int, int],
+    stride: Tuple[int, int]
 ) -> Tuple[Tensor, Tensor]:
     """
     Max pooling forward propagation
     
     Parameters:
         input: Input tensor (batch_size, channels, height, width)
-        kernel_h: Kernel height
-        kernel_w: Kernel width
-        pad_h: Height padding
-        pad_w: Width padding
-        stride_h: Height stride
-        stride_w: Width stride
+        kernel_size: Tuple of height and width kernel size
+        padding: Tuple of height and width padding
+        stride: Tuple of height and width stride
     
     Returns:
         Tuple[
@@ -368,28 +344,27 @@ def max_pool_forward(
             Tensor       // Mask tensor
         ]: Output tensor and mask tensor
     """
-    # Handle input dimensions
-    input_shape = input.shape()
-    if len(input_shape) == 3:
-        # Add batch dimension
-        input = input.reshape([1] + input_shape)
-    elif len(input_shape) != 4:
-        raise ValueError(
-            f"Input tensor must be 3D or 4D, but got shape {input_shape}"
-        )
+    if input.dim() == 3:
+        channels, height, width = input.shape()
+        input = input.reshape([1, channels, height, width])
     
     batch_size, channels, height, width = input.shape()
+    assert input.dim() == 4, f"Input tensor must be 3D or 4D, but got shape {input.shape()}"
+    
+    kernel_h, kernel_w = kernel_size
+    pad_h, pad_w = padding
+    stride_h, stride_w = stride
+    
     height_out = (height + 2 * pad_h - kernel_h) // stride_h + 1
     width_out = (width + 2 * pad_w - kernel_w) // stride_w + 1
     
-    if height_out <= 0 or width_out <= 0:
-        raise ValueError(
-            f"Invalid output dimensions: ({height_out}, {width_out}). "
-            f"Input: ({height}, {width}), "
-            f"Kernel: ({kernel_h}, {kernel_w}), "
-            f"Padding: ({pad_h}, {pad_w}), "
-            f"Stride: ({stride_h}, {stride_w})"
-        )
+    assert height_out > 0 and width_out > 0, (
+        f"Invalid output dimensions: ({height_out}, {width_out}). "
+        f"Input: ({height}, {width}), "
+        f"Kernel: ({kernel_h}, {kernel_w}), "
+        f"Padding: ({pad_h}, {pad_w}), "
+        f"Stride: ({stride_h}, {stride_w})"
+    )
     
     output = Tensor([batch_size, channels, height_out, width_out], input.device())
     mask = Tensor([batch_size, channels, height_out, width_out], input.device())
@@ -401,15 +376,12 @@ def max_pool_forward(
     return output, mask
 
 def max_pool_backward(
-    grad_output: Tensor,
-    mask: Tensor,
-    kernel_h: int,
-    kernel_w: int,
-    pad_h: int,
-    pad_w: int,
-    stride_h: int,
-    stride_w: int,
-    input_shape: List[int]
+    grad_output: Tensor,  # (batch_size, out_channels, height_out, width_out)
+    mask: Tensor,         # (batch_size, out_channels, height_out, width_out)
+    kernel_size: Tuple[int, int],
+    padding: Tuple[int, int],
+    stride: Tuple[int, int],
+    input_shape: List[int]  # (batch_size, channels, height, width)
 ) -> Tensor:
     """
     Max pooling backward propagation
@@ -417,43 +389,33 @@ def max_pool_backward(
     Parameters:
         grad_output: Output gradient tensor (batch_size, channels, height_out, width_out)
         mask: Mask tensor from forward pass (batch_size, channels, height_out, width_out)
-        kernel_h: Kernel height
-        kernel_w: Kernel width
-        pad_h: Height padding
-        pad_w: Width padding
-        stride_h: Height stride
-        stride_w: Width stride
+        kernel_size: Tuple of height and width kernel size
+        padding: Tuple of height and width padding
+        stride: Tuple of height and width stride
         input_shape: Shape of the input tensor
     
     Returns:
         Tensor: Input gradient tensor
     """
-    # Handle grad_output dimensions
-    grad_shape = grad_output.shape()
-    if len(grad_shape) != 4:
-        raise ValueError(
-            f"Gradient tensor must be 4D, but got shape {grad_shape}"
-        )
+    if grad_output.dim() == 3:
+        channels, height_out, width_out = grad_output.shape()
+        grad_output = grad_output.reshape([1, channels, height_out, width_out])
+    if mask.dim() == 3:
+        channels, height_out, width_out = mask.shape()
+        mask = mask.reshape([1, channels, height_out, width_out])
     
-    # Handle mask dimensions
-    mask_shape = mask.shape()
-    if len(mask_shape) != 4:
-        raise ValueError(
-            f"Mask tensor must be 4D, but got shape {mask_shape}"
-        )
-    
-    # Check dimensions match
-    if grad_shape != mask_shape:
-        raise ValueError(
-            f"Gradient shape {grad_shape} doesn't match mask shape {mask_shape}"
-        )
-    
-    if len(input_shape) != 4:
-        raise ValueError(
-            f"Input shape must be 4D, but got shape {input_shape}"
-        )
+    assert grad_output.dim() == 4, f"Gradient tensor must be 4D, but got shape {grad_output.shape()}"
+    assert mask.dim() == 4, f"Mask tensor must be 4D, but got shape {mask.shape()}"
+    assert grad_output.shape() == mask.shape(), (
+        f"Gradient shape {grad_output.shape()} doesn't match mask shape {mask.shape()}"
+    )
+    assert len(input_shape) == 4, f"Input shape must be 4D, but got shape {input_shape}"
     
     grad_input = Tensor(input_shape, grad_output.device())
+    
+    kernel_h, kernel_w = kernel_size
+    pad_h, pad_w = padding
+    stride_h, stride_w = stride
     
     _max_pool_backward(
         grad_input, mask, grad_output,
@@ -462,7 +424,7 @@ def max_pool_backward(
     return grad_input
 
 def softmax_forward(
-    input: Tensor
+    input: Tensor  # (batch_size, num_classes)
 ) -> Tensor:
     """
     Softmax forward propagation
@@ -474,67 +436,49 @@ def softmax_forward(
     Returns:
         Tensor: Output tensor (batch_size, num_classes)
     """
-    # Handle input dimensions
-    input_shape = input.shape()
-    if len(input_shape) == 1:
-        # Add batch dimension
+    if input.dim() == 1:
         input = input.reshape([1, -1])
-    elif len(input_shape) != 2:
-        raise ValueError(
-            f"Input tensor must be 1D or 2D, but got shape {input_shape}"
-        )
+    
+    assert input.dim() == 2, f"Input tensor must be 1D or 2D, but got shape {input.shape()}"
     
     output = Tensor(input.shape(), input.device())
     _softmax_forward(input, output)
     return output
 
 def cross_entropy_forward(
-    input: Tensor,
-    target: Tensor
+    input: Tensor,  # (batch_size, num_classes)
+    target: Tensor  # (batch_size)
 ) -> Tensor:
     """
     Cross entropy loss forward propagation
     - loss = -sum(y_i * log(p_i))
     
     Parameters:
-        input: Input tensor (batch_size, num_classes) or (num_classes,)
-        target: Target tensor (batch_size,) or scalar
+        input: Input tensor (batch_size, num_classes)
+        target: Target tensor (batch_size)
     
     Returns:
         Tensor: Loss value (scalar)
     """
-    # Handle input dimensions
-    input_shape = input.shape()
-    if len(input_shape) == 1:
-        # Add batch dimension
+    if input.dim() == 1:
         input = input.reshape([1, -1])
-    elif len(input_shape) != 2:
-        raise ValueError(
-            f"Input tensor must be 1D or 2D, but got shape {input_shape}"
-        )
-    
-    # Handle target dimensions
-    target_shape = target.shape()
-    if len(target_shape) == 0:
-        # Scalar target
+    if target.dim() == 0:
         target = target.reshape([1])
-    elif len(target_shape) > 1:
-        raise ValueError(
-            f"Target tensor must be scalar or 1D, but got shape {target_shape}"
-        )
     
-    if target.shape()[0] != input.shape()[0]:
-        raise ValueError(
-            f"Batch size mismatch: input {input.shape()[0]}, target {target.shape()[0]}"
-        )
+    batch_size, num_classes = input.shape()
+    assert input.dim() == 2, f"Input tensor must be 1D or 2D, but got shape {input.shape()}"
+    assert target.dim() == 1, f"Target tensor must be scalar or 1D, but got shape {target.shape()}"
+    assert target.shape()[0] == batch_size, (
+        f"Batch size mismatch: input {batch_size}, target {target.shape()[0]}"
+    )
     
     output = Tensor([1], input.device())
     _cross_entropy_forward(input, target, output)
     return output
 
 def cross_entropy_backward(
-    input: Tensor,
-    target: Tensor
+    input: Tensor,  # (batch_size, num_classes)
+    target: Tensor  # (batch_size)
 ) -> Tensor:
     """
     Cross entropy loss backward propagation (with softmax)
@@ -547,30 +491,17 @@ def cross_entropy_backward(
     Returns:
         Tensor: Input gradient tensor (batch_size, num_classes)
     """
-    # Handle input dimensions
-    input_shape = input.shape()
-    if len(input_shape) == 1:
-        # Add batch dimension
+    if input.dim() == 1:
         input = input.reshape([1, -1])
-    elif len(input_shape) != 2:
-        raise ValueError(
-            f"Input tensor must be 1D or 2D, but got shape {input_shape}"
-        )
-    
-    # Handle target dimensions
-    target_shape = target.shape()
-    if len(target_shape) == 0:
-        # Scalar target
+    if target.dim() == 0:
         target = target.reshape([1])
-    elif len(target_shape) > 1:
-        raise ValueError(
-            f"Target tensor must be scalar or 1D, but got shape {target_shape}"
-        )
     
-    if target.shape()[0] != input.shape()[0]:
-        raise ValueError(
-            f"Batch size mismatch: input {input.shape()[0]}, target {target.shape()[0]}"
-        )
+    batch_size, num_classes = input.shape()
+    assert input.dim() == 2, f"Input tensor must be 1D or 2D, but got shape {input.shape()}"
+    assert target.dim() == 1, f"Target tensor must be scalar or 1D, but got shape {target.shape()}"
+    assert target.shape()[0] == batch_size, (
+        f"Batch size mismatch: input {batch_size}, target {target.shape()[0]}"
+    )
     
     grad = Tensor(input.shape(), input.device())
     _cross_entropy_backward(input, target, grad)

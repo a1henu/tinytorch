@@ -99,8 +99,6 @@ def _test_conv2d_forward_backward(
         rtol: Relative tolerance for numerical comparison
     """
     kernel_h, kernel_w = kernel_size
-    stride_h, stride_w = stride
-    pad_h, pad_w = padding
     
     # Initialize input and parameters
     x = np.random.randn(batch_size, in_channels, height, width)
@@ -118,7 +116,7 @@ def _test_conv2d_forward_backward(
     b_torch = torch.tensor(b, requires_grad=True)
     
     # Forward pass
-    output = conv2d_forward(x_tensor, w_tensor, b_tensor, pad_h, pad_w, stride_h, stride_w)
+    output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding, stride)
     output_torch = F.conv2d(x_torch, w_torch, b_torch, stride=stride, padding=padding)
     
     # Check forward results
@@ -136,7 +134,7 @@ def _test_conv2d_forward_backward(
     output_torch.backward(torch.tensor(grad))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad_tensor,
-        pad_h, pad_w, stride_h, stride_w
+        padding, stride
     )
     
     # Check backward results
@@ -176,10 +174,6 @@ def _test_max_pool_forward_backward(
         padding: (padding_height, padding_width)
         rtol: Relative tolerance for numerical comparison
     """
-    kernel_h, kernel_w = kernel_size
-    stride_h, stride_w = stride
-    pad_h, pad_w = padding
-    
     # Initialize input
     x = np.random.randn(batch_size, channels, height, width)
     x_tensor = Tensor.from_numpy(x)
@@ -187,8 +181,7 @@ def _test_max_pool_forward_backward(
     
     # Forward pass
     output, mask = max_pool_forward(
-        x_tensor, kernel_h, kernel_w,
-        pad_h, pad_w, stride_h, stride_w
+        x_tensor, kernel_size, padding, stride
     )
     output_torch = F.max_pool2d(
         x_torch,
@@ -212,9 +205,7 @@ def _test_max_pool_forward_backward(
     output_torch.backward(torch.tensor(grad))
     grad_x = max_pool_backward(
         grad_tensor, mask,
-        kernel_h, kernel_w,
-        pad_h, pad_w,
-        stride_h, stride_w,
+        kernel_size, padding, stride,
         x_tensor.shape()
     )
     
@@ -271,7 +262,7 @@ def _test_softmax_cross_entropy(
     
     # Backward pass
     loss_torch.backward()
-    grad = cross_entropy_backward(prob, t_tensor)
+    grad = cross_entropy_backward(x_tensor, t_tensor)
     
     # Check backward results
     assert_allclose(
@@ -391,14 +382,14 @@ def test_conv2d():
         w_tensor.to_gpu()
         b_tensor.to_gpu()
         
-        output = conv2d_forward(x_tensor, w_tensor, b_tensor, 1, 1, 1, 1)
+        output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
         assert output.device() == DeviceType.GPU
         
         grad = Tensor.from_numpy(np.random.randn(*output.shape()))
         grad.to_gpu()
         grad_x, grad_w, grad_b = conv2d_backward(
             x_tensor, w_tensor, grad,
-            1, 1, 1, 1
+            padding=(1, 1), stride=(1, 1)
         )
         
         assert grad_x.device() == DeviceType.GPU
@@ -411,75 +402,74 @@ def test_conv2d():
         b_tensor.to_cpu()
     
     # Test on CPU
-    output = conv2d_forward(x_tensor, w_tensor, b_tensor, 1, 1, 1, 1)
+    output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
     assert output.device() == DeviceType.CPU
     
     grad = Tensor.from_numpy(np.random.randn(*output.shape()))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
-        1, 1, 1, 1
+        padding=(1, 1), stride=(1, 1)
     )
     
     assert grad_x.device() == DeviceType.CPU
     assert grad_w.device() == DeviceType.CPU
     assert grad_b.device() == DeviceType.CPU
     
-# def test_max_pool():
-#     """Test Max Pooling layer in various scenarios"""
-#     # Basic functionality test
-#     _test_max_pool_forward_backward(
-#         batch_size=2,
-#         channels=16,
-#         height=32,
-#         width=32,
-#         kernel_size=(2, 2),
-#         stride=(2, 2),
-#         padding=(0, 0)
-#     )
+def test_max_pool():
+    """Test Max Pooling layer in various scenarios"""
+    # Basic functionality test
+    _test_max_pool_forward_backward(
+        batch_size=2,
+        channels=16,
+        height=32,
+        width=32,
+        kernel_size=(2, 2),
+        stride=(2, 2),
+        padding=(0, 0)
+    )
     
-#     # Test different configurations
-#     configs = [
-#         # (batch_size, channels, h, w, kernel, stride, pad)
-#         (1, 1, 28, 28, (2, 2), (2, 2), (0, 0)),     # Single channel
-#         (32, 64, 56, 56, (3, 3), (2, 2), (1, 1)),   # ResNet-like
-#         (16, 32, 16, 16, (4, 4), (4, 4), (0, 0)),   # Large kernel
-#         (8, 128, 7, 7, (3, 3), (1, 1), (1, 1)),     # Small feature map
-#     ]
+    # Test different configurations
+    configs = [
+        # (batch_size, channels, h, w, kernel, stride, pad)
+        (1, 1, 28, 28, (2, 2), (2, 2), (0, 0)),     # Single channel
+        (8, 16, 14, 14, (2, 2), (2, 2), (0, 0)),   # Multiple channels
+        (32, 3, 32, 32, (2, 2), (2, 2), (0, 0)),  # Large size
+    ]
     
-#     for config in configs:
-#         _test_max_pool_forward_backward(*config)
+    for config in configs:
+        _test_max_pool_forward_backward(*config)
     
-#     # Device consistency test
-#     x = np.random.randn(2, 3, 8, 8)
-#     x_tensor = Tensor.from_numpy(x)
+    # Device consistency test
+    x = np.random.randn(2, 3, 8, 8)
+    x_tensor = Tensor.from_numpy(x)
     
-#     if hasattr(x_tensor, "gpu"):
-#         x_tensor.to_gpu()
-#         output, mask = max_pool_forward(x_tensor, 2, 2, 0, 0, 2, 2)
-#         assert output.device() == DeviceType.GPU
-#         assert mask.device() == DeviceType.GPU
+    if hasattr(x_tensor, "gpu"):
+        x_tensor.to_gpu()
+        output, mask = max_pool_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
+        assert output.device() == DeviceType.GPU
+        assert mask.device() == DeviceType.GPU
         
-#         grad = Tensor.from_numpy(np.random.randn(*output.shape()))
-#         grad.to_gpu()
-#         grad_x = max_pool_backward(
-#             grad, mask, 2, 2, 0, 0, 2, 2,
-#             x_tensor.shape()
-#         )
-#         assert grad_x.device() == DeviceType.GPU
+        grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+        grad.to_gpu()
+        grad_x = max_pool_backward(
+            grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
+            input_shape=x_tensor.shape()
+        )
+        assert grad_x.device() == DeviceType.GPU
         
-#         x_tensor.to_cpu()
+        x_tensor.to_cpu()
     
-#     # Test on CPU
-#     output, mask = max_pool_forward(x_tensor, 2, 2, 0, 0, 2, 2)
-#     assert output.device() == DeviceType.CPU
-#     assert mask.device() == DeviceType.CPU
+    # Test on CPU
+    output, mask = max_pool_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
+    assert output.device() == DeviceType.CPU
+    assert mask.device() == DeviceType.CPU
     
-#     grad = Tensor.from_numpy(np.random.randn(*output.shape()))
-#     grad_x = max_pool_backward(
-#         grad, mask, 2, 2, 0, 0, 2, 2,
-#         x_tensor.shape()
-#     )
-#     assert grad_x.device() == DeviceType.CPU
+    grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+    grad_x = max_pool_backward(
+        grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
+        input_shape=x_tensor.shape()
+    )
+    assert grad_x.device() == DeviceType.CPU
 
 def test_softmax_cross_entropy():
     """Test Softmax and Cross Entropy in various scenarios"""

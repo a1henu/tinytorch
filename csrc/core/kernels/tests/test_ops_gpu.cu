@@ -696,18 +696,18 @@ TEST_F(TestOps, TestMaxPoolOp_gpu) {
         1.3151, 0.7686, 
         1.2346, 0.4868
     };
-    int gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double gt_mask[8] = {1, 2, 2, 0, 1, 1, 3, 0};
 
     double* d_data_im;
     double* d_data_out;
-    int* d_mask_out;
+    double* d_mask_out;
 
     double data_out[8] = {0.0};
-    int mask_out[8] = {0};
+    double mask_out[8] = {0};
     
     cudaMalloc(&d_data_im, 32 * sizeof(double));
     cudaMalloc(&d_data_out, 8 * sizeof(double));
-    cudaMalloc(&d_mask_out, 8 * sizeof(int));
+    cudaMalloc(&d_mask_out, 8 * sizeof(double));
 
     cudaMemcpy(d_data_im, data_im, 32 * sizeof(double), cudaMemcpyHostToDevice);
     max_pool_gpu_op()(
@@ -722,7 +722,7 @@ TEST_F(TestOps, TestMaxPoolOp_gpu) {
         2, 2
     );
     cudaMemcpy(data_out, d_data_out, 8 * sizeof(double), cudaMemcpyDeviceToHost);
-    cudaMemcpy(mask_out, d_mask_out, 8 * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(mask_out, d_mask_out, 8 * sizeof(double), cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < 8; ++i) {
         EXPECT_NEAR(data_out[i], gt_out[i], 1e-4);
@@ -735,7 +735,7 @@ TEST_F(TestOps, TestMaxPoolOp_gpu) {
 }
 
 TEST_F(TestOps, TestMaxPoolBackwardOp_gpu) {
-    int mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
+    double mask_out[8] = {1, 2, 2, 0, 1, 1, 3, 0};
     double grad_out[8] = {1, 1, 1, 1, 1, 1, 1, 1};
     double grad_im[32] = {0};
     
@@ -750,15 +750,15 @@ TEST_F(TestOps, TestMaxPoolBackwardOp_gpu) {
         0, 1, 0, 0
     };
 
-    int* d_mask_out;
+    double* d_mask_out;
     double* d_grad_out;
     double* d_grad_im;
     
-    cudaMalloc(&d_mask_out, 8 * sizeof(int));
+    cudaMalloc(&d_mask_out, 8 * sizeof(double));
     cudaMalloc(&d_grad_out, 8 * sizeof(double));
     cudaMalloc(&d_grad_im, 32 * sizeof(double));
 
-    cudaMemcpy(d_mask_out, mask_out, 8 * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mask_out, mask_out, 8 * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(d_grad_out, grad_out, 8 * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemset(d_grad_im, 0, 32 * sizeof(double));  // 初始化为0
 
