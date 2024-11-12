@@ -388,7 +388,7 @@ struct matmul_op<Tp, device::GPU> {
         cublasCreate(&handle);
         cublasOperation_t transa_ = (*transa == 'N') ? CUBLAS_OP_N : CUBLAS_OP_T;
         cublasOperation_t transb_ = (*transb == 'N') ? CUBLAS_OP_N : CUBLAS_OP_T;
-        if (std::is_same<Tp, float>::value) {
+        if constexpr (std::is_same<Tp, float>::value) {
             cublasSgemm(
                 handle,
                 transb_,
@@ -406,7 +406,7 @@ struct matmul_op<Tp, device::GPU> {
                 ldc
             );
             cublasDestroy(handle);
-        } else if (std::is_same<Tp, double>::value) {
+        } else if constexpr (std::is_same<Tp, double>::value) {
             cublasDgemm(
                 handle,
                 transb_,

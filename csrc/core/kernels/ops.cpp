@@ -76,7 +76,7 @@ struct matmul_op<Tp, device::CPU> {
     ) {
         CBLAS_TRANSPOSE transa_ = transa[0] == 'N' ? CblasNoTrans : CblasTrans;
         CBLAS_TRANSPOSE transb_ = transb[0] == 'N' ? CblasNoTrans : CblasTrans;
-        if (std::is_same<Tp, float>::value) {
+        if constexpr (std::is_same<Tp, float>::value) {
             cblas_sgemm(
                 CblasRowMajor,
                 transa_,
@@ -93,7 +93,7 @@ struct matmul_op<Tp, device::CPU> {
                 reinterpret_cast<float*>(C),
                 ldc
             );
-        } else if (std::is_same<Tp, double>::value) {
+        } else if constexpr (std::is_same<Tp, double>::value) {
             cblas_dgemm(
                 CblasRowMajor,
                 transa_,
