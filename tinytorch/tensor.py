@@ -325,6 +325,37 @@ class Tensor(_Tensor):
         return super().to_numpy()
     
     @staticmethod
+    def save(filename: str, tensor: Tensor) -> None:
+        """
+        Save the tensor to a numpy file.
+        
+        Parameters:
+            tensor (Tensor): The tensor to save.
+            path (str): The path to the file.
+        
+        Returns:
+            None
+        """
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"Expected Tensor, got {type(tensor).__name__}")
+        np.save(filename, tensor.to_numpy())
+    
+    @staticmethod
+    def load(filename: str, device: DeviceType = DeviceType.CPU) -> Tensor:
+        """
+        Load the tensor from a numpy file.
+        
+        Parameters:
+            filename (str): The path to the file.
+            device (DeviceType): The device of the tensor.
+        
+        Returns:
+            Tensor: The loaded tensor.
+        """
+        array = np.load(filename)
+        return Tensor.from_numpy(array, device)
+    
+    @staticmethod
     def zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
         """
         Create a tensor with all elements set to 0.

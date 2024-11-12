@@ -15,15 +15,15 @@ class Net:
     def __init__(self):
         # Conv1: 1x28x28 -> 6x24x24
         self.conv1_w = Tensor.randn([6, 1, 5, 5], DeviceType.CPU) * 0.1
-        self.conv1_b = Tensor.from_numpy(np.zeros(6), DeviceType.CPU)
+        self.conv1_b = Tensor.zeros([6], DeviceType.CPU)
         
         # Conv2: 6x24x24 -> 16x20x20 
         self.conv2_w = Tensor.randn([16, 6, 5, 5], DeviceType.CPU) * 0.1
-        self.conv2_b = Tensor.from_numpy(np.zeros(16), DeviceType.CPU)
+        self.conv2_b = Tensor.zeros([16], DeviceType.CPU)
         
         # FC: 16x20x20 -> 10
         self.fc_w = Tensor.randn([16 * 20 * 20, 10], DeviceType.CPU) * 0.1
-        self.fc_b = Tensor.from_numpy(np.zeros([1, 10]), DeviceType.CPU)
+        self.fc_b = Tensor.zeros([1, 10], DeviceType.CPU)
         
         self.lr = 0.01
         
