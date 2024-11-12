@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 class DataSet:
     """Abstract dataset class"""
     def __init__(self):
+        """Initialize the dataset"""
         pass
     
     def __getitem__(
