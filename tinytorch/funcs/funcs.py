@@ -450,7 +450,8 @@ def cross_entropy_forward(
     target: Tensor  # (batch_size)
 ) -> Tensor:
     """
-    Cross entropy loss forward propagation
+    Cross entropy loss forward propagation (with softmax)
+    - p = softmax(X)
     - loss = -sum(y_i * log(p_i))
     
     Parameters:
@@ -465,15 +466,16 @@ def cross_entropy_forward(
     if target.dim() == 0:
         target = target.reshape([1])
     
-    batch_size, num_classes = input.shape()
+    batch_size, _ = input.shape()
     assert input.dim() == 2, f"Input tensor must be 1D or 2D, but got shape {input.shape()}"
     assert target.dim() == 1, f"Target tensor must be scalar or 1D, but got shape {target.shape()}"
-    assert target.shape()[0] == batch_size, (
+    assert len(target) == batch_size, (
         f"Batch size mismatch: input {batch_size}, target {target.shape()[0]}"
     )
     
+    prob = softmax_forward(input)
     output = Tensor([1], input.device())
-    _cross_entropy_forward(input, target, output)
+    _cross_entropy_forward(prob, target, output)
     return output
 
 def cross_entropy_backward(

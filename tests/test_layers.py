@@ -243,7 +243,7 @@ def _test_softmax_cross_entropy(
     
     # Forward pass
     prob = softmax_forward(x_tensor)
-    loss = cross_entropy_forward(prob, t_tensor)
+    loss = cross_entropy_forward(x_tensor, t_tensor)
     
     prob_torch = F.softmax(x_torch, dim=1)
     loss_torch = F.cross_entropy(x_torch, t_torch)
@@ -263,8 +263,8 @@ def _test_softmax_cross_entropy(
     )
     
     # Backward pass
-    loss_torch.backward()
     grad = cross_entropy_backward(x_tensor, t_tensor)
+    loss_torch.backward()
     
     # Check backward results
     assert_allclose(

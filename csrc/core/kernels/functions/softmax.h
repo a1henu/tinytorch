@@ -9,6 +9,7 @@
 #ifndef CSRC_CORE_KERNELS_FUNCTIONS_SOFTMAX_H
 #define CSRC_CORE_KERNELS_FUNCTIONS_SOFTMAX_H
 
+#include <algorithm>
 #include <cstddef>
 
 #include "core/device/device.h"
