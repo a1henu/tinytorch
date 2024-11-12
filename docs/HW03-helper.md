@@ -90,4 +90,39 @@ skip_if_no_cuda = pytest.mark.skipif(
 
 ## 示例
 
-我利用目前构造的函数和类，通过**手动微分**
+我利用目前构造的函数和类，通过**手动微分**实现了一个简单的CNN模型，用于对`MNIST`数据集进行训练，具体代码位于`examples/vanilla_cnn_mnist.py`。
+
+直接运行即可：
+```bash
+python examples/vanilla_cnn_mnist.py
+```
+
+结果如下：
+```
+Loading datasets...
+Training model...
+Epoch [1/1], Step [100/1875], Loss: 2.1124
+Epoch [1/1], Step [200/1875], Loss: 1.6029
+Epoch [1/1], Step [300/1875], Loss: 1.2737
+Epoch [1/1], Step [400/1875], Loss: 1.0755
+Epoch [1/1], Step [500/1875], Loss: 0.9465
+Epoch [1/1], Step [600/1875], Loss: 0.8542
+Epoch [1/1], Step [700/1875], Loss: 0.7824
+Epoch [1/1], Step [800/1875], Loss: 0.7271
+Epoch [1/1], Step [900/1875], Loss: 0.6797
+Epoch [1/1], Step [1000/1875], Loss: 0.6442
+Epoch [1/1], Step [1100/1875], Loss: 0.6113
+Epoch [1/1], Step [1200/1875], Loss: 0.5808
+Epoch [1/1], Step [1300/1875], Loss: 0.5566
+Epoch [1/1], Step [1400/1875], Loss: 0.5357
+Epoch [1/1], Step [1500/1875], Loss: 0.5159
+Epoch [1/1], Step [1600/1875], Loss: 0.4976
+Epoch [1/1], Step [1700/1875], Loss: 0.4825
+Epoch [1/1], Step [1800/1875], Loss: 0.4680
+Epoch [1/1], Train Acc: 0.9371, Train Loss: 1.5591, Test Acc: 0.9405, Test Loss: 1.5559
+Evaluating model...
+
+Final Results:
+Train Accuracy: 0.9371
+Test Accuracy: 0.9405
+```
