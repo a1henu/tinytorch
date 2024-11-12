@@ -13,7 +13,7 @@ from tinytorch import DeviceType, Tensor
 from tinytorch.funcs import (
     fc_forward, fc_backward,
     conv2d_forward, conv2d_backward,
-    max_pool_forward, max_pool_backward,
+    max_pool2d_forward, max_pool2d_backward,
     softmax_forward,
     cross_entropy_forward, cross_entropy_backward
 )
@@ -182,7 +182,7 @@ def _test_max_pool_forward_backward(
     x_torch = torch.tensor(x, requires_grad=True)
     
     # Forward pass
-    output, mask = max_pool_forward(
+    output, mask = max_pool2d_forward(
         x_tensor, kernel_size, padding, stride
     )
     output_torch = F.max_pool2d(
@@ -205,7 +205,7 @@ def _test_max_pool_forward_backward(
     grad_tensor = Tensor.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
-    grad_x = max_pool_backward(
+    grad_x = max_pool2d_backward(
         grad_tensor, mask,
         kernel_size, padding, stride,
         x_tensor.shape()
@@ -446,12 +446,12 @@ def test_max_pool():
     x = np.random.randn(2, 3, 8, 8)
     x_tensor = Tensor.from_numpy(x)
     
-    output, mask = max_pool_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
+    output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
     assert output.device() == DeviceType.CPU
     assert mask.device() == DeviceType.CPU
     
     grad = Tensor.from_numpy(np.random.randn(*output.shape()))
-    grad_x = max_pool_backward(
+    grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
         input_shape=x_tensor.shape()
     )
@@ -464,13 +464,13 @@ def test_max_pool_gpu():
     x_tensor = Tensor.from_numpy(x)
     x_tensor.to_gpu()
     
-    output, mask = max_pool_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
+    output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
     assert output.device() == DeviceType.GPU
     assert mask.device() == DeviceType.GPU
     
     grad = Tensor.from_numpy(np.random.randn(*output.shape()))
     grad.to_gpu()
-    grad_x = max_pool_backward(
+    grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
         input_shape=x_tensor.shape()
     )

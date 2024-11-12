@@ -323,7 +323,7 @@ def conv2d_backward(
     )
     return grad_input, grad_weight, grad_bias
 
-def max_pool_forward(
+def max_pool2d_forward(
     input: Tensor,   # (batch_size, channels, height, width)
     kernel_size: Tuple[int, int],
     padding: Tuple[int, int],
@@ -375,7 +375,7 @@ def max_pool_forward(
     )
     return output, mask
 
-def max_pool_backward(
+def max_pool2d_backward(
     grad_output: Tensor,  # (batch_size, out_channels, height_out, width_out)
     mask: Tensor,         # (batch_size, out_channels, height_out, width_out)
     kernel_size: Tuple[int, int],

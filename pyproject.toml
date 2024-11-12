@@ -2,7 +2,6 @@
 requires = ["scikit-build-core>=0.10", "pybind11", "numpy"]
 build-backend = "scikit_build_core.build"
 
-
 [project]
 name = "tinytorch"
 version = "0.0.1"
