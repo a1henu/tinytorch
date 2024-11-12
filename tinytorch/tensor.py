@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, overload
+from typing import List, Dict, overload
 
 import numpy as np 
 from numpy.typing import NDArray
@@ -341,6 +341,24 @@ class Tensor(_Tensor):
         np.save(filename, tensor.to_numpy())
     
     @staticmethod
+    def savez(filename: str, **kwargs) -> None:
+        """
+        Save tensors to a compressed numpy file.
+        
+        Parameters:
+            filename (str): The path to the file.
+            kwargs: The tensors to save.
+        
+        Returns:
+            None
+        """
+        for key, value in kwargs.items():
+            if not isinstance(value, Tensor):
+                raise TypeError(f"Expected Tensor, got {type(value).__name__}")
+            kwargs[key] = value.to_numpy()
+        np.savez(filename, **kwargs)
+    
+    @staticmethod
     def load(filename: str, device: DeviceType = DeviceType.CPU) -> Tensor:
         """
         Load the tensor from a numpy file.
@@ -354,6 +372,25 @@ class Tensor(_Tensor):
         """
         array = np.load(filename)
         return Tensor.from_numpy(array, device)
+    
+    @staticmethod
+    def loadz(filename: str, device: DeviceType = DeviceType.CPU, *args) -> Dict[Tensor]:
+        """
+        Load tensors from a compressed numpy file.
+        
+        Parameters:
+            filename (str): The path to the file.
+            device (DeviceType): The device of the tensors.
+            args: The keys of the tensors to load.
+        
+        Returns:
+            Dict[Tensor]: The loaded tensors.
+        """
+        tensors = {}
+        with np.load(filename) as data:
+            for key in args:
+                tensors[key] = Tensor.from_numpy(data[key], device)
+        return tensors
     
     @staticmethod
     def zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
