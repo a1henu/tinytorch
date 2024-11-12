@@ -34,23 +34,32 @@ class Tensor(_Tensor):
         to_gpu(): Move the tensor to GPU.
         in_cpu(): Check if the tensor is on CPU.
         in_gpu(): Check if the tensor is on GPU.
+        device(): Get the device of the tensor.
         
         dim(): Get the dimension of the tensor.
         shape(): Get the shape of the tensor.
         reshape(shape: List[int]) -> Tensor: Reshape the tensor to the given shape.
         transpose(): Transpose the tensor.
         size(): Get the total size of the tensor.
+        __len__() -> int: Get the length of the tensor.
         
         __add__(other: Tensor) -> Tensor: Add another tensor to the current tensor.
         __sub__(other: Tensor) -> Tensor: Subtract another tensor from the current tensor.
         __matmul__(other: Tensor) -> Tensor: Matrix multiplication of two tensors.
+       __mul__(other: float) -> Tensor: Scalar multiplication of the tensor.
+        __rmul__(other: float) -> Tensor: Scalar multiplication of the tensor.
         __eq__(other: Tensor) -> bool: Check if the current tensor is equal to another tensor.
         __getitem__(args) -> float: Get item from the tensor.
         __repr__(): Get the string representation of the tensor.
         __str__(): Get the string representation of the tensor.
         
-        from_numpy(array: NDArray) -> Tensor: Create a tensor from a numpy array.
         to_numpy() -> NDArray: Convert the tensor to a numpy array.
+        from_numpy(array: NDArray) -> Tensor: Create a tensor from a numpy array.
+        save(filename: str, tensor: Tensor) -> None: Save the tensor to a numpy file.
+        savez(filename: str, **kwargs) -> None: Save tensors to a compressed numpy file.
+        load(filename: str) -> Tensor: Load the tensor from a numpy file.
+        loadz(filename: str, *args) -> Dict[Tensor]: Load tensors from a compressed numpy file.
+        zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with all elements set to 0.
         ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with all elements set to 1.
         randn(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with elements drawn from a normal distribution.
         
@@ -297,6 +306,15 @@ class Tensor(_Tensor):
         """
         return super().__str__()
     
+    def to_numpy(self) -> NDArray:
+        """
+        Convert the tensor to a numpy array.
+        
+        Returns:
+            NDArray: The numpy array.
+        """
+        return super().to_numpy()
+    
     @staticmethod
     def from_numpy(array: NDArray, device: DeviceType = DeviceType.CPU) -> Tensor:
         """
@@ -314,15 +332,6 @@ class Tensor(_Tensor):
         if device == DeviceType.GPU:
             t.to_gpu()
         return t
-    
-    def to_numpy(self) -> NDArray:
-        """
-        Convert the tensor to a numpy array.
-        
-        Returns:
-            NDArray: The numpy array.
-        """
-        return super().to_numpy()
     
     @staticmethod
     def save(filename: str, tensor: Tensor) -> None:
