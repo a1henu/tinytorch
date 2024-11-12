@@ -57,6 +57,37 @@ CUDA_BUILD=ON pip install -v .[test]    # 安装CUDA版本，安装测试依赖
     - `conv2d_forward`：`Convolution`前向传播
     - `conv2d_backward`：`Convolution`反向传播
     - `max_pool2d_forward`：`MaxPooling`前向传播
+    - `max_pool2d_backward`：`MaxPooling`反向传播
     - `softmax_forward`：`SoftMax`前向传播
     - `cross_entropy_forward`：`CrossEntropyLoss`前向传播（内含`softmax`）
     - `cross_entropy_backward`：`CrossEntropyLoss`反向传播（内含`softmax`）
+- `tinytorch.data`：`data`子模块
+    - `Dataset`：数据集基类
+    - `DataLoader`：数据加载器
+    - `MNIST`：`MNIST`数据集
+
+## 测试
+
+测试代码位于`tests`文件夹中，使用`pytest`进行测试，测试代码覆盖了`Tensor`、`funcs`和`data`模块的大部分功能。
+
+测试代码中使用了`torch`进行对照，以保证实现的正确性。
+
+运行测试代码：
+```bash
+pytest -v
+```
+
+测试中创建了如下装饰器，以便在不含`CUDA`的环境中跳过gpu测试：
+```python
+def is_cuda_available() -> bool:
+    return torch.cuda.is_available()
+
+skip_if_no_cuda = pytest.mark.skipif(
+    not is_cuda_available(),
+    reason="CUDA is not available"
+)
+```
+
+## 示例
+
+我利用目前构造的函数和类，通过**手动微分**
