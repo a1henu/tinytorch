@@ -55,8 +55,8 @@ class Net:
         # Softmax
         output = softmax_forward(fc)
         
-        # Cache for backprop (including pre-softmax fc output)
-        cache = [x, conv1, relu1, conv2, relu2, flatten, fc, output]
+        # Cache for backprop (including pre-softmax fc)
+        cache = [x, conv1, relu1, conv2, relu2, flatten, fc]
         return output, cache
     
     def backward(
@@ -76,10 +76,10 @@ class Net:
             loss: Loss value
         """
         # Unpack cached tensors
-        x, conv1, relu1, conv2, relu2, flatten, fc, softmax_out = cache
+        x, conv1, relu1, conv2, relu2, flatten, fc = cache
         
         # Compute loss using softmax output
-        loss = cross_entropy_forward(softmax_out, target)
+        loss = cross_entropy_forward(fc, target)
         # Compute gradient using pre-softmax values
         grad = cross_entropy_backward(fc, target)
         
