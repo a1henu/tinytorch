@@ -309,12 +309,12 @@ TEST_F(TestOps, TestCol2ImOp_cpu) {
      * 
      * col2im output format (height = width = 3):
      * [
-     * [1, 2, 3;    // channel 1
-     *  4, 5, 6;
-     *  7, 8, 9],
-     * [3, 2, 1;    // channel 2
-     *  6, 5, 4;
-     *  9, 8, 7]
+     * [1, 4, 3;    // channel 1
+     *  8, 20, 12;
+     *  7, 16, 9],
+     * [3, 4, 1;    // channel 2
+     *  12, 20, 8;
+     *  9, 16, 7]
      * ]
      * 
      * so data_im is

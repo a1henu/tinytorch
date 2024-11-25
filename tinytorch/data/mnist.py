@@ -31,7 +31,7 @@ class MNIST(DataSet):
             download: If True, download the dataset from the internet
         """
         super().__init__()
-        self.root = root
+        self.root = os.path.join(root, "MNIST")
         self.train = train
         self.download = download
         

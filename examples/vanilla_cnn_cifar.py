@@ -1,5 +1,5 @@
 from tinytorch import Tensor, DeviceType
-from tinytorch.data import MNIST, DataLoader
+from tinytorch.data import CIFAR10, DataLoader
 from tinytorch.funcs import (
     fc_forward, fc_backward, 
     conv2d_forward, conv2d_backward,
@@ -12,18 +12,24 @@ import numpy as np
 from typing import Tuple, List
 
 class Net:
-    def __init__(self):
-        # Conv1: 1x28x28 -> 6x24x24
-        self.conv1_w = Tensor.randn([6, 1, 5, 5], DeviceType.CPU) * 0.1
-        self.conv1_b = Tensor.zeros([6], DeviceType.CPU)
+    def __init__(self, device: DeviceType = DeviceType.GPU):
+        self.device = device
         
-        # Conv2: 6x24x24 -> 16x20x20 
-        self.conv2_w = Tensor.randn([16, 6, 5, 5], DeviceType.CPU) * 0.1
-        self.conv2_b = Tensor.zeros([16], DeviceType.CPU)
+        # Conv1: 3x32x32 -> 32x28x28
+        self.conv1_w = Tensor.randn([32, 3, 5, 5], device) * 0.1
+        self.conv1_b = Tensor.zeros([32], device)
         
-        # FC: 16x20x20 -> 10
-        self.fc_w = Tensor.randn([16 * 20 * 20, 10], DeviceType.CPU) * 0.1
-        self.fc_b = Tensor.zeros([1, 10], DeviceType.CPU)
+        # Conv2: 32x28x28 -> 64x24x24
+        self.conv2_w = Tensor.randn([64, 32, 5, 5], device) * 0.1
+        self.conv2_b = Tensor.zeros([64], device)
+        
+        # Conv3: 64x24x24 -> 128x20x20
+        self.conv3_w = Tensor.randn([128, 64, 5, 5], device) * 0.1
+        self.conv3_b = Tensor.zeros([128], device)
+        
+        # FC: 128x20x20 -> 10
+        self.fc_w = Tensor.randn([128 * 20 * 20, 10], device) * 0.1
+        self.fc_b = Tensor.zeros([1, 10], device)
         
         self.lr = 0.01
         
@@ -31,7 +37,7 @@ class Net:
         """Forward pass
         
         Args:
-            x: Input tensor (batch_size, 1, 28, 28)
+            x: Input tensor (batch_size, 3, 32, 32)
             
         Returns:
             output: Network output
@@ -45,9 +51,13 @@ class Net:
         conv2 = conv2d_forward(relu1, self.conv2_w, self.conv2_b, (0, 0), (1, 1))
         relu2 = relu_forward(conv2)
         
+        # Third conv block
+        conv3 = conv2d_forward(relu2, self.conv3_w, self.conv3_b, (0, 0), (1, 1))
+        relu3 = relu_forward(conv3)
+        
         # Flatten
-        batch_size = relu2.shape()[0]
-        flatten = relu2.reshape([batch_size, -1])
+        batch_size = relu3.shape()[0]
+        flatten = relu3.reshape([batch_size, -1])
         
         # Fully connected
         fc = fc_forward(flatten, self.fc_w, self.fc_b)
@@ -55,8 +65,8 @@ class Net:
         # Softmax
         output = softmax_forward(fc)
         
-        # Cache for backprop (including pre-softmax fc)
-        cache = [x, conv1, relu1, conv2, relu2, flatten, fc]
+        # Cache for backprop
+        cache = [x, conv1, relu1, conv2, relu2, conv3, relu3, flatten, fc]
         return output, cache
     
     def backward(
@@ -65,22 +75,12 @@ class Net:
         target: Tensor, 
         cache: List[Tensor]
     ) -> float:
-        """Backward pass
-        
-        Args:
-            pred: Network predictions
-            target: Target labels
-            cache: Cached results from forward pass
-            
-        Returns:
-            loss: Loss value
-        """
+        """Backward pass"""
         # Unpack cached tensors
-        x, conv1, relu1, conv2, relu2, flatten, fc = cache
+        x, conv1, relu1, conv2, relu2, conv3, relu3, flatten, fc = cache
         
-        # Compute loss using softmax output
-        loss = cross_entropy_forward(fc, target)
-        # Compute gradient using pre-softmax values
+        # Compute loss and gradient
+        loss = cross_entropy_forward(pred, target)
         grad = cross_entropy_backward(fc, target)
         
         # Backprop through FC
@@ -88,11 +88,17 @@ class Net:
             flatten, self.fc_w, self.fc_b, fc, grad
         )
         
-        # Reshape gradient to match conv output
-        grad_flatten = grad_fc_x.reshape(relu2.shape())
+        # Reshape gradient
+        grad_flatten = grad_fc_x.reshape(relu3.shape())
+        
+        # Backprop through third conv block
+        grad_relu3 = relu_backward(conv3, grad_flatten)
+        grad_conv3_x, grad_conv3_w, grad_conv3_b = conv2d_backward(
+            relu2, self.conv3_w, grad_relu3, (0, 0), (1, 1)
+        )
         
         # Backprop through second conv block
-        grad_relu2 = relu_backward(conv2, grad_flatten)
+        grad_relu2 = relu_backward(conv2, grad_conv3_x)
         grad_conv2_x, grad_conv2_w, grad_conv2_b = conv2d_backward(
             relu1, self.conv2_w, grad_relu2, (0, 0), (1, 1)
         )
@@ -108,35 +114,24 @@ class Net:
         self.conv1_b -= self.lr * grad_conv1_b
         self.conv2_w -= self.lr * grad_conv2_w
         self.conv2_b -= self.lr * grad_conv2_b
+        self.conv3_w -= self.lr * grad_conv3_w
+        self.conv3_b -= self.lr * grad_conv3_b
         self.fc_w -= self.lr * grad_fc_w
         self.fc_b -= self.lr * grad_fc_b
         
         return loss.to_numpy()[0]
 
 def evaluate(model: Net, dataloader: DataLoader) -> Tuple[float, float]:
-    """Evaluate model performance
-    
-    Args:
-        model: Neural network model
-        dataloader: Data loader
-        
-    Returns:
-        accuracy: Classification accuracy
-        avg_loss: Average loss
-    """
+    """Evaluate model performance"""
     total = 0
     correct = 0
     total_loss = 0
     
     for images, labels in dataloader:
-        # Forward pass
         pred, cache = model.forward(images)
-        
-        # Compute loss
         loss = cross_entropy_forward(pred, labels)
         total_loss += loss.to_numpy()[0]
         
-        # Compute accuracy
         pred_labels = pred.to_numpy().argmax(axis=1)
         correct += (pred_labels == labels.to_numpy()).sum()
         total += len(labels)
@@ -146,37 +141,30 @@ def evaluate(model: Net, dataloader: DataLoader) -> Tuple[float, float]:
 def train(
     train_loader: DataLoader,
     test_loader: DataLoader,
-    epochs: int = 5
+    device: DeviceType = DeviceType.GPU,
+    epochs: int = 10
 ) -> Net:
-    """Train the network
+    """Train the network"""
+    model = Net(device)
     
-    Args:
-        train_loader: Training data loader
-        test_loader: Test data loader
-        epochs: Number of epochs to train
-        
-    Returns:
-        model: Trained model
-    """
-    # Create model
-    model = Net()
-    
-    # Training loop
     for epoch in range(epochs):
         total_loss = 0
         for i, (images, labels) in enumerate(train_loader):
-            # Forward & backward pass
+            # Ensure data is on the correct device
+            if images.device() != device:
+                images.to_gpu() if device == DeviceType.GPU else images.to_cpu()
+            if labels.device() != device:
+                labels.to_gpu() if device == DeviceType.GPU else labels.to_cpu()
+                
             pred, cache = model.forward(images)
             loss = model.backward(pred, labels, cache)
             total_loss += loss
             
-            # Print progress
             if (i + 1) % 100 == 0:
                 print(f"Epoch [{epoch+1}/{epochs}], "
                       f"Step [{i+1}/{len(train_loader)}], "
                       f"Loss: {total_loss / (i+1):.4f}")
         
-        # Evaluate
         train_acc, train_loss = evaluate(model, train_loader)
         test_acc, test_loss = evaluate(model, test_loader)
         
@@ -187,24 +175,22 @@ def train(
     return model
 
 if __name__ == "__main__":
-    """Train and test the CNN on MNIST dataset"""
-    # Test data loading
-    print("Loading datasets...")
-    train_dataset = MNIST(root="./data", train=True, download=True)
-    test_dataset = MNIST(root="./data", train=False, download=True)
+    """Train and test the CNN on CIFAR10 dataset on GPU"""
+    device = DeviceType.GPU 
     
-    assert len(train_dataset) == 60000, "Wrong training set size"
+    print("Loading datasets...")
+    train_dataset = CIFAR10(root="./data", train=True, download=True)
+    test_dataset = CIFAR10(root="./data", train=False, download=True)
+    
+    assert len(train_dataset) == 50000, "Wrong training set size"
     assert len(test_dataset) == 10000, "Wrong test set size"
     
-    # data loader
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, device=device)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, device=device)
     
-    # Train model
-    print("Training model...")
-    model = train(train_loader, test_loader, epochs=1)
+    print(f"Training model on {device}...")
+    model = train(train_loader, test_loader, device=device, epochs=10)
     
-    # Evaluate model
     print("Evaluating model...")
     train_acc, train_loss = evaluate(model, train_loader)
     test_acc, test_loss = evaluate(model, test_loader)
@@ -213,5 +199,5 @@ if __name__ == "__main__":
     print(f"Train Accuracy: {train_acc:.4f}")
     print(f"Test Accuracy: {test_acc:.4f}")
     
-
-
+    
+    
