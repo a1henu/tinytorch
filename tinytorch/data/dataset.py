@@ -12,9 +12,9 @@ class DataSet:
         index: Union[int, slice, List, NDArray]
     ) -> Tuple[NDArray, NDArray]:
         """Get item from the dataset"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __len__(self) -> int:
         """Get the length of the dataset"""
-        raise NotImplementedError
+        raise NotImplementedError()
     

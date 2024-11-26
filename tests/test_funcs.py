@@ -9,7 +9,7 @@ from numpy.testing import assert_allclose
 import torch
 import torch.nn.functional as F
 
-from tinytorch import DeviceType, Tensor
+from tinytorch import DeviceType, TensorBase
 from tinytorch.funcs import (
     relu_forward, relu_backward,
     sigmoid_forward, sigmoid_backward
@@ -19,13 +19,13 @@ from utils import skip_if_no_cuda
 
 def _test_activation_forward_backward(
     x: NDArray,
-    forward_fn: Callable[[Tensor], Tensor],
-    backward_fn: Callable[[Tensor, Tensor], Tensor],
+    forward_fn: Callable[[TensorBase], TensorBase],
+    backward_fn: Callable[[TensorBase, TensorBase], TensorBase],
     torch_fn: Callable[[torch.Tensor], torch.Tensor],
     rtol: float = 1e-5
 ) -> None:
     """Helper function for testing activation forward/backward"""
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     x_torch = torch.tensor(x, requires_grad=True)
     
     output = forward_fn(x_tensor)
@@ -38,7 +38,7 @@ def _test_activation_forward_backward(
     )
     
     grad = np.random.randn(*x.shape)
-    grad_tensor = Tensor.from_numpy(grad)
+    grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
     grad_output = backward_fn(x_tensor, grad_tensor)
@@ -61,7 +61,7 @@ def test_relu_cpu():
     
     # Edge cases test
     x = np.array([[-1, 0, 1], [1e3, -1e3, 0]])
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     output = relu_forward(x_tensor)
     
     assert output.device() == DeviceType.CPU
@@ -74,7 +74,7 @@ def test_relu_cpu():
     shapes = [(1, 1), (2, 3), (4, 5, 6)]
     for shape in shapes:
         x = np.random.randn(*shape)
-        x_tensor = Tensor.from_numpy(x)
+        x_tensor = TensorBase.from_numpy(x)
         output = relu_forward(x_tensor)
         assert output.shape() == list(shape)
         assert output.device() == DeviceType.CPU
@@ -83,7 +83,7 @@ def test_relu_cpu():
 def test_relu_gpu():
     """Test ReLU on GPU"""
     x = np.random.randn(2, 3)
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     x_tensor.to_gpu()
     
     # Forward test
@@ -91,7 +91,7 @@ def test_relu_gpu():
     assert output.device() == DeviceType.GPU
     
     # Backward test
-    grad = Tensor.from_numpy(np.random.randn(2, 3))
+    grad = TensorBase.from_numpy(np.random.randn(2, 3))
     grad.to_gpu()
     grad_output = relu_backward(x_tensor, grad)
     assert grad_output.device() == DeviceType.GPU
@@ -108,7 +108,7 @@ def test_sigmoid_cpu():
     
     # Edge cases test
     x = np.array([[0, 10, -10]])
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     output = sigmoid_forward(x_tensor)
     
     assert output.device() == DeviceType.CPU
@@ -119,7 +119,7 @@ def test_sigmoid_cpu():
     shapes = [(1, 1), (2, 3), (4, 5, 6)]
     for shape in shapes:
         x = np.random.randn(*shape)
-        x_tensor = Tensor.from_numpy(x)
+        x_tensor = TensorBase.from_numpy(x)
         output = sigmoid_forward(x_tensor)
         assert output.shape() == list(shape)
         assert output.device() == DeviceType.CPU
@@ -128,7 +128,7 @@ def test_sigmoid_cpu():
 def test_sigmoid_gpu():
     """Test Sigmoid on GPU"""
     x = np.random.randn(2, 3)
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     x_tensor.to_gpu()
     
     # Forward test
@@ -136,7 +136,7 @@ def test_sigmoid_gpu():
     assert output.device() == DeviceType.GPU
     
     # Backward test
-    grad = Tensor.from_numpy(np.random.randn(2, 3))
+    grad = TensorBase.from_numpy(np.random.randn(2, 3))
     grad.to_gpu()
     grad_output = sigmoid_backward(x_tensor, grad)
     assert grad_output.device() == DeviceType.GPU

@@ -2,10 +2,9 @@ from __future__ import annotations
 from typing import Iterator, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 from tinytorch.data import DataSet
-from tinytorch.tensor import Tensor, DeviceType
+from tinytorch import Tensor, DeviceType
 
 class DataLoader:
     """Generic data loader class for batched data loading"""

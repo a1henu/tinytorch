@@ -9,7 +9,7 @@ from numpy.testing import assert_allclose
 import torch
 import torch.nn.functional as F
 
-from tinytorch import DeviceType, Tensor
+from tinytorch import DeviceType, TensorBase
 from tinytorch.funcs import (
     fc_forward, fc_backward,
     conv2d_forward, conv2d_backward,
@@ -41,9 +41,9 @@ def _test_fc_forward_backward(
     b = np.random.randn(out_features)
     
     # Create tensors
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     # Create PyTorch tensors
     x_torch = torch.tensor(x, requires_grad=True)
@@ -63,7 +63,7 @@ def _test_fc_forward_backward(
     
     # Backward pass
     grad = np.random.randn(batch_size, out_features)
-    grad_tensor = Tensor.from_numpy(grad)
+    grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
     grad_x, grad_w, grad_b = fc_backward(
@@ -108,9 +108,9 @@ def _test_conv2d_forward_backward(
     b = np.random.randn(out_channels)
     
     # Create tensors
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     # Create PyTorch tensors
     x_torch = torch.tensor(x, requires_grad=True)
@@ -131,7 +131,7 @@ def _test_conv2d_forward_backward(
     
     # Backward pass
     grad = np.random.randn(*output.shape())
-    grad_tensor = Tensor.from_numpy(grad)
+    grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
     grad_x, grad_w, grad_b = conv2d_backward(
@@ -178,7 +178,7 @@ def _test_max_pool_forward_backward(
     """
     # Initialize input
     x = np.random.randn(batch_size, channels, height, width)
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     x_torch = torch.tensor(x, requires_grad=True)
     
     # Forward pass
@@ -202,7 +202,7 @@ def _test_max_pool_forward_backward(
     
     # Backward pass
     grad = np.random.randn(*output.shape())
-    grad_tensor = Tensor.from_numpy(grad)
+    grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
     grad_x = max_pool2d_backward(
@@ -236,8 +236,8 @@ def _test_softmax_cross_entropy(
     x = np.random.randn(batch_size, num_classes)
     t = np.random.randint(0, num_classes, size=batch_size)
     
-    x_tensor = Tensor.from_numpy(x)
-    t_tensor = Tensor.from_numpy(t)
+    x_tensor = TensorBase.from_numpy(x)
+    t_tensor = TensorBase.from_numpy(t)
     x_torch = torch.tensor(x, requires_grad=True)
     t_torch = torch.tensor(t)
     
@@ -299,14 +299,14 @@ def test_fc_cpu():
     w = np.random.randn(3, 4)
     b = np.random.randn(4)
     
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     output = fc_forward(x_tensor, w_tensor, b_tensor)
     assert output.device() == DeviceType.CPU
     
-    grad = Tensor.from_numpy(np.random.randn(2, 4))
+    grad = TensorBase.from_numpy(np.random.randn(2, 4))
     grad_x, grad_w, grad_b = fc_backward(
         x_tensor, w_tensor, b_tensor, output, grad
     )
@@ -322,9 +322,9 @@ def test_fc_gpu():
     w = np.random.randn(3, 4)
     b = np.random.randn(4)
     
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     # Move to GPU
     x_tensor.to_gpu()
@@ -334,7 +334,7 @@ def test_fc_gpu():
     output = fc_forward(x_tensor, w_tensor, b_tensor)
     assert output.device() == DeviceType.GPU
     
-    grad = Tensor.from_numpy(np.random.randn(2, 4))
+    grad = TensorBase.from_numpy(np.random.randn(2, 4))
     grad.to_gpu()
     grad_x, grad_w, grad_b = fc_backward(
         x_tensor, w_tensor, b_tensor, output, grad
@@ -372,14 +372,14 @@ def test_conv2d_cpu():
     w = np.random.randn(16, 3, 3, 3)
     b = np.random.randn(16)
     
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
     assert output.device() == DeviceType.CPU
     
-    grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
         padding=(1, 1), stride=(1, 1)
@@ -396,9 +396,9 @@ def test_conv2d_gpu():
     w = np.random.randn(16, 3, 3, 3)
     b = np.random.randn(16)
     
-    x_tensor = Tensor.from_numpy(x)
-    w_tensor = Tensor.from_numpy(w)
-    b_tensor = Tensor.from_numpy(b)
+    x_tensor = TensorBase.from_numpy(x)
+    w_tensor = TensorBase.from_numpy(w)
+    b_tensor = TensorBase.from_numpy(b)
     
     x_tensor.to_gpu()
     w_tensor.to_gpu()
@@ -407,7 +407,7 @@ def test_conv2d_gpu():
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
     assert output.device() == DeviceType.GPU
     
-    grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
     grad.to_gpu()
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
@@ -444,13 +444,13 @@ def test_max_pool():
     
     # Test on CPU
     x = np.random.randn(2, 3, 8, 8)
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     
     output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
     assert output.device() == DeviceType.CPU
     assert mask.device() == DeviceType.CPU
     
-    grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
     grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
         input_shape=x_tensor.shape()
@@ -461,14 +461,14 @@ def test_max_pool():
 def test_max_pool_gpu():
     """Test Max Pooling layer GPU operations"""
     x = np.random.randn(2, 3, 8, 8)
-    x_tensor = Tensor.from_numpy(x)
+    x_tensor = TensorBase.from_numpy(x)
     x_tensor.to_gpu()
     
     output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
     assert output.device() == DeviceType.GPU
     assert mask.device() == DeviceType.GPU
     
-    grad = Tensor.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
     grad.to_gpu()
     grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
@@ -499,8 +499,8 @@ def test_softmax_cross_entropy():
     x = np.random.randn(2, 3)
     t = np.array([0, 1])
     
-    x_tensor = Tensor.from_numpy(x)
-    t_tensor = Tensor.from_numpy(t)
+    x_tensor = TensorBase.from_numpy(x)
+    t_tensor = TensorBase.from_numpy(t)
     
     prob = softmax_forward(x_tensor)
     assert prob.device() == DeviceType.CPU
@@ -517,8 +517,8 @@ def test_softmax_cross_entropy_gpu():
     x = np.random.randn(2, 3)
     t = np.array([0, 1])
     
-    x_tensor = Tensor.from_numpy(x)
-    t_tensor = Tensor.from_numpy(t)
+    x_tensor = TensorBase.from_numpy(x)
+    t_tensor = TensorBase.from_numpy(t)
     
     x_tensor.to_gpu()
     t_tensor.to_gpu()

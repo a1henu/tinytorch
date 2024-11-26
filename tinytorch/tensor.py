@@ -1,108 +1,66 @@
 from __future__ import annotations
-from typing import List, Dict, overload
-
-import numpy as np 
+from typing import Tuple, List, Callable, Optional, overload
 from numpy.typing import NDArray
 
-from ._libtensor import DeviceType as _DeviceType, Tensor as _Tensor
+from .tensorbase import DeviceType, TensorBase
+from .operators import Ops, Node
+from .autodiff import compute_gradient_of_variables
 
-class DeviceType(_DeviceType):
+class Tensor(Node):
     """
-    A device type class.
-    
-    Attributes:
-        CPU (DeviceType): The CPU device.
-        GPU (DeviceType): The GPU device.
-    """
-    CPU = _DeviceType.CPU
-    GPU = _DeviceType.GPU
-    
-    
-class Tensor(_Tensor):
-    """
-    A tensor class.
-    
-    Attributes:
-        shape (List[int]): The shape of the tensor.
-        device (DeviceType): The device of the tensor.
-        data (List[float]): The data of the tensor.
-        
-    Methods:
-        cpu(): Move the tensor to CPU and return a new tensor.
-        gpu(): Move the tensor to GPU and return a new tensor.
-        to_cpu(): Move the tensor to CPU.
-        to_gpu(): Move the tensor to GPU.
-        in_cpu(): Check if the tensor is on CPU.
-        in_gpu(): Check if the tensor is on GPU.
-        device(): Get the device of the tensor.
-        
-        dim(): Get the dimension of the tensor.
-        shape(): Get the shape of the tensor.
-        reshape(shape: List[int]) -> Tensor: Reshape the tensor to the given shape.
-        transpose(): Transpose the tensor.
-        size(): Get the total size of the tensor.
-        __len__() -> int: Get the length of the tensor.
-        
-        __add__(other: Tensor) -> Tensor: Add another tensor to the current tensor.
-        __sub__(other: Tensor) -> Tensor: Subtract another tensor from the current tensor.
-        __matmul__(other: Tensor) -> Tensor: Matrix multiplication of two tensors.
-       __mul__(other: float) -> Tensor: Scalar multiplication of the tensor.
-        __rmul__(other: float) -> Tensor: Scalar multiplication of the tensor.
-        __eq__(other: Tensor) -> bool: Check if the current tensor is equal to another tensor.
-        __getitem__(args) -> float: Get item from the tensor.
-        __repr__(): Get the string representation of the tensor.
-        __str__(): Get the string representation of the tensor.
-        
-        to_numpy() -> NDArray: Convert the tensor to a numpy array.
-        from_numpy(array: NDArray) -> Tensor: Create a tensor from a numpy array.
-        save(filename: str, tensor: Tensor) -> None: Save the tensor to a numpy file.
-        savez(filename: str, **kwargs) -> None: Save tensors to a compressed numpy file.
-        load(filename: str) -> Tensor: Load the tensor from a numpy file.
-        loadz(filename: str, *args) -> Dict[Tensor]: Load tensors from a compressed numpy file.
-        zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with all elements set to 0.
-        ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with all elements set to 1.
-        randn(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor: Create a tensor with elements drawn from a normal distribution.
-        
-    Examples:
-        >>> t = Tensor([2, 3], DeviceType.CPU)
-        >>> t_cpu = t.cpu()
-        >>> t_gpu = t.gpu()
-        >>> t.to_cpu()
-        >>> t.to_gpu()
-        
-        >>> a = Tensor.randn([2, 3], DeviceType.CPU)
-        >>> b = Tensor.randn([2, 3], DeviceType.CPU)
-        >>> c = a + b
-        >>> d = a * b
-        >>> e = a @ b.transpose()
+    A tensor class that supports autograd
     """
     @overload
-    def __init__(self) -> None: ...
+    def __init__(self, data: TensorBase) -> None: ...
     @overload
-    def __init__(self, shape: List[int], device: DeviceType) -> None: ...
+    def __init__(self, shape: List[int], device: DeviceType, requires_grad: bool = False) -> None: ...
     @overload
-    def __init__(self, shape: List[int], device: DeviceType, data: List[float]) -> None: ...
+    def __init__(self, shape: List[int], device: DeviceType, data: List[float], requires_grad: bool = False) -> None: ...
     
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, requires_grad: bool = False, **kwargs) -> None:
+        if len(args) == 1 and isinstance(args[0], TensorBase):
+            self.requires_grad = False
+            self.data = args[0]
+        else:
+            self.requires_grad = requires_grad
+            self.data = TensorBase(*args, **kwargs)
         
+    def __hash__(self) -> int:
+        return id(self)
+    
+    def __TensorBase__(self) -> TensorBase:
+        return self.get_cached_data()
+    
+    def requires_grad_(self, requires_grad: bool = True) -> Tensor:
+        """
+        Set the tensor to require gradient computation.
+        
+        Parameters:
+            requires_grad (bool): Whether the tensor requires gradient computation.
+        
+        Returns:
+            Tensor: The tensor with the updated requirement.
+        """
+        self.requires_grad = requires_grad
+        return self
+    
     def cpu(self) -> Tensor:
         """
         Move the tensor to CPU and return a new tensor.
         
         Returns:
-            Tensor: The tensor on CPU.
+            TensorBase: The tensor on CPU.
         """
-        return super().cpu()
+        return Tensor(self.get_cached_data().cpu())
     
-    def gpu(self) -> Tensor:
+    def gpu(self) -> TensorBase:
         """
         Move the tensor to GPU and return a new tensor.
         
         Returns:
-            Tensor: The tensor on GPU.
+            TensorBase: The tensor on GPU.
         """
-        return super().gpu()
+        return Tensor(self.get_cached_data().gpu())
     
     def to_cpu(self) -> None:
         """
@@ -111,7 +69,7 @@ class Tensor(_Tensor):
         Returns:
             None
         """
-        super().to_cpu()
+        self.get_cached_data().to_cpu()
     
     def to_gpu(self) -> None:
         """
@@ -120,7 +78,7 @@ class Tensor(_Tensor):
         Returns:
             None
         """
-        super().to_gpu()
+        self.get_cached_data().to_gpu()
     
     def in_cpu(self) -> bool:
         """
@@ -129,7 +87,7 @@ class Tensor(_Tensor):
         Returns:
             bool: True if the tensor is on CPU, False otherwise.
         """
-        return super().in_cpu()
+        return self.get_cached_data().in_cpu()
     
     def in_gpu(self) -> bool:
         """
@@ -138,7 +96,7 @@ class Tensor(_Tensor):
         Returns:
             bool: True if the tensor is on GPU, False otherwise.
         """
-        return super().in_gpu()
+        return self.get_cached_data().in_gpu()
     
     def device(self) -> DeviceType:
         """
@@ -147,7 +105,16 @@ class Tensor(_Tensor):
         Returns:
             DeviceType: The device of the tensor.
         """
-        return super().device()
+        return self.get_cached_data().device()
+    
+    def data(self) -> TensorBase:
+        """
+        Get the data of the tensor.
+        
+        Returns:
+            TensorBase: The data of the tensor.
+        """
+        return self.get_cached_data()
     
     def dim(self) -> int:
         """
@@ -156,7 +123,7 @@ class Tensor(_Tensor):
         Returns:
             int: The dimension of the tensor.
         """
-        return super().dim()
+        return self.get_cached_data().dim()
     
     def shape(self) -> List[int]:
         """
@@ -165,9 +132,9 @@ class Tensor(_Tensor):
         Returns:
             List[int]: The shape of the tensor.
         """
-        return super().shape()
+        return self.get_cached_data().shape()
     
-    def reshape(self, shape: List[int]) -> Tensor:
+    def reshape(self, shape: List[int]) -> TensorBase:
         """
         Reshape the tensor to the given shape.
         
@@ -175,18 +142,18 @@ class Tensor(_Tensor):
             shape (List[int]): The shape to reshape the tensor to.
         
         Returns:
-            Tensor: The reshaped tensor.
+            TensorBase: The reshaped tensor.
         """
-        return super().reshape(shape)
+        return self.get_cached_data().reshape(shape)
     
-    def transpose(self) -> Tensor:
+    def transpose(self) -> TensorBase:
         """
         Transpose the tensor.
         
         Returns:
-            Tensor: The transposed tensor.
+            TensorBase: The transposed tensor.
         """
-        return super().transpose()
+        return self.get_cached_data().transpose()
     
     def size(self) -> int:
         """
@@ -195,7 +162,7 @@ class Tensor(_Tensor):
         Returns:
             int: The size of the tensor.
         """
-        return super().size()
+        return self.get_cached_data().size()
     
     def __len__(self) -> int:
         """
@@ -204,64 +171,48 @@ class Tensor(_Tensor):
         Returns:
             int: The length of the tensor.
         """
-        return super().__len__()
+        return self.get_cached_data().__len__()
     
     def __add__(self, other) -> Tensor:
         """
-        Add another tensor to the current tensor.
+        Add the tensor to another tensor.
         
         Returns:
-            Tensor: The result of addition.
+            Tensor: The sum of the tensors.
         """
-        if isinstance(other, NDArray):
-            other = Tensor.from_numpy(other, self.device())
-        elif not isinstance(other, Tensor):
-            raise TypeError(f"Unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__add__(other)
+        return AddOp()(self, other)
     
     def __sub__(self, other) -> Tensor:
         """
-        Subtract another tensor from the current tensor.
+        Subtract the tensor by another tensor.
         
         Returns:
-            Tensor: The result of subtraction.
+            Tensor: The difference of the tensors.
         """
-        if isinstance(other, NDArray):
-            other = Tensor.from_numpy(other, self.device())
-        elif not isinstance(other, Tensor):
-            raise TypeError(f"Unsupported operand type(s) for -: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__sub__(other)
-    
-    def __matmul__(self, other) -> Tensor:
-        """
-        Matrix multiplication of two tensors.
-        
-        Returns:
-            Tensor: The result of matrix multiplication.
-        """
-        if isinstance(other, NDArray):
-            other = Tensor.from_numpy(other, self.device())
-        elif not isinstance(other, Tensor):
-            raise TypeError(f"Unsupported operand type(s) for @: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__matmul__(other)
+        return SubOp()(self, other)
     
     def __mul__(self, other) -> Tensor:
         """
-        Scalar multiplication of the tensor.
+        Multiply the tensor by a scalar.
         
         Returns:
-            Tensor: The result of scalar multiplication.
+            Tensor: The product of the tensors.
         """
-        return super().__mul__(other)
+        return MulOp(other)(self)
     
-    def __rmul__(self, other) -> Tensor:
+    def __matmul__(self, other) -> Tensor:
         """
-        Scalar multiplication of the tensor.
+        Multiply the tensor by another tensor.
         
         Returns:
-            Tensor: The result of scalar multiplication.
+            Tensor: The product of the tensors.
         """
-        return super().__rmul__(other)
+        return MatMulOp()(self, other)
+    
+    __radd__ = __add__
+    __rsub__ = __sub__
+    __rmul__ = __mul__
+    __rmatmul__ = __matmul__
     
     def __eq__(self, other) -> bool:
         """
@@ -270,11 +221,7 @@ class Tensor(_Tensor):
         Returns:
             bool: True if the tensors are equal, False otherwise.
         """
-        if isinstance(other, NDArray):
-            other = Tensor.from_numpy(other, self.device())
-        elif not isinstance(other, Tensor):
-            return False
-        return super().__eq__(other)
+        return self.get_cached_data() == other.get_cached_data()
     
     def __getitem__(self, *args) -> float:
         """
@@ -286,7 +233,7 @@ class Tensor(_Tensor):
         Returns:
             float: The item.
         """
-        return super().__getitem__(list(args))
+        return self.get_cached_data().__getitem__(*args)
     
     def __repr__(self) -> str:
         """
@@ -295,7 +242,7 @@ class Tensor(_Tensor):
         Returns:
             str: The string representation of the tensor.
         """
-        return super().__repr__()
+        return self.get_cached_data().__repr__()
     
     def __str__(self) -> str:
         """
@@ -304,7 +251,7 @@ class Tensor(_Tensor):
         Returns:
             str: The string representation of the tensor.
         """
-        return super().__str__()
+        return self.get_cached_data().__str__()
     
     def to_numpy(self) -> NDArray:
         """
@@ -313,132 +260,164 @@ class Tensor(_Tensor):
         Returns:
             NDArray: The numpy array.
         """
-        return super().to_numpy()
+        return self.get_cached_data().to_numpy()
+    
+    def backward(self, out_grad=None):
+        if out_grad is None:
+            out_grad = Tensor.ones(self.shape, self.device(), requires_grad=True)
+        compute_gradient_of_variables(self, out_grad)
     
     @staticmethod
-    def from_numpy(array: NDArray, device: DeviceType = DeviceType.CPU) -> Tensor:
+    def from_numpy(array: NDArray, device: DeviceType = DeviceType.CPU, requires_grad: bool = False) -> Tensor:
         """
-        Create a tensor from a numpy array.
+        Make a tensor from a numpy array.
         
         Parameters:
-            array (NDArray): Input numpy array
-            device (DeviceType): Target device (default: CPU)
-            
+            data (NDArray): The numpy array to make the tensor from.
+            device (DeviceType): The device to load the tensor to.
+            requires_grad (bool): Whether the tensor requires gradient computation.
+        
         Returns:
-            Tensor: New tensor on specified device
+            Tensor: The tensor from the numpy array.
         """
-        array = array.astype(np.float64, order="C")
-        t = _Tensor.from_numpy(array)
-        if device == DeviceType.GPU:
-            t.to_gpu()
-        return t
+        data = TensorBase.from_numpy(array, device)
+        tensor = Tensor(data)
+        tensor.requires_grad_(requires_grad)
+        return tensor
     
     @staticmethod
-    def save(filename: str, tensor: Tensor) -> None:
+    def make_from_op(op: Ops, inputs: List[Tensor], requires_grad: bool = None) -> Tensor:
         """
-        Save the tensor to a numpy file.
+        Make a tensor from an operation and its inputs.
         
         Parameters:
-            tensor (Tensor): The tensor to save.
-            path (str): The path to the file.
+            op (Ops): The operation to make the tensor from.
+            inputs (List[Tensor]): The input tensors to the operation.
+            requires_grad (bool): Whether the tensor requires gradient computation.
         
         Returns:
-            None
+            Tensor: The tensor from the operation.
         """
-        if not isinstance(tensor, Tensor):
-            raise TypeError(f"Expected Tensor, got {type(tensor).__name__}")
-        np.save(filename, tensor.to_numpy())
+        if requires_grad is None:
+            requires_grad = any(t.requires_grad for t in inputs)
+        output = Tensor.__new__(Tensor)
+        output.init_op(op, inputs, None, requires_grad)
+        output.get_cached_data()
+        return output
     
     @staticmethod
-    def savez(filename: str, **kwargs) -> None:
+    def full(shape: List[int], fill_value: float, device: DeviceType = DeviceType.CPU, requires_grad: bool = False) -> Tensor:
         """
-        Save tensors to a compressed numpy file.
-        
-        Parameters:
-            filename (str): The path to the file.
-            kwargs: The tensors to save.
-        
-        Returns:
-            None
-        """
-        for key, value in kwargs.items():
-            if not isinstance(value, Tensor):
-                raise TypeError(f"Expected Tensor, got {type(value).__name__}")
-            kwargs[key] = value.to_numpy()
-        np.savez(filename, **kwargs)
-    
-    @staticmethod
-    def load(filename: str, device: DeviceType = DeviceType.CPU) -> Tensor:
-        """
-        Load the tensor from a numpy file.
-        
-        Parameters:
-            filename (str): The path to the file.
-            device (DeviceType): The device of the tensor.
-        
-        Returns:
-            Tensor: The loaded tensor.
-        """
-        array = np.load(filename)
-        return Tensor.from_numpy(array, device)
-    
-    @staticmethod
-    def loadz(filename: str, device: DeviceType = DeviceType.CPU, *args) -> Dict[Tensor]:
-        """
-        Load tensors from a compressed numpy file.
-        
-        Parameters:
-            filename (str): The path to the file.
-            device (DeviceType): The device of the tensors.
-            args: The keys of the tensors to load.
-        
-        Returns:
-            Dict[Tensor]: The loaded tensors.
-        """
-        tensors = {}
-        with np.load(filename) as data:
-            for key in args:
-                tensors[key] = Tensor.from_numpy(data[key], device)
-        return tensors
-    
-    @staticmethod
-    def zeros(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
-        """
-        Create a tensor with all elements set to 0.
+        Create a tensor filled with a scalar value.
         
         Parameters:
             shape (List[int]): The shape of the tensor.
-            device (DeviceType): The device of the tensor.
-            
+            fill_value (float): The scalar value to fill the tensor with.
+            device (DeviceType): The device to load the tensor to.
+            requires_grad (bool): Whether the tensor requires gradient computation.
+        
         Returns:
-            Tensor: The tensor with all elements set to 0.
+            Tensor: The tensor filled with the scalar value.
         """
-        return _Tensor.zeros(shape, device)
+        data = TensorBase.full(shape, fill_value, device)
+        tensor = Tensor(data)
+        tensor.requires_grad_(requires_grad)
+        return tensor
     
     @staticmethod
-    def ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
+    def zeros(shape: List[int], device: DeviceType = DeviceType.CPU, requires_grad: bool = False) -> Tensor:
         """
-        Create a tensor with all elements set to 1.
+        Create a tensor filled with zeros.
         
         Parameters:
             shape (List[int]): The shape of the tensor.
-            device (DeviceType): The device of the tensor.
-            
+            device (DeviceType): The device to load the tensor to.
+            requires_grad (bool): Whether the tensor requires gradient computation.
+        
         Returns:
-            Tensor: The tensor with all elements set to 1.
+            Tensor: The tensor filled with zeros.
         """
-        return _Tensor.ones(shape, device)
+        data = TensorBase.zeros(shape, device)
+        tensor = Tensor(data)
+        tensor.requires_grad_(requires_grad)
+        return tensor
     
     @staticmethod
-    def randn(shape: List[int], device: DeviceType = DeviceType.CPU) -> Tensor:
+    def ones(shape: List[int], device: DeviceType = DeviceType.CPU, requires_grad: bool = False) -> Tensor:
         """
-        Create a tensor with elements drawn from a normal distribution.
+        Create a tensor filled with ones.
         
         Parameters:
             shape (List[int]): The shape of the tensor.
-            device (DeviceType): The device of the tensor.
+            device (DeviceType): The device to load the tensor to.
+            requires_grad (bool): Whether the tensor requires gradient computation.
         
         Returns:
-            Tensor: The tensor with elements drawn from a normal distribution.
+            Tensor: The tensor filled with ones.
         """
-        return Tensor.from_numpy(np.random.randn(*shape), device)
+        data = TensorBase.ones(shape, device)
+        tensor = Tensor(data)
+        tensor.requires_grad_(requires_grad)
+        return tensor
+    
+    @staticmethod
+    def randn(shape: List[int], device: DeviceType = DeviceType.CPU, requires_grad: bool = False) -> Tensor:
+        """
+        Create a tensor filled with random values.
+        
+        Parameters:
+            shape (List[int]): The shape of the tensor.
+            device (DeviceType): The device to load the tensor to.
+            requires_grad (bool): Whether the tensor requires gradient computation.
+        
+        Returns:
+            Tensor: The tensor filled with random values.
+        """
+        data = TensorBase.randn(shape, device)
+        tensor = Tensor(data)
+        tensor.requires_grad_(requires_grad)
+        return tensor
+    
+    
+class TensorOp(Ops):
+    def __call__(self, *args):
+        return Tensor.make_from_op(self, args)
+    
+
+class AddOp(TensorOp):
+    def compute(self, a: TensorBase, b: TensorBase):
+        return a + b
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        return out_grad, out_grad
+    
+    
+class SubOp(TensorOp):
+    def compute(self, a: TensorBase, b: TensorBase):
+        return a - b
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        return out_grad, -out_grad
+    
+    
+class MulOp(TensorOp):
+    def __init__(self, scalar):
+        self.scalar = scalar
+        
+    def compute(self, a: TensorBase):
+        if isinstance(self.scalar, int) or isinstance(self.scalar, float):
+            return a * self.scalar
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        return out_grad * self.scalar
+
+
+class MatMulOp(TensorOp):
+    def compute(self, a: TensorBase, b: TensorBase):
+        return a @ b
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        a, b = node.inputs
+        grad_a = out_grad @ b.transpose()
+        grad_b = a.transpose() @ out_grad
+        return grad_a, grad_b

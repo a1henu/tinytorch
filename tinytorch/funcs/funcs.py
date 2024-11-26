@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np 
 from numpy.typing import NDArray
 
-from tinytorch import Tensor
+from ..tensorbase import TensorBase
 
 from ._libfuncs import                                                                                  \
     relu_forward as _relu_forward, relu_backward as _relu_backward,                                     \
@@ -17,8 +17,8 @@ from ._libfuncs import                                                          
     
     
 def relu_forward(
-    input: Tensor
-) -> Tensor:
+    input: TensorBase
+) -> TensorBase:
     """
     ReLU activation function forward propagation.
     - ReLU(x) = max(0, x)
@@ -29,14 +29,14 @@ def relu_forward(
     Returns:
         Tensor: Output tensor.
     """
-    output = Tensor(input.shape(), input.device())
+    output = TensorBase(input.shape(), input.device())
     _relu_forward(output, input)
     return output
 
 def relu_backward(
-    input: Tensor,
-    grad: Tensor
-) -> Tensor:
+    input: TensorBase,
+    grad: TensorBase
+) -> TensorBase:
     """
     ReLU activation function backward propagation.
     - dL/dx = dL/dy * (x > 0)
@@ -52,13 +52,13 @@ def relu_backward(
         f"Input shape {input.shape()} doesn't match gradient shape {grad.shape()}"
     )
     
-    output = Tensor(input.shape(), input.device())
+    output = TensorBase(input.shape(), input.device())
     _relu_backward(output, input, grad)
     return output
 
 def sigmoid_forward(
-    input: Tensor
-) -> Tensor:
+    input: TensorBase
+) -> TensorBase:
     """
     Sigmoid activation function forward propagation.
     - Sigmoid(x) = 1 / (1 + exp(-x))
@@ -69,14 +69,14 @@ def sigmoid_forward(
     Returns:
         Tensor: Output tensor.
     """
-    output = Tensor(input.shape(), input.device())
+    output = TensorBase(input.shape(), input.device())
     _sigmoid_forward(output, input)
     return output
 
 def sigmoid_backward(
-    input: Tensor,
-    grad: Tensor
-) -> Tensor:
+    input: TensorBase,
+    grad: TensorBase
+) -> TensorBase:
     """
     Sigmoid activation function backward propagation.
     - dL/dx = dL/dy * Sigmoid(x) * (1 - Sigmoid(x))
@@ -92,15 +92,15 @@ def sigmoid_backward(
         f"Input shape {input.shape()} doesn't match gradient shape {grad.shape()}"
     )
     
-    output = Tensor(input.shape(), input.device())
+    output = TensorBase(input.shape(), input.device())
     _sigmoid_backward(output, input, grad)
     return output
 
 def fc_forward(
-    input: Tensor,    # (batch_size, in_features)
-    weight: Tensor,   # (in_features, out_features)
-    bias: Tensor      # (1, out_features)
-) -> Tensor:
+    input: TensorBase,    # (batch_size, in_features)
+    weight: TensorBase,   # (in_features, out_features)
+    bias: TensorBase      # (1, out_features)
+) -> TensorBase:
     """
     Fully connected layer forward propagation.
     - Y = XW + b
@@ -128,17 +128,17 @@ def fc_forward(
         f"Bias feature dimension {bias.shape()[1]} doesn't match weight output dimension {out_features}"
     )
     
-    output = Tensor([batch_size, out_features], input.device())
+    output = TensorBase([batch_size, out_features], input.device())
     _fc_forward(input, weight, bias, output)
     return output
 
 def fc_backward(
-    input: Tensor,    # (batch_size, in_features)
-    weight: Tensor,   # (in_features, out_features)
-    bias: Tensor,     # (1, out_features)
-    output: Tensor,   # (batch_size, out_features)
-    grad: Tensor      # (batch_size, out_features)
-) -> Tuple[Tensor, Tensor, Tensor]:
+    input: TensorBase,    # (batch_size, in_features)
+    weight: TensorBase,   # (in_features, out_features)
+    bias: TensorBase,     # (1, out_features)
+    output: TensorBase,   # (batch_size, out_features)
+    grad: TensorBase      # (batch_size, out_features)
+) -> Tuple[TensorBase, TensorBase, TensorBase]:
     """
     Fully connected layer backward propagation.
     - dX = dY * W^T
@@ -185,20 +185,20 @@ def fc_backward(
         f"Gradient shape {grad.shape()} doesn't match output shape {output.shape()}"
     )
     
-    grad_input = Tensor(input.shape(), input.device())
-    grad_weight = Tensor(weight.shape(), weight.device())
-    grad_bias = Tensor(bias.shape(), bias.device())
+    grad_input = TensorBase(input.shape(), input.device())
+    grad_weight = TensorBase(weight.shape(), weight.device())
+    grad_bias = TensorBase(bias.shape(), bias.device())
     
     _fc_backward(input, weight, bias, output, grad_input, grad_weight, grad_bias, grad)
     return grad_input, grad_weight, grad_bias
 
 def conv2d_forward(
-    input: Tensor,   # (batch_size, in_channels, height, width)
-    weight: Tensor,  # (out_channels, in_channels, kernel_h, kernel_w)
-    bias: Tensor,    # (out_channels)
+    input: TensorBase,   # (batch_size, in_channels, height, width)
+    weight: TensorBase,  # (out_channels, in_channels, kernel_h, kernel_w)
+    bias: TensorBase,    # (out_channels)
     padding: Tuple[int, int],
     stride: Tuple[int, int]
-) -> Tensor:
+) -> TensorBase:
     """
     2D convolution forward propagation.
     - Y = W conv X + b
@@ -240,17 +240,17 @@ def conv2d_forward(
     height_out = (height + 2 * pad_h - kernel_h) // stride_h + 1
     width_out = (width + 2 * pad_w - kernel_w) // stride_w + 1
     
-    output = Tensor([batch_size, out_channels, height_out, width_out], input.device())
+    output = TensorBase([batch_size, out_channels, height_out, width_out], input.device())
     _conv2d_forward(input, weight, bias, output, pad_h, pad_w, stride_h, stride_w)
     return output
 
 def conv2d_backward(
-    input: Tensor,          # (batch_size, in_channels, height, width)
-    weight: Tensor,         # (out_channels, in_channels, kernel_h, kernel_w)
-    grad_output: Tensor,    # (batch_size, out_channels, height_out, width_out)
+    input: TensorBase,          # (batch_size, in_channels, height, width)
+    weight: TensorBase,         # (out_channels, in_channels, kernel_h, kernel_w)
+    grad_output: TensorBase,    # (batch_size, out_channels, height_out, width_out)
     padding: Tuple[int, int],
     stride: Tuple[int, int]
-) -> Tuple[Tensor, Tensor, Tensor]:
+) -> Tuple[TensorBase, TensorBase, TensorBase]:
     """
     2D convolution backward propagation.
     - dX = dY conv W^T
@@ -313,9 +313,9 @@ def conv2d_backward(
         f"Output width {width_out} doesn't match gradient width {width_out_d}"
     )
     
-    grad_input = Tensor(input.shape(), input.device())
-    grad_weight = Tensor(weight.shape(), weight.device())
-    grad_bias = Tensor([out_channels], weight.device())
+    grad_input = TensorBase(input.shape(), input.device())
+    grad_weight = TensorBase(weight.shape(), weight.device())
+    grad_bias = TensorBase([out_channels], weight.device())
     
     _conv2d_backward(
         input, weight, grad_input, grad_weight, grad_bias, grad_output,
@@ -324,11 +324,11 @@ def conv2d_backward(
     return grad_input, grad_weight, grad_bias
 
 def max_pool2d_forward(
-    input: Tensor,   # (batch_size, channels, height, width)
+    input: TensorBase,   # (batch_size, channels, height, width)
     kernel_size: Tuple[int, int],
     padding: Tuple[int, int],
     stride: Tuple[int, int]
-) -> Tuple[Tensor, Tensor]:
+) -> Tuple[TensorBase, TensorBase]:
     """
     Max pooling forward propagation
     
@@ -366,8 +366,8 @@ def max_pool2d_forward(
         f"Stride: ({stride_h}, {stride_w})"
     )
     
-    output = Tensor([batch_size, channels, height_out, width_out], input.device())
-    mask = Tensor([batch_size, channels, height_out, width_out], input.device())
+    output = TensorBase([batch_size, channels, height_out, width_out], input.device())
+    mask = TensorBase([batch_size, channels, height_out, width_out], input.device())
     
     _max_pool_forward(
         input, mask, output,
@@ -376,13 +376,13 @@ def max_pool2d_forward(
     return output, mask
 
 def max_pool2d_backward(
-    grad_output: Tensor,  # (batch_size, out_channels, height_out, width_out)
-    mask: Tensor,         # (batch_size, out_channels, height_out, width_out)
+    grad_output: TensorBase,  # (batch_size, out_channels, height_out, width_out)
+    mask: TensorBase,         # (batch_size, out_channels, height_out, width_out)
     kernel_size: Tuple[int, int],
     padding: Tuple[int, int],
     stride: Tuple[int, int],
     input_shape: List[int]  # (batch_size, channels, height, width)
-) -> Tensor:
+) -> TensorBase:
     """
     Max pooling backward propagation
     
@@ -411,7 +411,7 @@ def max_pool2d_backward(
     )
     assert len(input_shape) == 4, f"Input shape must be 4D, but got shape {input_shape}"
     
-    grad_input = Tensor(input_shape, grad_output.device())
+    grad_input = TensorBase(input_shape, grad_output.device())
     
     kernel_h, kernel_w = kernel_size
     pad_h, pad_w = padding
@@ -424,8 +424,8 @@ def max_pool2d_backward(
     return grad_input
 
 def softmax_forward(
-    input: Tensor  # (batch_size, num_classes)
-) -> Tensor:
+    input: TensorBase  # (batch_size, num_classes)
+) -> TensorBase:
     """
     Softmax forward propagation
     - Y = softmax(X)
@@ -441,14 +441,14 @@ def softmax_forward(
     
     assert input.dim() == 2, f"Input tensor must be 1D or 2D, but got shape {input.shape()}"
     
-    output = Tensor(input.shape(), input.device())
+    output = TensorBase(input.shape(), input.device())
     _softmax_forward(input, output)
     return output
 
 def cross_entropy_forward(
-    input: Tensor,  # (batch_size, num_classes)
-    target: Tensor  # (batch_size)
-) -> Tensor:
+    input: TensorBase,  # (batch_size, num_classes)
+    target: TensorBase  # (batch_size)
+) -> TensorBase:
     """
     Cross entropy loss forward propagation (with softmax)
     - p = softmax(X)
@@ -474,14 +474,14 @@ def cross_entropy_forward(
     )
     
     prob = softmax_forward(input)
-    output = Tensor([1], input.device())
+    output = TensorBase([1], input.device())
     _cross_entropy_forward(prob, target, output)
     return output
 
 def cross_entropy_backward(
-    input: Tensor,  # (batch_size, num_classes)
-    target: Tensor  # (batch_size)
-) -> Tensor:
+    input: TensorBase,  # (batch_size, num_classes)
+    target: TensorBase  # (batch_size)
+) -> TensorBase:
     """
     Cross entropy loss backward propagation (with softmax)
     - dX_i = p_i - y_i
@@ -505,6 +505,6 @@ def cross_entropy_backward(
         f"Batch size mismatch: input {batch_size}, target {target.shape()[0]}"
     )
     
-    grad = Tensor(input.shape(), input.device())
+    grad = TensorBase(input.shape(), input.device())
     _cross_entropy_backward(input, target, grad)
     return grad
