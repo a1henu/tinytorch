@@ -18,6 +18,11 @@ jobs:
       with:
         submodules: true  
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build
+
     - name: Build
       run: |
         CUDA_BUILD=OFF pip install -v .[test]
