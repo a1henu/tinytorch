@@ -3,7 +3,8 @@ from typing import Tuple, List, Callable, Optional, overload
 from numpy.typing import NDArray
 
 from .tensorbase import DeviceType, TensorBase
-from .operators import Ops, Node
+from .operators import Ops
+from .node import Node
 from .autodiff import compute_gradient_of_variables
 
 class Tensor(Node):

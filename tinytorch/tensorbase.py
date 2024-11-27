@@ -79,6 +79,8 @@ class TensorBase(_Tensor):
     @overload
     def __init__(self) -> None: ...
     @overload
+    def __init__(self, _tensor: _Tensor) -> None: ...
+    @overload
     def __init__(self, shape: List[int], device: DeviceType) -> None: ...
     @overload
     def __init__(self, shape: List[int], device: DeviceType, data: List[float]) -> None: ...
@@ -93,7 +95,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The tensor on CPU.
         """
-        return super().cpu()
+        return TensorBase(super().cpu())
     
     def gpu(self) -> TensorBase:
         """
@@ -102,7 +104,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The tensor on GPU.
         """
-        return super().gpu()
+        return TensorBase(super().gpu())
     
     def to_cpu(self) -> None:
         """
@@ -177,7 +179,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The reshaped tensor.
         """
-        return super().reshape(shape)
+        return TensorBase(super().reshape(shape))
     
     def transpose(self) -> TensorBase:
         """
@@ -186,7 +188,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The transposed tensor.
         """
-        return super().transpose()
+        return TensorBase(super().transpose())
     
     def size(self) -> int:
         """
@@ -217,7 +219,7 @@ class TensorBase(_Tensor):
             other = TensorBase.from_numpy(other, self.device())
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__add__(other)
+        return TensorBase(super().__add__(other))
     
     def __sub__(self, other) -> TensorBase:
         """
@@ -230,7 +232,7 @@ class TensorBase(_Tensor):
             other = TensorBase.from_numpy(other, self.device())
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for -: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__sub__(other)
+        return TensorBase(super().__sub__(other))
     
     def __matmul__(self, other) -> TensorBase:
         """
@@ -243,7 +245,7 @@ class TensorBase(_Tensor):
             other = TensorBase.from_numpy(other, self.device())
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for @: '{type(self).__name__}' and '{type(other).__name__}'")
-        return super().__matmul__(other)
+        return TensorBase(super().__matmul__(other))
     
     def __mul__(self, other) -> TensorBase:
         """
@@ -252,7 +254,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The result of scalar multiplication.
         """
-        return super().__mul__(other)
+        return TensorBase(super().__mul__(other))
     
     def __rmul__(self, other) -> TensorBase:
         """
@@ -261,7 +263,7 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The result of scalar multiplication.
         """
-        return super().__rmul__(other)
+        return TensorBase(super().__rmul__(other))
     
     def __eq__(self, other) -> bool:
         """
@@ -333,8 +335,9 @@ class TensorBase(_Tensor):
             Tensor: New tensor on specified device
         """
         array = array.astype(np.float64, order="C")
-        t = TensorBase(array.shape, device, array.flatten().tolist())
-        return t
+        _t = _Tensor.from_numpy(array)
+        if device == DeviceType.GPU: _t.to_gpu()
+        return TensorBase(_t)
     
     @staticmethod
     def save(filename: str, tensor: TensorBase) -> None:
@@ -431,7 +434,8 @@ class TensorBase(_Tensor):
         Returns:
             Tensor: The tensor with all elements set to 0.
         """
-        return TensorBase.full(shape, 0.0, device)
+        _t = _Tensor.zeros(shape, device)
+        return TensorBase(_t)
     
     @staticmethod
     def ones(shape: List[int], device: DeviceType = DeviceType.CPU) -> TensorBase:
@@ -445,7 +449,8 @@ class TensorBase(_Tensor):
         Returns:
             Tensor: The tensor with all elements set to 1.
         """
-        return TensorBase.full(shape, 1.0, device)
+        _t = _Tensor.ones(shape, device)
+        return TensorBase(_t)
     
     @staticmethod
     def randn(shape: List[int], device: DeviceType = DeviceType.CPU) -> TensorBase:

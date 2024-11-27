@@ -2,7 +2,7 @@ from typing import List, Dict, Tuple
 from functools import reduce
 from operator import add
 
-from .operators import Node
+from .node import Node
 
 def find_topo_sort(node_list: List[Node]) -> List[Node]:
     visited = set()

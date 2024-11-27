@@ -27,10 +27,8 @@ PYBIND11_MODULE(_libtensor, m) {
         .def(py::init<>())
         .def(py::init<const std::vector<int>&, tensor::DeviceType>())
         .def(py::init<const std::vector<int>&, tensor::DeviceType, const std::vector<double>&>())
-        .def("__copy__", [](const tensor::Tensor<double> &self) {
-            return tensor::Tensor<double>(self);
-        })
-        .def("__deepcopy__", [](const tensor::Tensor<double> &self, py::dict) {
+        .def(py::init<const tensor::Tensor<double>&>())
+        .def("__deepcopy__", [](const tensor::Tensor<double>& self, py::dict) {
             return tensor::Tensor<double>(self);
         })
         // device
