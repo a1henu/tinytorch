@@ -142,6 +142,7 @@ class TensorBase(_Tensor):
         """
         return super().in_gpu()
     
+    @property
     def device(self) -> DeviceType:
         """
         Get the device of the tensor.
@@ -151,6 +152,7 @@ class TensorBase(_Tensor):
         """
         return super().device()
     
+    @property
     def dim(self) -> int:
         """
         Get the dimension of the tensor.
@@ -160,6 +162,7 @@ class TensorBase(_Tensor):
         """
         return super().dim()
     
+    @property
     def shape(self) -> List[int]:
         """
         Get the shape of the tensor.
@@ -190,6 +193,7 @@ class TensorBase(_Tensor):
         """
         return TensorBase(super().transpose())
     
+    @property
     def size(self) -> int:
         """
         Get the total size of the tensor.
@@ -216,7 +220,7 @@ class TensorBase(_Tensor):
             TensorBase: The result of addition.
         """
         if isinstance(other, np.ndarray):
-            other = TensorBase.from_numpy(other, self.device())
+            other = TensorBase.from_numpy(other, self.device)
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'")
         return TensorBase(super().__add__(other))
@@ -229,7 +233,7 @@ class TensorBase(_Tensor):
             TensorBase: The result of subtraction.
         """
         if isinstance(other, np.ndarray):
-            other = TensorBase.from_numpy(other, self.device())
+            other = TensorBase.from_numpy(other, self.device)
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for -: '{type(self).__name__}' and '{type(other).__name__}'")
         return TensorBase(super().__sub__(other))
@@ -242,7 +246,7 @@ class TensorBase(_Tensor):
             TensorBase: The result of matrix multiplication.
         """
         if isinstance(other, np.ndarray):
-            other = TensorBase.from_numpy(other, self.device())
+            other = TensorBase.from_numpy(other, self.device)
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for @: '{type(self).__name__}' and '{type(other).__name__}'")
         return TensorBase(super().__matmul__(other))
@@ -273,7 +277,7 @@ class TensorBase(_Tensor):
             bool: True if the tensors are equal, False otherwise.
         """
         if isinstance(other, np.ndarray):
-            other = TensorBase.from_numpy(other, self.device())
+            other = TensorBase.from_numpy(other, self.device)
         elif not isinstance(other, TensorBase):
             return False
         return super().__eq__(other)

@@ -64,7 +64,7 @@ def test_relu_cpu():
     x_tensor = TensorBase.from_numpy(x)
     output = relu_forward(x_tensor)
     
-    assert output.device() == DeviceType.CPU
+    assert output.device == DeviceType.CPU
     assert_allclose(
         output.to_numpy(),
         np.maximum(x, 0)
@@ -76,8 +76,8 @@ def test_relu_cpu():
         x = np.random.randn(*shape)
         x_tensor = TensorBase.from_numpy(x)
         output = relu_forward(x_tensor)
-        assert output.shape() == list(shape)
-        assert output.device() == DeviceType.CPU
+        assert output.shape == list(shape)
+        assert output.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_relu_gpu():
@@ -88,13 +88,13 @@ def test_relu_gpu():
     
     # Forward test
     output = relu_forward(x_tensor)
-    assert output.device() == DeviceType.GPU
+    assert output.device == DeviceType.GPU
     
     # Backward test
     grad = TensorBase.from_numpy(np.random.randn(2, 3))
     grad.to_gpu()
     grad_output = relu_backward(x_tensor, grad)
-    assert grad_output.device() == DeviceType.GPU
+    assert grad_output.device == DeviceType.GPU
 
 def test_sigmoid_cpu():
     """Test Sigmoid on CPU"""
@@ -111,7 +111,7 @@ def test_sigmoid_cpu():
     x_tensor = TensorBase.from_numpy(x)
     output = sigmoid_forward(x_tensor)
     
-    assert output.device() == DeviceType.CPU
+    assert output.device == DeviceType.CPU
     expected = 1 / (1 + np.exp(-x))
     assert_allclose(output.to_numpy(), expected)
     
@@ -121,8 +121,8 @@ def test_sigmoid_cpu():
         x = np.random.randn(*shape)
         x_tensor = TensorBase.from_numpy(x)
         output = sigmoid_forward(x_tensor)
-        assert output.shape() == list(shape)
-        assert output.device() == DeviceType.CPU
+        assert output.shape == list(shape)
+        assert output.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_sigmoid_gpu():
@@ -133,13 +133,13 @@ def test_sigmoid_gpu():
     
     # Forward test
     output = sigmoid_forward(x_tensor)
-    assert output.device() == DeviceType.GPU
+    assert output.device == DeviceType.GPU
     
     # Backward test
     grad = TensorBase.from_numpy(np.random.randn(2, 3))
     grad.to_gpu()
     grad_output = sigmoid_backward(x_tensor, grad)
-    assert grad_output.device() == DeviceType.GPU
+    assert grad_output.device == DeviceType.GPU
 
 if __name__ == "__main__":
     pytest.main([__file__])

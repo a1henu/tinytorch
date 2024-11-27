@@ -46,7 +46,7 @@ class Net:
         relu2 = relu_forward(conv2)
         
         # Flatten
-        batch_size = relu2.shape()[0]
+        batch_size = relu2.shape[0]
         flatten = relu2.reshape([batch_size, -1])
         
         # Fully connected
@@ -89,7 +89,7 @@ class Net:
         )
         
         # Reshape gradient to match conv output
-        grad_flatten = grad_fc_x.reshape(relu2.shape())
+        grad_flatten = grad_fc_x.reshape(relu2.shape)
         
         # Backprop through second conv block
         grad_relu2 = relu_backward(conv2, grad_flatten)

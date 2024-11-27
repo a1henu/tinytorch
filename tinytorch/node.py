@@ -5,7 +5,7 @@ from .operators import Ops
 from .tensorbase import TensorBase
 
 class Node:
-    data: TensorBase
+    _data: TensorBase
     requires_grad: bool
     op: Ops = None
     inputs: List[Node] = []
@@ -31,8 +31,28 @@ class Node:
             requires_grad = any(t.requires_grad for t in inputs)
         self.op = op
         self.inputs = inputs
-        self.data = data
+        self._data = data
         self.requires_grad = requires_grad
+
+    @property
+    def data(self) -> TensorBase:
+        """
+        Get the data of the tensor.
+        
+        Returns:
+            TensorBase: The data of the tensor.
+        """
+        return self.get_cached_data()
+    
+    @data.setter
+    def data(self, value: TensorBase) -> None:
+        """
+        Set the data of the tensor.
+        
+        Parameters:
+            value (TensorBase): The new data of the tensor.
+        """
+        self._data = value
 
     def get_cached_data(self) -> TensorBase:
         """
@@ -41,12 +61,12 @@ class Node:
         Returns:
             TensorBase: The cached data of the tensor.
         """
-        if self.data is not None:
-            return self.data
-        self.data = self.op.compute(
+        if self._data is not None:
+            return self._data
+        self._data = self.op.compute(
             *[t.get_cached_data() for t in self.inputs]
         )
-        return self.data
+        return self._data
     
     def is_leaf(self) -> bool:
         return self.op is None

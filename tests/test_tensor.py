@@ -15,39 +15,39 @@ def test_tensor_constructor():
     
     # Test shape-only constructor
     t2 = Tensor([2, 3], DeviceType.CPU)
-    assert t2.shape() == [2, 3]
-    assert t2.device() == DeviceType.CPU
+    assert t2.shape == [2, 3]
+    assert t2.device == DeviceType.CPU
     
     # Test full constructor
     data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
     t3 = Tensor([2, 3], DeviceType.CPU, data)
-    assert t3.shape() == [2, 3]
-    assert t3.device() == DeviceType.CPU
+    assert t3.shape == [2, 3]
+    assert t3.device == DeviceType.CPU
     assert_allclose(t3.to_numpy(), np.array(data).reshape(2, 3))
     
     # Test zeros
     t4 = Tensor.zeros([2, 3])
-    assert t4.shape() == [2, 3]
-    assert t4.device() == DeviceType.CPU
+    assert t4.shape == [2, 3]
+    assert t4.device == DeviceType.CPU
     assert_allclose(t4.to_numpy(), np.zeros([2, 3]))
     
     # Test ones
     t5 = Tensor.ones([2, 3])
-    assert t5.shape() == [2, 3]
-    assert t5.device() == DeviceType.CPU
+    assert t5.shape == [2, 3]
+    assert t5.device == DeviceType.CPU
     assert_allclose(t5.to_numpy(), np.ones([2, 3]))
 
 def test_tensor_numpy():
     """Test numpy conversion methods (CPU)"""
     arr1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=np.float64)
     t1 = Tensor.from_numpy(arr1)
-    assert t1.shape() == [6]
-    assert t1.device() == DeviceType.CPU
+    assert t1.shape == [6]
+    assert t1.device == DeviceType.CPU
     
     arr2 = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float64)
     t2 = Tensor.from_numpy(arr2)
-    assert t2.shape() == [2, 3]
-    assert t2.device() == DeviceType.CPU
+    assert t2.shape == [2, 3]
+    assert t2.device == DeviceType.CPU
     
     data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
     t = Tensor([2, 3], DeviceType.CPU, data)
@@ -65,26 +65,26 @@ def test_tensor_ops():
     
     # Test basic operations
     result = ta + tb
-    assert result.device() == DeviceType.CPU
+    assert result.device == DeviceType.CPU
     assert_allclose(result.to_numpy(), a + b)
     
     result = ta - tb
-    assert result.device() == DeviceType.CPU
+    assert result.device == DeviceType.CPU
     assert_allclose(result.to_numpy(), a - b)
     
     # Test matrix multiplication
     result = ta @ tc
-    assert result.device() == DeviceType.CPU
+    assert result.device == DeviceType.CPU
     assert_allclose(result.to_numpy(), a @ c)
     
     # Test scalar multiplication
     scalar = 2.5
     result = ta * scalar
-    assert result.device() == DeviceType.CPU
+    assert result.device == DeviceType.CPU
     assert_allclose(result.to_numpy(), a * scalar)
     
     result = scalar * ta
-    assert result.device() == DeviceType.CPU
+    assert result.device == DeviceType.CPU
     assert_allclose(result.to_numpy(), scalar * a)
 
 @skip_if_no_cuda
@@ -105,37 +105,37 @@ def test_tensor_ops_gpu():
     
     # Test basic operations
     result = ta + tb
-    assert result.device() == DeviceType.GPU
+    assert result.device == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), a + b)
     
     result = ta - tb
-    assert result.device() == DeviceType.GPU
+    assert result.device == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), a - b)
     
     # Test matrix multiplication
     result = ta @ tc
-    assert result.device() == DeviceType.GPU
+    assert result.device == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), a @ c)
     
     # Test scalar multiplication
     scalar = 2.5
     result = ta * scalar
-    assert result.device() == DeviceType.GPU
+    assert result.device == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), a * scalar)
     
     result = scalar * ta
-    assert result.device() == DeviceType.GPU
+    assert result.device == DeviceType.GPU
     result.to_cpu()
     assert_allclose(result.to_numpy(), scalar * a)
 
-def test_tensor_device():
+def test_tensor_device:
     """Test basic device operations (CPU)"""
     t = Tensor([2, 3], DeviceType.CPU)
-    assert t.device() == DeviceType.CPU
+    assert t.device == DeviceType.CPU
     assert t.in_cpu()
     assert not t.in_gpu()
 
@@ -146,7 +146,7 @@ def test_tensor_device_gpu():
     
     # Test device movement
     t.to_gpu()
-    assert t.device() == DeviceType.GPU
+    assert t.device == DeviceType.GPU
     assert not t.in_cpu()
     assert t.in_gpu()
     
@@ -161,19 +161,19 @@ def test_tensor_shape_ops():
     """Test shape operations"""
     # Test dim
     t = Tensor.randn([2, 3, 4])
-    assert t.dim() == 3
-    assert t.shape() == [2, 3, 4]
-    assert t.size() == 24
+    assert t.dim == 3
+    assert t.shape == [2, 3, 4]
+    assert t.size == 24
     
     # Test reshape
     t_reshaped = t.reshape([4, 6])
-    assert t_reshaped.shape() == [4, 6]
-    assert t_reshaped.size() == 24
+    assert t_reshaped.shape == [4, 6]
+    assert t_reshaped.size == 24
     
     # Test transpose
     t = Tensor.randn([2, 3])
     t_t = t.transpose()
-    assert t_t.shape() == [3, 2]
+    assert t_t.shape == [3, 2]
     np_t = t.to_numpy()
     assert_allclose(t_t.to_numpy(), np_t.T)
 
@@ -184,15 +184,15 @@ def test_tensor_shape_ops_gpu():
     t = Tensor.randn([2, 3, 4])
     t.to_gpu()
     t_reshaped = t.reshape([4, 6])
-    assert t_reshaped.device() == DeviceType.GPU
-    assert t_reshaped.shape() == [4, 6]
+    assert t_reshaped.device == DeviceType.GPU
+    assert t_reshaped.shape == [4, 6]
     
     # Test transpose on GPU
     t = Tensor.randn([2, 3])
     t.to_gpu()
     t_t = t.transpose()
-    assert t_t.device() == DeviceType.GPU
-    assert t_t.shape() == [3, 2]
+    assert t_t.device == DeviceType.GPU
+    assert t_t.shape == [3, 2]
 
 def test_tensor_special_methods():
     """Test special methods"""

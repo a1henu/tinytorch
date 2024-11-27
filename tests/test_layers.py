@@ -130,7 +130,7 @@ def _test_conv2d_forward_backward(
     )
     
     # Backward pass
-    grad = np.random.randn(*output.shape())
+    grad = np.random.randn(*output.shape)
     grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
@@ -201,14 +201,14 @@ def _test_max_pool_forward_backward(
     )
     
     # Backward pass
-    grad = np.random.randn(*output.shape())
+    grad = np.random.randn(*output.shape)
     grad_tensor = TensorBase.from_numpy(grad)
     
     output_torch.backward(torch.tensor(grad))
     grad_x = max_pool2d_backward(
         grad_tensor, mask,
         kernel_size, padding, stride,
-        x_tensor.shape()
+        x_tensor.shape
     )
     
     # Check backward results
@@ -304,16 +304,16 @@ def test_fc_cpu():
     b_tensor = TensorBase.from_numpy(b)
     
     output = fc_forward(x_tensor, w_tensor, b_tensor)
-    assert output.device() == DeviceType.CPU
+    assert output.device == DeviceType.CPU
     
     grad = TensorBase.from_numpy(np.random.randn(2, 4))
     grad_x, grad_w, grad_b = fc_backward(
         x_tensor, w_tensor, b_tensor, output, grad
     )
     
-    assert grad_x.device() == DeviceType.CPU
-    assert grad_w.device() == DeviceType.CPU
-    assert grad_b.device() == DeviceType.CPU
+    assert grad_x.device == DeviceType.CPU
+    assert grad_w.device == DeviceType.CPU
+    assert grad_b.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_fc_gpu():
@@ -332,7 +332,7 @@ def test_fc_gpu():
     b_tensor.to_gpu()
     
     output = fc_forward(x_tensor, w_tensor, b_tensor)
-    assert output.device() == DeviceType.GPU
+    assert output.device == DeviceType.GPU
     
     grad = TensorBase.from_numpy(np.random.randn(2, 4))
     grad.to_gpu()
@@ -340,9 +340,9 @@ def test_fc_gpu():
         x_tensor, w_tensor, b_tensor, output, grad
     )
     
-    assert grad_x.device() == DeviceType.GPU
-    assert grad_w.device() == DeviceType.GPU
-    assert grad_b.device() == DeviceType.GPU
+    assert grad_x.device == DeviceType.GPU
+    assert grad_w.device == DeviceType.GPU
+    assert grad_b.device == DeviceType.GPU
 
 def test_conv2d_cpu():
     """Test Conv2D layer in various scenarios (CPU)"""
@@ -377,17 +377,17 @@ def test_conv2d_cpu():
     b_tensor = TensorBase.from_numpy(b)
     
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
-    assert output.device() == DeviceType.CPU
+    assert output.device == DeviceType.CPU
     
-    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
         padding=(1, 1), stride=(1, 1)
     )
     
-    assert grad_x.device() == DeviceType.CPU
-    assert grad_w.device() == DeviceType.CPU
-    assert grad_b.device() == DeviceType.CPU
+    assert grad_x.device == DeviceType.CPU
+    assert grad_w.device == DeviceType.CPU
+    assert grad_b.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_conv2d_gpu():
@@ -405,18 +405,18 @@ def test_conv2d_gpu():
     b_tensor.to_gpu()
     
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
-    assert output.device() == DeviceType.GPU
+    assert output.device == DeviceType.GPU
     
-    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape))
     grad.to_gpu()
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
         padding=(1, 1), stride=(1, 1)
     )
     
-    assert grad_x.device() == DeviceType.GPU
-    assert grad_w.device() == DeviceType.GPU
-    assert grad_b.device() == DeviceType.GPU
+    assert grad_x.device == DeviceType.GPU
+    assert grad_w.device == DeviceType.GPU
+    assert grad_b.device == DeviceType.GPU
     
 def test_max_pool():
     """Test Max Pooling layer in various scenarios (CPU)"""
@@ -447,15 +447,15 @@ def test_max_pool():
     x_tensor = TensorBase.from_numpy(x)
     
     output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
-    assert output.device() == DeviceType.CPU
-    assert mask.device() == DeviceType.CPU
+    assert output.device == DeviceType.CPU
+    assert mask.device == DeviceType.CPU
     
-    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape))
     grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
-        input_shape=x_tensor.shape()
+        input_shape=x_tensor.shape
     )
-    assert grad_x.device() == DeviceType.CPU
+    assert grad_x.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_max_pool_gpu():
@@ -465,16 +465,16 @@ def test_max_pool_gpu():
     x_tensor.to_gpu()
     
     output, mask = max_pool2d_forward(x_tensor, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2))
-    assert output.device() == DeviceType.GPU
-    assert mask.device() == DeviceType.GPU
+    assert output.device == DeviceType.GPU
+    assert mask.device == DeviceType.GPU
     
-    grad = TensorBase.from_numpy(np.random.randn(*output.shape()))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape))
     grad.to_gpu()
     grad_x = max_pool2d_backward(
         grad, mask, kernel_size=(2, 2), padding=(0, 0), stride=(2, 2),
-        input_shape=x_tensor.shape()
+        input_shape=x_tensor.shape
     )
-    assert grad_x.device() == DeviceType.GPU
+    assert grad_x.device == DeviceType.GPU
 
 def test_softmax_cross_entropy():
     """Test Softmax and Cross Entropy in various scenarios (CPU)"""
@@ -503,13 +503,13 @@ def test_softmax_cross_entropy():
     t_tensor = TensorBase.from_numpy(t)
     
     prob = softmax_forward(x_tensor)
-    assert prob.device() == DeviceType.CPU
+    assert prob.device == DeviceType.CPU
     
     loss = cross_entropy_forward(prob, t_tensor)
-    assert loss.device() == DeviceType.CPU
+    assert loss.device == DeviceType.CPU
     
     grad = cross_entropy_backward(prob, t_tensor)
-    assert grad.device() == DeviceType.CPU
+    assert grad.device == DeviceType.CPU
 
 @skip_if_no_cuda
 def test_softmax_cross_entropy_gpu():
@@ -524,13 +524,13 @@ def test_softmax_cross_entropy_gpu():
     t_tensor.to_gpu()
     
     prob = softmax_forward(x_tensor)
-    assert prob.device() == DeviceType.GPU
+    assert prob.device == DeviceType.GPU
     
     loss = cross_entropy_forward(prob, t_tensor)
-    assert loss.device() == DeviceType.GPU
+    assert loss.device == DeviceType.GPU
     
     grad = cross_entropy_backward(prob, t_tensor)
-    assert grad.device() == DeviceType.GPU
+    assert grad.device == DeviceType.GPU
 
 if __name__ == "__main__":
     pytest.main([__file__])

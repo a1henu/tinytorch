@@ -9,46 +9,77 @@ from .funcs import (
     softmax_forward,
     cross_entropy_forward, cross_entropy_backward
 )
-from ..tensor import TensorOp
+from ..tensor import TensorOp, Tensor
 
 class ReLU(TensorOp):
     def compute(self, x):
         return relu_forward(x)
     
     def gradient(self, out_grad, node):
-        return relu_backward(node.inputs[0].get_cached_data(), out_grad)
+        return Tensor(relu_backward(node.inputs[0].get_cached_data(), out_grad.get_cached_data()))
 
 class Sigmoid(TensorOp):
     def compute(self, x):
         return sigmoid_forward(x)
     
     def gradient(self, out_grad, node):
-        return sigmoid_backward(node.inputs[0].get_cached_data(), out_grad)
+        return Tensor(sigmoid_backward(node.inputs[0].get_cached_data(), out_grad.get_cached_data()))
 
 class FC(TensorOp):
+    def __init__(self):
+        self.output = None
+        
     def compute(self, x, weight, bias):
-        return fc_forward(x, weight, bias)
+        self.output = fc_forward(x, weight, bias)
+        return self.output
     
     def gradient(self, out_grad, node):
         x, w, b = node.inputs
         x, w, b = x.get_cached_data(), w.get_cached_data(), b.get_cached_data()
-        return fc_backward(x, w, b, FC.compute(x, w, b), out_grad)
+        grads = fc_backward(x, w, b, self.output, out_grad.get_cached_data())
+        return tuple(Tensor(grad) for grad in grads)
     
 class Conv2D(TensorOp):
-    def compute(self, x, weight, bias, padding, stride):
-        return conv2d_forward(x, weight, bias, padding, stride)
+    def __init__(self, padding, stride):
+        self.padding = padding
+        self.stride = stride
+        
+    def compute(self, x, weight, bias):
+        return conv2d_forward(x, weight, bias, self.padding, self.stride)
     
     def gradient(self, out_grad, node):
-        x, w, b, padding, stride = node.inputs
-        return conv2d_backward(x, w, out_grad, padding, stride)
+        x, w, _ = node.inputs
+        x, w = x.get_cached_data(), w.get_cached_data()
+        grads = conv2d_backward(x, w, out_grad.get_cached_data(), self.padding, self.stride)
+        return tuple(Tensor(grad) for grad in grads)
     
-# TODO: Check the input order
 class MaxPool2D(TensorOp):
-    def compute(self, x, kernel_size, stride):
-        return max_pool2d_forward(x, kernel_size, stride)
+    def __init__(self, kernel_size, padding, stride):
+        self.mask = None
+        self.shape = None
+        self.kernel_size = kernel_size
+        self.padding = padding
+        self.stride = stride
+        
+    def compute(self, x):
+        self.shape = x.shape
+        output, self.mask = max_pool2d_forward(
+            x, 
+            self.kernel_size, 
+            self.padding, 
+            self.stride
+        )
+        return output
     
     def gradient(self, out_grad, node):
-        return max_pool2d_backward(out_grad, node.inputs[0].get_cached_data(), node.inputs[1].get_cached_data(), node.inputs[2].get_cached_data())
+        return Tensor(max_pool2d_backward(
+            out_grad.get_cached_data(), 
+            self.mask, 
+            self.kernel_size, 
+            self.padding, 
+            self.stride,
+            self.shape
+        ))
     
 class Softmax(TensorOp):
     def compute(self, x):
@@ -57,7 +88,14 @@ class Softmax(TensorOp):
         return out_grad
 
 class CrossEntropy(TensorOp):
-    def compute(self, x, target):
-        return cross_entropy_forward(x, target)
+    def __init__(self, target):
+        self.target = target.get_cached_data()
+    
+    def compute(self, x):
+        return cross_entropy_forward(x, self.target)
+    
     def gradient(self, out_grad, node):
-        return cross_entropy_backward(out_grad, node.inputs[0].get_cached_data(), node.inputs[1].get_cached_data())
+        x = node.inputs[0].get_cached_data()
+        return Tensor(cross_entropy_backward(x, self.target))
+    
+    

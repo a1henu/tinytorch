@@ -56,7 +56,7 @@ class Net:
         relu3 = relu_forward(conv3)
         
         # Flatten
-        batch_size = relu3.shape()[0]
+        batch_size = relu3[0]
         flatten = relu3.reshape([batch_size, -1])
         
         # Fully connected
@@ -89,7 +89,7 @@ class Net:
         )
         
         # Reshape gradient
-        grad_flatten = grad_fc_x.reshape(relu3.shape())
+        grad_flatten = grad_fc_x.reshape(relu3.shape)
         
         # Backprop through third conv block
         grad_relu3 = relu_backward(conv3, grad_flatten)
@@ -151,9 +151,9 @@ def train(
         total_loss = 0
         for i, (images, labels) in enumerate(train_loader):
             # Ensure data is on the correct device
-            if images.device() != device:
+            if images.device != device:
                 images.to_gpu() if device == DeviceType.GPU else images.to_cpu()
-            if labels.device() != device:
+            if labels.device != device:
                 labels.to_gpu() if device == DeviceType.GPU else labels.to_cpu()
                 
             pred, cache = model.forward(images)

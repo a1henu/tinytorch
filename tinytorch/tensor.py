@@ -21,10 +21,10 @@ class Tensor(Node):
     def __init__(self, *args, requires_grad: bool = False, **kwargs) -> None:
         if len(args) == 1 and isinstance(args[0], TensorBase):
             self.requires_grad = False
-            self.data = args[0]
+            self._data = args[0]
         else:
             self.requires_grad = requires_grad
-            self.data = TensorBase(*args, **kwargs)
+            self._data = TensorBase(*args, **kwargs)
         
     def __hash__(self) -> int:
         return id(self)
@@ -54,7 +54,7 @@ class Tensor(Node):
         """
         return Tensor(self.get_cached_data().cpu())
     
-    def gpu(self) -> TensorBase:
+    def gpu(self) -> Tensor:
         """
         Move the tensor to GPU and return a new tensor.
         
@@ -99,6 +99,7 @@ class Tensor(Node):
         """
         return self.get_cached_data().in_gpu()
     
+    @property
     def device(self) -> DeviceType:
         """
         Get the device of the tensor.
@@ -106,17 +107,9 @@ class Tensor(Node):
         Returns:
             DeviceType: The device of the tensor.
         """
-        return self.get_cached_data().device()
+        return self.get_cached_data().device
     
-    def data(self) -> TensorBase:
-        """
-        Get the data of the tensor.
-        
-        Returns:
-            TensorBase: The data of the tensor.
-        """
-        return self.get_cached_data()
-    
+    @property
     def dim(self) -> int:
         """
         Get the dimension of the tensor.
@@ -124,8 +117,9 @@ class Tensor(Node):
         Returns:
             int: The dimension of the tensor.
         """
-        return self.get_cached_data().dim()
+        return self.get_cached_data().dim
     
+    @property
     def shape(self) -> List[int]:
         """
         Get the shape of the tensor.
@@ -133,9 +127,9 @@ class Tensor(Node):
         Returns:
             List[int]: The shape of the tensor.
         """
-        return self.get_cached_data().shape()
+        return self.get_cached_data().shape
     
-    def reshape(self, shape: List[int]) -> TensorBase:
+    def reshape(self, shape: List[int]) -> Tensor:
         """
         Reshape the tensor to the given shape.
         
@@ -145,17 +139,18 @@ class Tensor(Node):
         Returns:
             TensorBase: The reshaped tensor.
         """
-        return self.get_cached_data().reshape(shape)
+        return Tensor(self.get_cached_data().reshape(shape))
     
-    def transpose(self) -> TensorBase:
+    def transpose(self) -> Tensor:
         """
         Transpose the tensor.
         
         Returns:
             TensorBase: The transposed tensor.
         """
-        return self.get_cached_data().transpose()
+        return Tensor(self.get_cached_data().transpose())
     
+    @property
     def size(self) -> int:
         """
         Get the total size of the tensor.
@@ -265,7 +260,7 @@ class Tensor(Node):
     
     def backward(self, out_grad=None):
         if out_grad is None:
-            out_grad = Tensor.ones(self.shape, self.device(), requires_grad=True)
+            out_grad = Tensor.ones(self.shape, self.device, requires_grad=True)
         compute_gradient_of_variables(self, out_grad)
     
     @staticmethod
@@ -407,10 +402,10 @@ class MulOp(TensorOp):
         
     def compute(self, a: TensorBase):
         if isinstance(self.scalar, int) or isinstance(self.scalar, float):
-            return a * self.scalar
+            return self.scalar * a
     
     def gradient(self, out_grad: Tensor, node: Tensor):
-        return out_grad * self.scalar
+        return self.scalar * out_grad
 
 
 class MatMulOp(TensorOp):
