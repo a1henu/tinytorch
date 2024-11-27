@@ -14,7 +14,30 @@ We purpose to implement a tiny deep learning framework, and we will use it to tr
 
 ## Installation
 
-**TODO**: Describe the installation process
+Firstly, make sure you have installed `openblas`. If you haven't installed it, you can run the following command to install it:
+
+```bash
+apt-get install libopenblas-dev 
+# or if you are using brew
+brew install openblas
+```
+
+And export the following environment variables:
+
+```bash
+export CPLUS_INCLUDE_PATH=/opt/homebrew/opt/openblas/include
+export LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
+export LD_LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
+```
+
+Then, you can install `tinytorch` by running the following command:
+
+```bash
+# if you want to build the CPU version and you have installed CUDA
+CUDA_BUILD=ON pip install -v .[test] 
+# if you want to build the CPU version
+CUDA_BUILD=OFF pip install -v .[test]
+```
 
 ## Usage
 
@@ -75,4 +98,13 @@ cmake -DTEST=ON -DCUDA=OFF .. # test the CPU Version
 cmake -DTEST=ON -DCUDA=ON ..  # test the GPU Version
 make
 ctest --verbose --output-on-failure -C Debug -T test
+```
+
+### Python Part
+
+If you want to run the unit test for python part, you can run the following command:
+
+```bash
+cd tests
+pytest -v
 ```
