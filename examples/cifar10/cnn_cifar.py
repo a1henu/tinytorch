@@ -4,18 +4,18 @@ import numpy as np
 import time
 
 from tinytorch import Tensor, nn
-from tinytorch.data import MNIST, DataLoader
+from tinytorch.data import CIFAR10, DataLoader
 from tinytorch.optim import SGD, Adam
 
 class SimpleCNN(nn.Module):
     def __init__(self):
         super().__init__()
-        # (1, 28, 28) -conv-> (6, 24, 24) -pool-> (6, 12, 12)
-        self.conv1 = nn.Conv2d(1, 6, kernel_size=(5, 5))
-        # (6, 12, 12) -> (16, 10, 10) -pool-> (16, 5, 5)
-        self.conv2 = nn.Conv2d(6, 16, kernel_size=(3, 3))
+        # (3, 32, 32) -conv-> (32, 28, 28) -pool-> (32, 14, 14)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=(5, 5))
+        # (32, 14, 14) -> (64, 10, 10) -pool-> (64, 5, 5)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=(5, 5))
         
-        self.fc1 = nn.Linear(16 * 5 * 5, 256)
+        self.fc1 = nn.Linear(64 * 5 * 5, 256)
         self.fc2 = nn.Linear(256, 10)
         
         self.max_pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
@@ -53,7 +53,7 @@ def evaluate(model: SimpleCNN, dataloader: DataLoader) -> Tuple[float, float]:
 def train(
     train_loader: DataLoader,
     test_loader: DataLoader,
-    epochs: int = 5,
+    epochs: int = 10,
     learning_rate: float = 0.01,
     optimizer_class=SGD
 ) -> SimpleCNN:
@@ -87,8 +87,8 @@ def train(
 
 if __name__ == "__main__":
     print("Loading datasets...")
-    train_dataset = MNIST(root="./data", train=True, download=True)
-    test_dataset = MNIST(root="./data", train=False, download=True)
+    train_dataset = CIFAR10(root="./data", train=True, download=True)
+    test_dataset = CIFAR10(root="./data", train=False, download=True)
     
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)

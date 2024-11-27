@@ -325,6 +325,44 @@ size_t Tensor<Tp>::get_tol_size() const {
     return std::accumulate(_shape.begin(), _shape.end(), 1, std::multiplies<int>());
 }
 
+template <typename Tp> 
+Tensor<Tp> Tensor<Tp>::power(const double scalar) const {
+    if (this->in_cpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU);
+        size_t tol_size = this->get_tol_size();
+        ops::pow_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), this->get_data(), scalar, tol_size);
+        return out;
+    } else if (this->in_gpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::GPU);
+        size_t tol_size = this->get_tol_size();
+        ops::pow_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), this->get_data(), scalar, tol_size);
+        return out;
+    } else {
+        throw error::DeviceError("Unknown device type");
+    }
+}
+
+template <typename Tp>
+Tensor<Tp> Tensor<Tp>::ewise_mul(const Tensor<Tp>& other) const {
+    if (this->get_shape() != other.get_shape()) {
+        throw error::InvalidArgumentError("The shape of two tensors must be the same.");
+    }
+
+    if (this->in_cpu() && other.in_cpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::CPU);
+        size_t tol_size = this->get_tol_size();
+        ops::ewise_mul_op<Tp, device::CPU>()(device::cpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
+        return out;
+    } else if (this->in_gpu() && other.in_gpu()) {
+        Tensor<Tp> out(this->get_shape(), DeviceType::GPU);
+        size_t tol_size = this->get_tol_size();
+        ops::ewise_mul_op<Tp, device::GPU>()(device::gpu_device, out.get_data(), this->get_data(), other.get_data(), tol_size);
+        return out;
+    } else {
+        throw error::DeviceError("The device of two tensors must be the same.");
+    }
+}
+
 template <typename Tp>
 Tensor<Tp> Tensor<Tp>::operator+(const Tensor<Tp>& other) const {
     if (this->get_shape() != other.get_shape()) {

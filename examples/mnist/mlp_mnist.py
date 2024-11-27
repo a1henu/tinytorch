@@ -3,18 +3,16 @@ from typing import Tuple
 import numpy as np
 import time
 
-from tinytorch import Tensor
-from tinytorch.nn import Module, Linear, ReLU
+from tinytorch import Tensor, nn
 from tinytorch.data import MNIST, DataLoader
-from tinytorch.funcs import CrossEntropy
 from tinytorch.optim import SGD
 
-class SimpleMLP(Module):
+class SimpleMLP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = Linear(784, 128)
-        self.relu = ReLU()
-        self.fc2 = Linear(128, 10)
+        self.fc1 = nn.Linear(784, 128)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x: Tensor) -> Tensor:
         x = x.reshape([x.shape[0], -1])
@@ -27,10 +25,11 @@ def evaluate(model: SimpleMLP, dataloader: DataLoader) -> Tuple[float, float]:
     total = 0
     correct = 0
     total_loss = 0
+    criterion = nn.CrossEntropyLoss()
     
     for images, labels in dataloader:
         output = model(images)
-        loss = CrossEntropy(labels)(output)
+        loss = criterion(output, labels)
         total_loss += loss.to_numpy()[0]
         pred_labels = output.to_numpy().argmax(axis=1)
         correct += (pred_labels == labels.to_numpy()).sum()
@@ -47,12 +46,13 @@ def train(
 ) -> SimpleMLP:
     model = SimpleMLP()
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
+    criterion = nn.CrossEntropyLoss()
     
     for epoch in range(epochs):
         total_loss = 0
         for i, (images, labels) in enumerate(train_loader):
             output = model(images)
-            loss = CrossEntropy(labels)(output)
+            loss = criterion(output, labels)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()

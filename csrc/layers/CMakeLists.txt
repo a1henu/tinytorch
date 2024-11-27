@@ -3,6 +3,7 @@ set(LAYERS_SOURCES
     pooling_layer.cpp
     conv2d_layer.cpp
     softmax_layer.cpp
+    mse_layer.cpp
     cross_entropy_layer.cpp
 )
 

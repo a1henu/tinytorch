@@ -13,6 +13,7 @@ from ._libfuncs import                                                          
     conv2d_forward as _conv2d_forward, conv2d_backward as _conv2d_backward,                             \
     max_pool_forward as _max_pool_forward, max_pool_backward as _max_pool_backward,                     \
     softmax_forward as _softmax_forward,                                                                \
+    mse_forward as _mse_forward, mse_backward as _mse_backward,                                         \
     cross_entropy_forward as _cross_entropy_forward, cross_entropy_backward as _cross_entropy_backward
     
     
@@ -444,6 +445,52 @@ def softmax_forward(
     output = TensorBase(input.shape, input.device)
     _softmax_forward(input, output)
     return output
+
+def mse_forward(
+    input: TensorBase,  # (batch_size, num_classes)
+    target: TensorBase  # (batch_size, num_classes)
+) -> TensorBase:
+    """
+    Mean Squared Error loss forward propagation.
+    - loss = mean((input - target)^2)
+    
+    Parameters:
+        input: Input tensor (batch_size, num_classes)
+        target: Target tensor (batch_size, num_classes)
+    
+    Returns:
+        Tensor: Loss value (scalar)
+    """
+    assert input.shape == target.shape, (
+        f"Input shape {input.shape} doesn't match target shape {target.shape}"
+    )
+    
+    output = TensorBase([1], input.device)
+    _mse_forward(input, target, output)
+    return output
+
+def mse_backward(
+    input: TensorBase,  # (batch_size, num_classes)
+    target: TensorBase  # (batch_size, num_classes)
+) -> TensorBase:
+    """
+    Mean Squared Error loss backward propagation.
+    - dX = 2 * (input - target) / (batch_size * num_classes)
+    
+    Parameters:
+        input: Input tensor (batch_size, num_classes)
+        target: Target tensor (batch_size, num_classes)
+    
+    Returns:
+        Tensor: Input gradient tensor (batch_size, num_classes)
+    """
+    assert input.shape == target.shape, (
+        f"Input shape {input.shape} doesn't match target shape {target.shape}"
+    )
+    
+    grad = TensorBase(input.shape, input.device)
+    _mse_backward(input, target, grad)
+    return grad
 
 def cross_entropy_forward(
     input: TensorBase,  # (batch_size, num_classes)

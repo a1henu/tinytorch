@@ -42,6 +42,7 @@ Testing/
 
 # example data
 examples/mnist/data/
+examples/cifar10/data/
 
 # pytest cache
 **/.pytest_cache/

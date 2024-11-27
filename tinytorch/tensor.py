@@ -187,6 +187,15 @@ class Tensor(Node):
         """
         return SubOp()(self, other)
     
+    def __pow__(self, scalar) -> Tensor:
+        """
+        Raise the tensor to a scalar power.
+        
+        Returns:
+            Tensor: The tensor raised to the power.
+        """
+        return PowOp(scalar)(self)
+    
     def __mul__(self, other) -> Tensor:
         """
         Multiply the tensor by a scalar.
@@ -194,7 +203,22 @@ class Tensor(Node):
         Returns:
             Tensor: The product of the tensors.
         """
-        return MulOp(other)(self)
+        if isinstance(other, int) or isinstance(other, float):
+            return MulOp(float(other))(self)
+        elif isinstance(other, Tensor):
+            return EWiseMulOp()(self, other)
+    
+    def __truediv__(self, other) -> Tensor:
+        """
+        Divide the tensor by a scalar.
+        
+        Returns:
+            Tensor: The quotient of the tensors.
+        """
+        if isinstance(other, int) or isinstance(other, float):
+            return MulOp(float(1 / other))(self)
+        elif isinstance(other, Tensor):
+            return EWiseMulOp()(self, other**(-1))
     
     def __matmul__(self, other) -> Tensor:
         """
@@ -396,6 +420,17 @@ class SubOp(TensorOp):
         return out_grad, -out_grad
     
     
+class PowOp(TensorOp):
+    def __init__(self, scalar):
+        self.scalar = scalar
+        
+    def compute(self, a: TensorBase):
+        return a ** self.scalar
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        return out_grad * self.scalar * node.inputs[0] ** (self.scalar - 1)
+    
+    
 class MulOp(TensorOp):
     def __init__(self, scalar):
         self.scalar = scalar
@@ -406,6 +441,14 @@ class MulOp(TensorOp):
     
     def gradient(self, out_grad: Tensor, node: Tensor):
         return self.scalar * out_grad
+
+
+class EWiseMulOp(TensorOp):
+    def compute(self, a: TensorBase, b: TensorBase):
+        return a * b
+    
+    def gradient(self, out_grad: Tensor, node: Tensor):
+        return out_grad * node.inputs[1], out_grad * node.inputs[0]
 
 
 class MatMulOp(TensorOp):

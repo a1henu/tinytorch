@@ -7,6 +7,7 @@ from .funcs import (
     conv2d_forward, conv2d_backward,
     max_pool2d_forward, max_pool2d_backward,
     softmax_forward,
+    mse_forward, mse_backward,
     cross_entropy_forward, cross_entropy_backward
 )
 from ..tensor import TensorOp, Tensor
@@ -84,8 +85,20 @@ class MaxPool2d(TensorOp):
 class Softmax(TensorOp):
     def compute(self, x):
         return softmax_forward(x)
+    
     def gradient(self, out_grad, node):
-        return out_grad
+        raise NotImplementedError()
+    
+class MSE(TensorOp):
+    def __init__(self, target):
+        self.target = target.get_cached_data()
+    
+    def compute(self, x):
+        return mse_forward(x, self.target)
+    
+    def gradient(self, out_grad, node):
+        x = node.inputs[0].get_cached_data()
+        return Tensor(mse_backward(x, self.target))
 
 class CrossEntropy(TensorOp):
     def __init__(self, target):

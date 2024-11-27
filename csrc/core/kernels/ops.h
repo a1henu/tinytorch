@@ -57,6 +57,32 @@ struct mul_op {
 };
 
 template <typename Tp, typename Device>
+struct ewise_mul_op {
+    /// @brief element-wise multiplication for multi-device
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer
+    /// @param input1 : the input1 array pointer
+    /// @param input2 : the input2 array pointer
+    /// @param size   : the size of the array 
+    void operator()(Device* device, Tp* output, const Tp* input1, const Tp* input2, size_t size);
+};
+
+template <typename Tp, typename Device>
+struct pow_op {
+    /// @brief element-wise power for multi-device
+    ///
+    /// Inputs:
+    /// @param device : the type of device
+    /// @param output : the output array pointer
+    /// @param arr    : the input array pointer
+    /// @param num    : the scalar number
+    /// @param size   : the size of the array 
+    void operator()(Device* device, Tp* output, const Tp* arr, const double num, size_t size);
+};
+
+template <typename Tp, typename Device>
 struct matmul_op {
     /// @brief matmul operator for multi-device
     ///        C = alpha * A * B + beta * C

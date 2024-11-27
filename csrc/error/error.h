@@ -1,6 +1,6 @@
 /**
- * @file tensor.cpp
- * @brief Tensor class implementation
+ * @file error.h
+ * @brief error types
  */
 
 #ifndef CSRC_ERROR_ERROR_H

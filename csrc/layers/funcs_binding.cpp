@@ -23,6 +23,8 @@ PYBIND11_MODULE(_libfuncs, m) {
     m.def("softmax_forward", &layers::softmax_forward<double>);
     m.def("cross_entropy_forward", &layers::cross_entropy_forward<double>);
     m.def("cross_entropy_backward", &layers::cross_entropy_backward<double>);
+    m.def("mse_forward", &layers::mse_forward<double>);
+    m.def("mse_backward", &layers::mse_backward<double>);
 
     m.def("relu_forward", &tensor::relu_forward<double>);
     m.def("relu_backward", &tensor::relu_backward<double>);

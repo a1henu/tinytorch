@@ -221,6 +221,8 @@ class TensorBase(_Tensor):
         """
         if isinstance(other, np.ndarray):
             other = TensorBase.from_numpy(other, self.device)
+        elif isinstance(other, int) or isinstance(other, float):
+            other = TensorBase.full(self.shape, other, self.device)
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for +: '{type(self).__name__}' and '{type(other).__name__}'")
         return TensorBase(super().__add__(other))
@@ -234,6 +236,8 @@ class TensorBase(_Tensor):
         """
         if isinstance(other, np.ndarray):
             other = TensorBase.from_numpy(other, self.device)
+        elif isinstance(other, int) or isinstance(other, float):
+            other = TensorBase.full(self.shape, other, self.device)
         elif not isinstance(other, TensorBase):
             raise TypeError(f"Unsupported operand type(s) for -: '{type(self).__name__}' and '{type(other).__name__}'")
         return TensorBase(super().__sub__(other))
@@ -258,7 +262,10 @@ class TensorBase(_Tensor):
         Returns:
             TensorBase: The result of scalar multiplication.
         """
-        return TensorBase(super().__mul__(other))
+        if isinstance(other, int) or isinstance(other, float):
+            return TensorBase(super().__mul__(float(other)))
+        elif isinstance(other, TensorBase):
+            return TensorBase(super().ewise_mul(other))
     
     def __rmul__(self, other) -> TensorBase:
         """
@@ -268,6 +275,27 @@ class TensorBase(_Tensor):
             TensorBase: The result of scalar multiplication.
         """
         return TensorBase(super().__rmul__(other))
+    
+    def __truediv__(self, other) -> TensorBase:
+        """
+        Element-wise division of the tensor.
+        
+        Returns:
+            TensorBase: The result of element-wise division.
+        """
+        if isinstance(other, int) or isinstance(other, float):
+            return TensorBase(super().__mul__(float(1 / other)))
+        elif isinstance(other, TensorBase):
+            return TensorBase(super().ewise_mul(other**(-1)))
+    
+    def __pow__(self, scalar) -> TensorBase:
+        """
+        Element-wise power of the tensor.
+        
+        Returns:
+            TensorBase: The result of element-wise power.
+        """
+        return TensorBase(super().power(scalar))
     
     def __eq__(self, other) -> bool:
         """
@@ -306,7 +334,7 @@ class TensorBase(_Tensor):
         Returns:
             str: The string representation of the tensor.
         """
-        return super().__repr__()
+        return super().__repr__()[:100] + '...'
     
     def __str__(self) -> str:
         """

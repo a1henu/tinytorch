@@ -49,6 +49,8 @@ PYBIND11_MODULE(_libtensor, m) {
             return self.get_shape()[0];
         })
         // operators
+        .def("power", &tensor::Tensor<double>::power)
+        .def("ewise_mul", &tensor::Tensor<double>::ewise_mul)
         .def("__add__", &tensor::Tensor<double>::operator+)
         .def("__sub__", &tensor::Tensor<double>::operator-)
         .def("__matmul__", py::overload_cast<const tensor::Tensor<double>&>(&tensor::Tensor<double>::operator*, py::const_))

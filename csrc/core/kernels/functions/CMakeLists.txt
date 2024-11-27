@@ -4,6 +4,7 @@ list(APPEND FUNCTIONS_SOURCES
     relu.cpp
     sigmoid.cpp
     softmax.cpp
+    mse.cpp
     cross_entropy.cpp
 )
 
@@ -12,6 +13,7 @@ if(CUDA)
         relu.cu
         sigmoid.cu
         softmax.cu
+        mse.cu
         cross_entropy.cu
     )
 endif()

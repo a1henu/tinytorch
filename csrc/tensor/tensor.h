@@ -83,6 +83,9 @@ public:
 
     size_t get_tol_size() const;
 
+    Tensor power(double scalar) const;
+    Tensor ewise_mul(const Tensor& other) const;
+
     Tensor operator+(const Tensor& other) const;
     Tensor operator-(const Tensor& other) const;
 

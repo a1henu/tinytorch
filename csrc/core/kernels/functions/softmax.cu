@@ -1,5 +1,5 @@
 /**
- * @file softmax.cpp
+ * @file softmax.cu
  * @brief softmax operator implementation for GPU
  * 
  * @copyright Copyright (c) 2024 chenxu bai

@@ -9,6 +9,7 @@
 #include <cblas.h>
 #include <limits>
 #include <cstring>
+#include <cmath>
 
 #include "core/device/device.h"
 #include "core/kernels/ops.h"
@@ -52,6 +53,36 @@ struct mul_op<Tp, device::CPU> {
     void operator()(device::CPU* device, Tp* output, const Tp* arr, const Tp num, size_t size) {
         for (int i = 0; i < size; ++i) {
             output[i] = arr[i] * num;
+        }
+    }
+};
+
+template <typename Tp>
+struct ewise_mul_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device, 
+        Tp* output, 
+        const Tp* input1, 
+        const Tp* input2, 
+        size_t size
+    ) {
+        for (int i = 0; i < size; ++i) {
+            output[i] = input1[i] * input2[i];
+        }
+    }
+};
+
+template <typename Tp>
+struct pow_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device, 
+        Tp* output, 
+        const Tp* arr, 
+        const double num, 
+        size_t size
+    ) {
+        for (int i = 0; i < size; ++i) {
+            output[i] = std::pow(arr[i], num);
         }
     }
 };
@@ -614,6 +645,32 @@ struct mul_op<Tp, device::GPU> {
 };
 
 template <typename Tp>
+struct ewise_mul_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* output, 
+        const Tp* input1, 
+        const Tp* input2, 
+        size_t size
+    ) {
+        throw error::DeviceError("ewise_mul_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct pow_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device, 
+        Tp* output, 
+        const Tp* arr, 
+        const double num, 
+        size_t size
+    ) {
+        throw error::DeviceError("pow_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
 struct matmul_op<Tp, device::GPU> {
     void operator()(
         device::GPU* device,
@@ -836,6 +893,14 @@ template struct mul_op<int, device::GPU>;
 template struct mul_op<float, device::GPU>;
 template struct mul_op<double, device::GPU>;
 
+template struct ewise_mul_op<int, device::GPU>;
+template struct ewise_mul_op<float, device::GPU>;
+template struct ewise_mul_op<double, device::GPU>;
+
+template struct pow_op<int, device::GPU>;
+template struct pow_op<float, device::GPU>;
+template struct pow_op<double, device::GPU>;
+
 template struct matmul_op<int, device::GPU>;
 template struct matmul_op<float, device::GPU>;
 template struct matmul_op<double, device::GPU>;
@@ -897,6 +962,14 @@ template struct sub_op<double, device::CPU>;
 template struct mul_op<int, device::CPU>;
 template struct mul_op<float, device::CPU>;
 template struct mul_op<double, device::CPU>;
+
+template struct ewise_mul_op<int, device::CPU>;
+template struct ewise_mul_op<float, device::CPU>;
+template struct ewise_mul_op<double, device::CPU>;
+
+template struct pow_op<int, device::CPU>;
+template struct pow_op<float, device::CPU>;
+template struct pow_op<double, device::CPU>;
 
 template struct matmul_op<int, device::CPU>;
 template struct matmul_op<float, device::CPU>;
