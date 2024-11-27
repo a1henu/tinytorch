@@ -9,7 +9,7 @@ from tinytorch.data import MNIST, DataLoader
 from tinytorch.funcs import CrossEntropy
 from tinytorch.optim import SGD
 
-class SimpleNN(Module):
+class SimpleMLP(Module):
     def __init__(self):
         super().__init__()
         self.fc1 = Linear(784, 128)
@@ -23,7 +23,7 @@ class SimpleNN(Module):
         x = self.fc2(x)
         return x
 
-def evaluate(model: SimpleNN, dataloader: DataLoader) -> Tuple[float, float]:
+def evaluate(model: SimpleMLP, dataloader: DataLoader) -> Tuple[float, float]:
     total = 0
     correct = 0
     total_loss = 0
@@ -44,8 +44,8 @@ def train(
     epochs: int = 5,
     learning_rate: float = 0.01,
     optimizer_class=SGD
-) -> SimpleNN:
-    model = SimpleNN()
+) -> SimpleMLP:
+    model = SimpleMLP()
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     
     for epoch in range(epochs):
