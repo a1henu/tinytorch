@@ -41,7 +41,7 @@ build/
 Testing/
 
 # example data
-examples/data/
+examples/mnist/data/
 
 # pytest cache
 **/.pytest_cache/

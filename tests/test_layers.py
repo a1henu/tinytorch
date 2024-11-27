@@ -379,7 +379,7 @@ def test_conv2d_cpu():
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding=(1, 1), stride=(1, 1))
     assert output.device == DeviceType.CPU
     
-    grad = TensorBase.from_numpy(np.random.randn(*output.))
+    grad = TensorBase.from_numpy(np.random.randn(*output.shape))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad,
         padding=(1, 1), stride=(1, 1)

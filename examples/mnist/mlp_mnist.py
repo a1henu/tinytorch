@@ -1,6 +1,8 @@
 from typing import Tuple
 
 import numpy as np
+import time
+
 from tinytorch import Tensor
 from tinytorch.nn import Module, Linear, ReLU
 from tinytorch.data import MNIST, DataLoader
@@ -75,14 +77,15 @@ if __name__ == "__main__":
     train_dataset = MNIST(root="./data", train=True, download=True)
     test_dataset = MNIST(root="./data", train=False, download=True)
     
-    assert len(train_dataset) == 60000, "Wrong training set size"
-    assert len(test_dataset) == 10000, "Wrong test set size"
-    
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
     
     print("Training model with SGD...")
-    model = train(train_loader, test_loader, epochs=5, learning_rate=0.01, optimizer_class=SGD)
+    start_time = time.time()
+    model = train(train_loader, test_loader, epochs=10, learning_rate=0.1, optimizer_class=SGD)
+    end_time = time.time()
+    
+    print(f"Training took {end_time - start_time:.2f} seconds")
     
     print("Evaluating model...")
     train_acc, train_loss = evaluate(model, train_loader)

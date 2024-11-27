@@ -8,9 +8,9 @@ __author__ = "Chenxu Bai"
 __email__ = "chenxu.bai@stu.pku.edu.cn"
 
 __all__ = [
-    "DeviceType", 
-    "TensorBase",
-    "Tensor",
-    "funcs",
-    "data",
+    'DeviceType',
+    'TensorBase',
+    'Tensor',
+    'funcs',
+    'data',
 ]

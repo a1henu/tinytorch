@@ -10,7 +10,7 @@ from .funcs import (
     cross_entropy_forward, cross_entropy_backward
 )
 from .funcs_autodiff import (
-    ReLU, Sigmoid, FC, Conv2D, MaxPool2D, Softmax, CrossEntropy
+    ReLU, Sigmoid, FC, Conv2d, MaxPool2d, Softmax, CrossEntropy
 )
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     'max_pool2d_forward', 'max_pool2d_backward',
     'softmax_forward',
     'cross_entropy_forward', 'cross_entropy_backward',
-    'ReLU', 'Sigmoid', 'FC', 'Conv2D', 'MaxPool2D', 'Softmax', 'CrossEntropy'
+    'ReLU', 'Sigmoid', 'FC', 'Conv2d', 'MaxPool2d', 'Softmax', 'CrossEntropy'
 ]

@@ -132,7 +132,7 @@ def test_tensor_ops_gpu():
     result.to_cpu()
     assert_allclose(result.to_numpy(), scalar * a)
 
-def test_tensor_device:
+def test_tensor_device_shape():
     """Test basic device operations (CPU)"""
     t = Tensor([2, 3], DeviceType.CPU)
     assert t.device == DeviceType.CPU

@@ -39,7 +39,7 @@ class FC(TensorOp):
         grads = fc_backward(x, w, b, self.output, out_grad.get_cached_data())
         return tuple(Tensor(grad) for grad in grads)
     
-class Conv2D(TensorOp):
+class Conv2d(TensorOp):
     def __init__(self, padding, stride):
         self.padding = padding
         self.stride = stride
@@ -53,7 +53,7 @@ class Conv2D(TensorOp):
         grads = conv2d_backward(x, w, out_grad.get_cached_data(), self.padding, self.stride)
         return tuple(Tensor(grad) for grad in grads)
     
-class MaxPool2D(TensorOp):
+class MaxPool2d(TensorOp):
     def __init__(self, kernel_size, padding, stride):
         self.mask = None
         self.shape = None
