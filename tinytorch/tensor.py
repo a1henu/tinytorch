@@ -158,7 +158,7 @@ class Tensor(Node):
         Returns:
             int: The size of the tensor.
         """
-        return self.get_cached_data().size()
+        return self.get_cached_data().size
     
     def __len__(self) -> int:
         """
