@@ -21,11 +21,11 @@ class SimpleCNN(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.conv1(x)
-        x = self.max_pool(x)
         x = self.relu(x)
+        x = self.max_pool(x)
         x = self.conv2(x)
-        x = self.max_pool(x)
         x = self.relu(x)
+        x = self.max_pool(x)
         x = x.reshape([x.shape[0], -1])
         x = self.fc1(x)
         x = self.relu(x)
@@ -56,7 +56,7 @@ def train(
     optimizer_class=SGD
 ) -> SimpleCNN:
     model = SimpleCNN()
-    model.to_gpu()
+    # model.to_gpu()
     
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
@@ -90,12 +90,12 @@ if __name__ == "__main__":
     train_dataset = CIFAR10(root="./data", train=True, download=True)
     test_dataset = CIFAR10(root="./data", train=False, download=True)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.GPU)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.GPU)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.CPU)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.CPU)
     
     print("Training model with Adam...")
     start_time = time.time()
-    model = train(train_loader, test_loader, epochs=10, learning_rate=0.001, optimizer_class=Adam)
+    model = train(train_loader, test_loader, epochs=10, learning_rate=3e-4, optimizer_class=Adam)
     end_time = time.time()
     
     print(f"Training took {end_time - start_time:.2f} seconds")

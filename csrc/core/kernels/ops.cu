@@ -15,12 +15,14 @@
 namespace ops {
 
 template <typename Tp>
-__device__ void atomicAddWrapper(Tp* address, Tp val) {
+__device__ void 
+atomicAddWrapper(Tp* address, Tp val) {
     atomicAdd(address, val);
 }
 
 template <>
-__device__ void atomicAddWrapper<double>(double* address, double val) {
+__device__ void 
+atomicAddWrapper<double>(double* address, double val) {
     #if __CUDA_ARCH__ >= 600
         atomicAdd(address, val);
     #else
@@ -36,25 +38,28 @@ __device__ void atomicAddWrapper<double>(double* address, double val) {
 }
 
 template <typename Tp>
-__global__ void reduce_sum(Tp* output, const Tp* input, int size) {
-    __shared__ Tp sdata[CUDA_K_THREADS];
+__global__ void compute_grad_bias_kernel(
+    Tp* grad_bias,             // (C)
+    const Tp* grad_output,     // (N, C, H, W)
+    const int batch_size,      // N
+    const int out_channels,    // C
+    const int height_out,      // H
+    const int width_out        // W
+) {
+    int c = blockIdx.x * blockDim.x + threadIdx.x;
+    if (c >= out_channels) return;
     
-    int tid = threadIdx.x;
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    
-    sdata[tid] = (i < size) ? input[i] : 0;
-    __syncthreads();
-    
-    for (int s = blockDim.x/2; s > 0; s >>= 1) {
-        if (tid < s) {
-            sdata[tid] += sdata[tid + s];
+    Tp sum = 0.0;
+    for (int n = 0; n < batch_size; ++n) {
+        for (int h = 0; h < height_out; ++h) {
+            for (int w = 0; w < width_out; ++w) {
+                int idx = ((n * out_channels + c) * height_out + h) * width_out + w;
+                sum += grad_output[idx];
+            }
         }
-        __syncthreads();
     }
-    
-    if (tid == 0) {
-        atomicAddWrapper(output, sdata[0]);
-    }
+
+    grad_bias[c] = sum;
 }
 
 template <typename Tp>
@@ -709,23 +714,17 @@ struct conv2d_backward_op<Tp, device::GPU> {
         cudaMalloc(&col, sizeof(Tp) * channels_col * height_out * width_out);
         cudaMalloc(&grad_col, sizeof(Tp) * channels_col * height_out * width_out);
         
-        if (grad_bias != nullptr) {
-            cudaMemset(grad_bias, 0, sizeof(Tp) * out_channels);
-            for (int b = 0; b < batch_size; ++b) {
-                for (int c = 0; c < out_channels; ++c) {
-                    Tp* grad_bias_c = grad_bias + c;
-                    const Tp* grad_output_c = grad_output + 
-                        (b * out_channels + c) * height_out * width_out;
-                    
-                    reduce_sum<<<1, CUDA_K_THREADS>>>(
-                        grad_bias_c,
-                        grad_output_c,
-                        height_out * width_out
-                    );
-                }
-            }
-        }
-        
+        cudaMemset(grad_bias, 0, sizeof(Tp) * out_channels);
+        compute_grad_bias_kernel<Tp><<<CUDA_GET_BLOCKS(out_channels), CUDA_K_THREADS>>>(
+            grad_bias,
+            grad_output,
+            batch_size,
+            out_channels,
+            height_out,
+            width_out
+        );
+        cudaDeviceSynchronize();
+
         cudaMemset(grad_weight, 0, sizeof(Tp) * out_channels * channels_col);
         for (int b = 0; b < batch_size; ++b) {
             im2col_op<Tp, device::GPU>()(

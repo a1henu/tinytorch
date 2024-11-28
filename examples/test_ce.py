@@ -1,37 +1,59 @@
 import numpy as np
-from tinytorch import TensorBase, DeviceType, Tensor
-from tinytorch.funcs import softmax_forward, cross_entropy_forward, cross_entropy_backward
+from numpy.testing import assert_allclose
+import torch
 
-from tinytorch.nn import CrossEntropyLoss
+from tinytorch import DeviceType, Tensor
+from tinytorch.nn import MSELoss
 
-x = np.array([
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199],
-    [1.86472945, 3.62155361, -1.31965916, 4.09653904, 8.84008718, 5.34746362,
-     2.3387004, 4.81332744, 2.60539029, 5.32241199]
-])
-t = np.array([6., 6., 2., 8., 4., 6., 1., 2., 0., 3.])
 
-xt = Tensor.from_numpy(x, DeviceType.GPU)
-tt = Tensor.from_numpy(t, DeviceType.GPU)
+def test_fc(l, x, t, gpu):
+    # Tinytorch
+    if gpu:
+        l.to_gpu()
+    else:
+        l.to_cpu()
+    # Tinytorch
+    tinytorch_x = Tensor.from_numpy(x, device=DeviceType.GPU, requires_grad=True)
+    tinytorch_target = Tensor.from_numpy(t, device=DeviceType.GPU, requires_grad=True)
+    tinytorch_output = l(tinytorch_x, tinytorch_target)
+    
+    # PyTorch
+    torch_x = torch.tensor(x, requires_grad=True)
+    torch_target = torch.tensor(t, requires_grad=True)
+    torch_mse_loss = torch.nn.MSELoss()
+    torch_output = torch_mse_loss(torch_x, torch_target)
+    
+    # Compare outputs
+    # assert_allclose(tinytorch_output.to_numpy(), torch_output.detach().numpy(), atol=1e-3)
+    print('=== loss ===')
+    print('--- tinytorch ---')
+    print(tinytorch_output.to_numpy())
+    print('--- torch ---')
+    print(torch_output.detach().numpy())
+    print('--- diff ---')
+    print(torch_output.detach().numpy() / tinytorch_output.to_numpy()[0])
+    print('--- numpy ---')
+    l_n = (x - t) ** 2
+    print(l_n.sum() / (x.shape[0] * x.shape[1]))
+    
+    # Backward pass
+    tinytorch_output.backward()
+    torch_output.backward()
+    
+    # Compare gradients
+    assert tinytorch_x.grad is not None, "tinytorch_x.grad is None"
+    assert torch_x.grad is not None, "torch_x.grad is None"
+    # assert_allclose(tinytorch_x.grad.to_numpy(), torch_x.grad.numpy(), atol=1e-3)
+    print('=== grad ===')
+    print('--- tinytorch ---')
+    print(tinytorch_x.grad.to_numpy())
+    print('--- torch ---')
+    print(torch_x.grad.numpy())
 
-criterion = CrossEntropyLoss()
-loss = criterion(xt, tt)
-
-print(loss.to_numpy())
+if __name__ == "__main__":
+    l = MSELoss()
+    x = np.random.randn(3, 5).astype(np.float32)
+    t = np.random.randn(3, 5).astype(np.float32)
+    for gpu in [False, True]:
+        print(f"Running on {'GPU' if gpu else 'CPU'}")
+        test_fc(l, x, t, gpu)
