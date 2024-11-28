@@ -123,15 +123,13 @@ PYBIND11_MODULE(_libtensor, m) {
                 if (self.in_cpu()) {
                     std::memcpy(ptr, self.get_data(), total_size * sizeof(double));
                 } else {
-                    std::vector<double> cpu_data(total_size);
                     memory::copy_mem_op<double, device::CPU, device::GPU>()(
                         device::cpu_device, 
                         device::gpu_device, 
-                        cpu_data.data(), 
+                        ptr, 
                         self.get_data(), 
                         total_size
                     );
-                    std::memcpy(ptr, cpu_data.data(), total_size * sizeof(double));
                 }
                 
                 return result;

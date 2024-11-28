@@ -23,7 +23,6 @@ class Adam(Optimizer):
 
                 m.data = beta1 * m.data + (1 - beta1) * grad
                 v.data = beta2 * v.data + (1 - beta2) * grad**2
-
                 m_hat = m.data / (1 - beta1**self.t)
                 v_hat = v.data / (1 - beta2**self.t)
 

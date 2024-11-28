@@ -70,6 +70,10 @@ class Tensor(Node):
         Returns:
             None
         """
+        for input in self.inputs:
+            input.to_cpu()
+        if self.grad is not None:
+            self.grad.to_cpu()
         self.get_cached_data().to_cpu()
     
     def to_gpu(self) -> None:
@@ -79,6 +83,10 @@ class Tensor(Node):
         Returns:
             None
         """
+        for input in self.inputs:
+            input.to_gpu()
+        if self.grad is not None:
+            self.grad.to_gpu()
         self.get_cached_data().to_gpu()
     
     def in_cpu(self) -> bool:
@@ -242,6 +250,21 @@ class Tensor(Node):
             bool: True if the tensors are equal, False otherwise.
         """
         return self.get_cached_data() == other.get_cached_data()
+    
+    def __assign__(self, other) -> Tensor:
+        """
+        Assign the tensor to another tensor.
+        
+        Returns:
+            Tensor: The assigned tensor.
+        """
+        self.data = other.data.__deepcopy__()
+        self.device = other.device
+        self.requires_grad = other.requires_grad
+        self.grad = other.grad
+        self.inputs = other.inputs
+        self.op = other.op
+        return self
     
     def __getitem__(self, *args) -> float:
         """

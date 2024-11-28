@@ -41,4 +41,22 @@ class Module:
         if name in self._modules:
             return self._modules[name]
         return super().__getattr__(name)
+    
+    def to_gpu(self) -> None:
+        """
+        Move the module and its parameters to GPU.
+        """
+        for name, param in self._parameters.items():
+            param.to_gpu()
+        for name, module in self._modules.items():
+            module.to_gpu()
+
+    def to_cpu(self) -> None:
+        """
+        Move the module and its parameters to CPU.
+        """
+        for name, param in self._parameters.items():
+            param.to_cpu()
+        for name, module in self._modules.items():
+            module.to_cpu()
 

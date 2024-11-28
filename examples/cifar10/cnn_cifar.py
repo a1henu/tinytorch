@@ -1,21 +1,19 @@
 from typing import Tuple
-
-import numpy as np
 import time
 
-from tinytorch import Tensor, nn
+from tinytorch import Tensor, DeviceType, nn
 from tinytorch.data import CIFAR10, DataLoader
 from tinytorch.optim import SGD, Adam
 
 class SimpleCNN(nn.Module):
     def __init__(self):
         super().__init__()
-        # (3, 32, 32) -conv-> (32, 28, 28) -pool-> (32, 14, 14)
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=(5, 5))
-        # (32, 14, 14) -> (64, 10, 10) -pool-> (64, 5, 5)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=(5, 5))
+        # (3, 32, 32) -conv-> (6, 28, 28)  -pool-> (6, 14, 14)
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=(5, 5))
+        # (6, 14, 14) -conv-> (16, 10, 10) -pool-> (16, 5, 5)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=(5, 5))
         
-        self.fc1 = nn.Linear(64 * 5 * 5, 256)
+        self.fc1 = nn.Linear(16 * 5 * 5, 256)
         self.fc2 = nn.Linear(256, 10)
         
         self.max_pool = nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
@@ -58,6 +56,8 @@ def train(
     optimizer_class=SGD
 ) -> SimpleCNN:
     model = SimpleCNN()
+    model.to_gpu()
+    
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
     
@@ -90,12 +90,12 @@ if __name__ == "__main__":
     train_dataset = CIFAR10(root="./data", train=True, download=True)
     test_dataset = CIFAR10(root="./data", train=False, download=True)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.GPU)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.GPU)
     
     print("Training model with Adam...")
     start_time = time.time()
-    model = train(train_loader, test_loader, epochs=10, learning_rate=0.01, optimizer_class=Adam)
+    model = train(train_loader, test_loader, epochs=10, learning_rate=0.001, optimizer_class=Adam)
     end_time = time.time()
     
     print(f"Training took {end_time - start_time:.2f} seconds")

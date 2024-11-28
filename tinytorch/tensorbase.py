@@ -46,7 +46,7 @@ class TensorBase(_Tensor):
         __add__(other: Tensor) -> Tensor: Add another tensor to the current tensor.
         __sub__(other: Tensor) -> Tensor: Subtract another tensor from the current tensor.
         __matmul__(other: Tensor) -> Tensor: Matrix multiplication of two tensors.
-       __mul__(other: float) -> Tensor: Scalar multiplication of the tensor.
+        __mul__(other: float) -> Tensor: Scalar multiplication of the tensor.
         __rmul__(other: float) -> Tensor: Scalar multiplication of the tensor.
         __eq__(other: Tensor) -> bool: Check if the current tensor is equal to another tensor.
         __getitem__(args) -> float: Get item from the tensor.
@@ -87,6 +87,15 @@ class TensorBase(_Tensor):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        
+    def __deepcopy__(self, memo) -> TensorBase:
+        """
+        Deepcopy the tensor.
+        
+        Returns:
+            TensorBase: The copied tensor.
+        """
+        return TensorBase(super().__deepcopy__(memo))
         
     def cpu(self) -> TensorBase:
         """
@@ -309,6 +318,20 @@ class TensorBase(_Tensor):
         elif not isinstance(other, TensorBase):
             return False
         return super().__eq__(other)
+    
+    def __assign__(self, other) -> TensorBase:
+        """
+        Assign another tensor to the current tensor.
+        
+        Returns:
+            TensorBase: The current tensor.
+        """
+        if isinstance(other, np.ndarray):
+            other = TensorBase.from_numpy(other, self.device)
+        elif not isinstance(other, TensorBase):
+            raise TypeError(f"Expected Tensor, got {type(other).__name__}")
+        super().__assign__(other)
+        return self
     
     def __getitem__(self, *args) -> float:
         """

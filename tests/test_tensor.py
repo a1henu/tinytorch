@@ -106,30 +106,25 @@ def test_tensor_ops_gpu():
     # Test basic operations
     result = ta + tb
     assert result.device == DeviceType.GPU
-    result.to_cpu()
     assert_allclose(result.to_numpy(), a + b)
     
     result = ta - tb
     assert result.device == DeviceType.GPU
-    result.to_cpu()
     assert_allclose(result.to_numpy(), a - b)
     
     # Test matrix multiplication
     result = ta @ tc
     assert result.device == DeviceType.GPU
-    result.to_cpu()
     assert_allclose(result.to_numpy(), a @ c)
     
     # Test scalar multiplication
     scalar = 2.5
     result = ta * scalar
     assert result.device == DeviceType.GPU
-    result.to_cpu()
     assert_allclose(result.to_numpy(), a * scalar)
     
     result = scalar * ta
     assert result.device == DeviceType.GPU
-    result.to_cpu()
     assert_allclose(result.to_numpy(), scalar * a)
 
 def test_tensor_device_shape():
