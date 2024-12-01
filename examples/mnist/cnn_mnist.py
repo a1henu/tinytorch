@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 import time
+import os
 
 from tinytorch import Tensor, nn
 from tinytorch.data import MNIST, DataLoader
@@ -107,3 +108,8 @@ if __name__ == "__main__":
     print("\nFinal Results:")
     print(f"Train Accuracy: {train_acc:.4f}")
     print(f"Test Accuracy: {test_acc:.4f}")
+    
+    print("Saving model...")
+    if os.path.exists("mnist_model.npz"):
+        os.remove("mnist_model.npz")
+    model.save("mnist_model.npz")

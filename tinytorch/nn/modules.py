@@ -1,5 +1,7 @@
 from __future__ import annotations
 from typing import List, Any, Dict, Union
+import numpy as np
+import os
 
 from ..tensor import Tensor
 
@@ -58,4 +60,56 @@ class Module:
             param.to_cpu()
         for name, module in self._modules.items():
             module.to_cpu()
+            
+    def save(self, filepath: str) -> None:
+        """
+        Save the module's parameters to a file.
+        """
+        data = {}
+        for name, param in self._parameters.items():
+            data[name] = param.to_numpy()
+        for name, module in self._modules.items():
+            module_data = module.save_to_dict()
+            for sub_name, sub_param in module_data.items():
+                data[f"{name}.{sub_name}"] = sub_param
+        
+        np.savez(filepath, **data)
 
+    def save_to_dict(self) -> Dict[str, Any]:
+        """
+        Save the module's parameters to a dictionary.
+        """
+        data = {}
+        for name, param in self._parameters.items():
+            data[name] = param.to_numpy()
+        for name, module in self._modules.items():
+            module_data = module.save_to_dict()
+            for sub_name, sub_param in module_data.items():
+                data[f"{name}.{sub_name}"] = sub_param
+        return data
+
+    def load(self, filepath: str) -> None:
+        """
+        Load the module's parameters from a file.
+        """
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"No such file: '{filepath}'")
+        
+        data = np.load(filepath)
+        self.load_from_dict(data)
+
+    def load_from_dict(self, data: Dict[str, Any]) -> None:
+        """
+        Load the module's parameters from a dictionary.
+        """
+        for name, param in self._parameters.items():
+            if name not in data:
+                raise ValueError(f"Parameter '{name}' not found in saved data")
+            param_data = data[name]
+            if list(param_data.shape) != list(param.shape):
+                raise ValueError(f"Shape mismatch for parameter '{name}': expected {param.shape}, got {param_data.shape}")
+            param = Tensor.from_numpy(param_data)
+        
+        for name, module in self._modules.items():
+            module_data = {k[len(name)+1:]: v for k, v in data.items() if k.startswith(f"{name}.")}
+            module.load_from_dict(module_data)
