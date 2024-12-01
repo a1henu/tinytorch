@@ -56,7 +56,7 @@ def train(
     optimizer_class=SGD
 ) -> SimpleCNN:
     model = SimpleCNN()
-    # model.to_gpu()
+    model.to_gpu()
     
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
@@ -90,12 +90,12 @@ if __name__ == "__main__":
     train_dataset = CIFAR10(root="./data", train=True, download=True)
     test_dataset = CIFAR10(root="./data", train=False, download=True)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.CPU)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.CPU)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.GPU)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.GPU)
     
-    print("Training model with Adam...")
+    print("Training model with SGD...")
     start_time = time.time()
-    model = train(train_loader, test_loader, epochs=10, learning_rate=3e-4, optimizer_class=Adam)
+    model = train(train_loader, test_loader, epochs=10, learning_rate=1e-2, optimizer_class=SGD)
     end_time = time.time()
     
     print(f"Training took {end_time - start_time:.2f} seconds")

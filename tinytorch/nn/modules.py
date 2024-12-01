@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Any, Dict, Union
 
 from ..tensor import Tensor
-from .. import funcs
 
 class Module:
     def __init__(self):
