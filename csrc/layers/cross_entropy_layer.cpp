@@ -57,7 +57,7 @@ void cross_entropy_forward(
 template <typename Tp>
 void cross_entropy_backward(
     const tensor::Tensor<Tp>& input,    // X(batch_size, num_classes)
-    const tensor::Tensor<Tp>& target,  // t(batch_size)
+    const tensor::Tensor<Tp>& target,   // t(batch_size)
     tensor::Tensor<Tp>& grad            // dX(batch_size, num_classes)
 ) {
     if (!(input.in_cpu() && target.in_cpu() && grad.in_cpu()) &&
