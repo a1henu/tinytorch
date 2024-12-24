@@ -4,7 +4,7 @@ import numpy as np
 import time
 import os
 
-from tinytorch import Tensor, nn
+from tinytorch import Tensor, nn, DeviceType
 from tinytorch.data import MNIST, DataLoader
 from tinytorch.optim import SGD, Adam
 
@@ -54,11 +54,13 @@ def evaluate(model: SimpleCNN, dataloader: DataLoader) -> Tuple[float, float]:
 def train(
     train_loader: DataLoader,
     test_loader: DataLoader,
-    epochs: int = 5,
+    epochs: int = 10,
     learning_rate: float = 0.01,
     optimizer_class=SGD
 ) -> SimpleCNN:
     model = SimpleCNN()
+    model.to_gpu()
+    
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
     
@@ -91,8 +93,8 @@ if __name__ == "__main__":
     train_dataset = MNIST(root="./data", train=True, download=True)
     test_dataset = MNIST(root="./data", train=False, download=True)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, device=DeviceType.GPU)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False, device=DeviceType.GPU)
     
     print("Training model with Adam...")
     start_time = time.time()
