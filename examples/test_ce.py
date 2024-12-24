@@ -3,57 +3,26 @@ from numpy.testing import assert_allclose
 import torch
 
 from tinytorch import DeviceType, Tensor
-from tinytorch.nn import MSELoss
+from tinytorch.nn import Linear
 
-
-def test_fc(l, x, t, gpu):
-    # Tinytorch
-    if gpu:
-        l.to_gpu()
-    else:
-        l.to_cpu()
-    # Tinytorch
-    tinytorch_x = Tensor.from_numpy(x, device=DeviceType.GPU, requires_grad=True)
-    tinytorch_target = Tensor.from_numpy(t, device=DeviceType.GPU, requires_grad=True)
-    tinytorch_output = l(tinytorch_x, tinytorch_target)
+def test_fc(device, batch_size, in_features, out_features):
+    input = np.random.randn(batch_size, in_features)
+    out_grad = np.random.randn(batch_size, out_features)
+    
+    tinytorch_fc = Linear(in_features, out_features)
+    tinytorch_fc.to(device)
+    
+    weight_t = tinytorch_fc.weight
+    bias_t = tinytorch_fc.bias
+    
+    weight = weight_t.to_numpy()
+    bias = bias_t.to_numpy()
     
     # PyTorch
-    torch_x = torch.tensor(x, requires_grad=True)
-    torch_target = torch.tensor(t, requires_grad=True)
-    torch_mse_loss = torch.nn.MSELoss()
-    torch_output = torch_mse_loss(torch_x, torch_target)
     
-    # Compare outputs
-    # assert_allclose(tinytorch_output.to_numpy(), torch_output.detach().numpy(), atol=1e-3)
-    print('=== loss ===')
-    print('--- tinytorch ---')
-    print(tinytorch_output.to_numpy())
-    print('--- torch ---')
-    print(torch_output.detach().numpy())
-    print('--- diff ---')
-    print(torch_output.detach().numpy() / tinytorch_output.to_numpy()[0])
-    print('--- numpy ---')
-    l_n = (x - t) ** 2
-    print(l_n.sum() / (x.shape[0] * x.shape[1]))
+    # TinyTorch
+    input_t = Tensor.from_numpy(input, device)
+    out_grad_t = Tensor.from_numpy(out_grad, device)
     
-    # Backward pass
-    tinytorch_output.backward()
-    torch_output.backward()
     
-    # Compare gradients
-    assert tinytorch_x.grad is not None, "tinytorch_x.grad is None"
-    assert torch_x.grad is not None, "torch_x.grad is None"
-    # assert_allclose(tinytorch_x.grad.to_numpy(), torch_x.grad.numpy(), atol=1e-3)
-    print('=== grad ===')
-    print('--- tinytorch ---')
-    print(tinytorch_x.grad.to_numpy())
-    print('--- torch ---')
-    print(torch_x.grad.numpy())
-
-if __name__ == "__main__":
-    l = MSELoss()
-    x = np.random.randn(3, 5).astype(np.float32)
-    t = np.random.randn(3, 5).astype(np.float32)
-    for gpu in [False, True]:
-        print(f"Running on {'GPU' if gpu else 'CPU'}")
-        test_fc(l, x, t, gpu)
+    

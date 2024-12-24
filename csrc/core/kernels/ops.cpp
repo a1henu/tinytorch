@@ -217,6 +217,176 @@ struct transpose_op<Tp, device::CPU> {
 };
 
 template <typename Tp>
+struct fc_forward_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        if constexpr (std::is_same<Tp, float>::value) {
+            matmul_op<float, device::CPU>()(
+                device::cpu_device,
+                "N",
+                "N",
+                batch_size,
+                out_features,
+                in_features,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(input),
+                in_features,
+                reinterpret_cast<const float*>(weight),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(output),
+                out_features
+            );
+            for (int b = 0; b < batch_size; ++b) {
+                for (int i = 0; i < out_features; ++i) {
+                    output[b * out_features + i] += bias[i];
+                }
+            }
+        } else if constexpr (std::is_same<Tp, double>::value) {
+            matmul_op<double, device::CPU>()(
+                device::cpu_device,
+                "N",
+                "N",
+                batch_size,
+                out_features,
+                in_features,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(input),
+                in_features,
+                reinterpret_cast<const double*>(weight),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(output),
+                out_features
+            );
+            for (int b = 0; b < batch_size; ++b) {
+                for (int i = 0; i < out_features; ++i) {
+                    output[b * out_features + i] += bias[i];
+                }
+            }
+        } else {
+            throw error::TypeError("matmul_op only supports float and double.");
+        }
+    }
+};
+
+template <typename Tp>
+struct fc_backward_op<Tp, device::CPU> {
+    void operator()(
+        device::CPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        if constexpr (std::is_same<Tp, float>::value) {
+            // Compute grad_input: dX = dY * W^T
+            matmul_op<float, device::CPU>()(
+                device::cpu_device,
+                "N",
+                "T",
+                batch_size,
+                in_features,
+                out_features,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(grad_output),
+                out_features,
+                reinterpret_cast<const float*>(weight),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(grad_input),
+                in_features
+            );
+
+            // Compute grad_weight: dW = X^T * dY
+            matmul_op<float, device::CPU>()(
+                device::cpu_device,
+                "T",
+                "N",
+                in_features,
+                out_features,
+                batch_size,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(input),
+                in_features,
+                reinterpret_cast<const float*>(grad_output),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(grad_weight),
+                out_features
+            );
+
+            // Compute grad_bias: db = sum(dY)
+            for (int i = 0; i < out_features; ++i) {
+                grad_bias[i] = 0.0f;
+                for (int b = 0; b < batch_size; ++b) {
+                    grad_bias[i] += grad_output[b * out_features + i];
+                }
+            }
+        } else if constexpr (std::is_same<Tp, double>::value) {
+            // Compute grad_input: dX = dY * W^T
+            matmul_op<double, device::CPU>()(
+                device::cpu_device,
+                "N",
+                "T",
+                batch_size,
+                in_features,
+                out_features,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(grad_output),
+                out_features,
+                reinterpret_cast<const double*>(weight),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(grad_input),
+                in_features
+            );
+
+            // Compute grad_weight: dW = X^T * dY
+            matmul_op<double, device::CPU>()(
+                device::cpu_device,
+                "T",
+                "N",
+                in_features,
+                out_features,
+                batch_size,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(input),
+                in_features,
+                reinterpret_cast<const double*>(grad_output),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(grad_weight),
+                out_features
+            );
+
+            // Compute grad_bias: db = sum(dY)
+            for (int i = 0; i < out_features; ++i) {
+                grad_bias[i] = 0.0;
+                for (int b = 0; b < batch_size; ++b) {
+                    grad_bias[i] += grad_output[b * out_features + i];
+                }
+            }
+        } else {
+            throw error::TypeError("fc_backward_op only supports float and double.");
+        }
+    }
+};
+
+template <typename Tp>
 struct im2col_op<Tp, device::CPU> {
     void operator()(
         device::CPU* device,
@@ -746,6 +916,39 @@ struct transpose_op<Tp, device::GPU> {
         throw error::DeviceError("transpose_op<GPU> can not be called without CUDA support.");
     }
 };
+template <typename Tp>
+struct fc_forward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        throw error::DeviceError("fc_forward_op<GPU> can not be called without CUDA support.");
+    }
+};
+
+template <typename Tp>
+struct fc_backward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        throw error::DeviceError("fc_backward_op<GPU> can not be called without CUDA support.");
+    }
+};
 
 template <typename Tp>
 struct im2col_op<Tp, device::GPU> {
@@ -925,6 +1128,14 @@ template struct transpose_op<int, device::GPU>;
 template struct transpose_op<float, device::GPU>;
 template struct transpose_op<double, device::GPU>;
 
+template struct fc_forward_op<int, device::GPU>;
+template struct fc_forward_op<float, device::GPU>;
+template struct fc_forward_op<double, device::GPU>;
+
+template struct fc_backward_op<int, device::GPU>;
+template struct fc_backward_op<float, device::GPU>;
+template struct fc_backward_op<double, device::GPU>;
+
 template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;
 template struct im2col_op<double, device::GPU>;
@@ -994,6 +1205,14 @@ template struct eye_op<double, device::CPU>;
 template struct transpose_op<int, device::CPU>;
 template struct transpose_op<float, device::CPU>;
 template struct transpose_op<double, device::CPU>;
+
+template struct fc_forward_op<int, device::CPU>;
+template struct fc_forward_op<float, device::CPU>;
+template struct fc_forward_op<double, device::CPU>;
+
+template struct fc_backward_op<int, device::CPU>;
+template struct fc_backward_op<float, device::CPU>;
+template struct fc_backward_op<double, device::CPU>;
 
 template struct im2col_op<int, device::CPU>;
 template struct im2col_op<float, device::CPU>;

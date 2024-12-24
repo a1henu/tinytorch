@@ -24,7 +24,8 @@ kernel_square_sub(
     size_t num_classes
 ) {
     CUDA_KERNEL_LOOP(i, batch_size * num_classes) {
-        output[i] = powf(input[i] - target[i], 2);
+        Tp diff = input[i] - target[i];
+        output[i] = diff * diff;
     }
 }
 
@@ -93,13 +94,14 @@ struct mse_forward<Tp, device::GPU> {
         );
         cudaDeviceSynchronize();
 
-        kernel_set_zero<<<1, 1>>>(output, 1);
+        cudaMemset(output, 0, sizeof(Tp));
         kernel_mse_sum<<<CUDA_GET_BLOCKS(batch_size * num_classes), CUDA_K_THREADS>>>(
             square_diff, output, batch_size, num_classes
         );
         cudaDeviceSynchronize();
 
         kernel_mse_div<<<1, 1>>>(output, batch_size * num_classes);
+        cudaFree(square_diff);
     }
 };
 

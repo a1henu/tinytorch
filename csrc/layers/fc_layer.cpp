@@ -42,13 +42,29 @@ void fc_forward(
         throw error::InvalidArgumentError("Output dimensions do not match");
     }
 
-    tensor::Tensor<Tp> ones_;
     if (input.in_cpu()) {
-        ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::CPU);
+        ops::fc_forward_op<Tp, device::CPU>()(
+            device::cpu_device,
+            output.get_data(),
+            input.get_data(),
+            weight.get_data(),
+            bias.get_data(),
+            input.get_shape()[0],
+            input.get_shape()[1],
+            weight.get_shape()[1]
+        );
     } else if (input.in_gpu()) {
-        ones_ = tensor::Tensor<Tp>::ones({input.get_shape()[0], 1}, tensor::DeviceType::GPU);
+        ops::fc_forward_op<Tp, device::GPU>()(
+            device::gpu_device,
+            output.get_data(),
+            input.get_data(),
+            weight.get_data(),
+            bias.get_data(),
+            input.get_shape()[0],
+            input.get_shape()[1],
+            weight.get_shape()[1]
+        );
     }
-    output = input * weight + ones_ * bias; 
 }
 
 template <typename Tp>
@@ -85,15 +101,33 @@ void fc_backward(
         throw error::InvalidArgumentError("Output dimensions do not match");
     }
 
-    tensor::Tensor<Tp> ones_;
     if (input.in_cpu()) {
-        ones_ = tensor::Tensor<Tp>::ones({1, input.get_shape()[0]}, tensor::DeviceType::CPU);
+        ops::fc_backward_op<Tp, device::CPU>()(
+            device::cpu_device,
+            grad_input.get_data(),
+            grad_weight.get_data(),
+            grad_bias.get_data(),
+            grad_output.get_data(),
+            input.get_data(),
+            weight.get_data(),
+            input.get_shape()[0],
+            input.get_shape()[1],
+            weight.get_shape()[1]
+        );
     } else if (input.in_gpu()) {
-        ones_ = tensor::Tensor<Tp>::ones({1, input.get_shape()[0]}, tensor::DeviceType::GPU);
+        ops::fc_backward_op<Tp, device::GPU>()(
+            device::gpu_device,
+            grad_input.get_data(),
+            grad_weight.get_data(),
+            grad_bias.get_data(),
+            grad_output.get_data(),
+            input.get_data(),
+            weight.get_data(),
+            input.get_shape()[0],
+            input.get_shape()[1],
+            weight.get_shape()[1]
+        );
     }
-    grad_input = grad_output * weight.transpose();
-    grad_weight = input.transpose() * grad_output;
-    grad_bias = ones_ * grad_output;
 }
 
 template void fc_forward<float>(

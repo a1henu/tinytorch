@@ -152,6 +152,29 @@ kernel_trans(const Tp* input, Tp* output, const int m, const int n) {
 }
 
 template <typename Tp>
+__global__ void 
+kernel_bias_fc(Tp* output, const Tp* bias, int batch_size, int out_features) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < batch_size * out_features) {
+        int i = idx % out_features;
+        output[idx] += bias[i];
+    }
+}
+
+template <typename Tp>
+__global__ void 
+kernel_calc_db(Tp* grad_bias, const Tp* grad_output, int batch_size, int out_features) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < out_features) {
+        Tp sum = 0;
+        for (int b = 0; b < batch_size; ++b) {
+            sum += grad_output[b * out_features + idx];
+        }
+        grad_bias[idx] = sum;
+    }
+}
+
+template <typename Tp>
 __global__ void
 kernel_im2col(
     const Tp* data_im,
@@ -530,6 +553,157 @@ struct transpose_op<Tp, device::GPU> {
         const int n
     ) {
         kernel_trans<Tp><<<CUDA_GET_BLOCKS(m * n), CUDA_K_THREADS>>>(input, output, m, n);
+    }
+};
+
+template <typename Tp>
+struct fc_forward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        if constexpr (std::is_same<Tp, float>::value) {
+            matmul_op<float, device::GPU>()(
+                device::gpu_device,
+                "N",
+                "N",
+                batch_size,
+                out_features,
+                in_features,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(input),
+                in_features,
+                reinterpret_cast<const float*>(weight),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(output),
+                out_features
+            );
+        } else if constexpr (std::is_same<Tp, double>::value) {
+            matmul_op<double, device::GPU>()(
+                device::gpu_device,
+                "N",
+                "N",
+                batch_size,
+                out_features,
+                in_features,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(input),
+                in_features,
+                reinterpret_cast<const double*>(weight),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(output),
+                out_features
+            );
+        } else {
+            throw std::runtime_error("fc_forward_op only supports float and double.");
+        }
+        kernel_bias_fc<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(batch_size * out_features)>>>(output, bias, batch_size, out_features);
+    }
+};
+
+template <typename Tp>
+struct fc_backward_op<Tp, device::GPU> {
+    void operator()(
+        device::GPU* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    ) {
+        if constexpr (std::is_same<Tp, float>::value) {
+            // Compute grad_input: dX = dY * W^T
+            matmul_op<float, device::GPU>()(
+                device::gpu_device,
+                "N",
+                "T",
+                batch_size,
+                in_features,
+                out_features,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(grad_output),
+                out_features,
+                reinterpret_cast<const float*>(weight),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(grad_input),
+                in_features
+            );
+
+            // Compute grad_weight: dW = X^T * dY
+            matmul_op<float, device::GPU>()(
+                device::gpu_device,
+                "T",
+                "N",
+                in_features,
+                out_features,
+                batch_size,
+                static_cast<float>(1.0),
+                reinterpret_cast<const float*>(input),
+                in_features,
+                reinterpret_cast<const float*>(grad_output),
+                out_features,
+                static_cast<float>(0.0),
+                reinterpret_cast<float*>(grad_weight),
+                out_features
+            );
+
+            // Compute grad_bias: db = sum(dY)
+            kernel_calc_db<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(out_features)>>>(grad_bias, grad_output, batch_size, out_features);
+        } else if constexpr (std::is_same<Tp, double>::value) {
+            // Compute grad_input: dX = dY * W^T
+            matmul_op<double, device::GPU>()(
+                device::gpu_device,
+                "N",
+                "T",
+                batch_size,
+                in_features,
+                out_features,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(grad_output),
+                out_features,
+                reinterpret_cast<const double*>(weight),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(grad_input),
+                in_features
+            );
+
+            // Compute grad_weight: dW = X^T * dY
+            matmul_op<double, device::GPU>()(
+                device::gpu_device,
+                "T",
+                "N",
+                in_features,
+                out_features,
+                batch_size,
+                static_cast<double>(1.0),
+                reinterpret_cast<const double*>(input),
+                in_features,
+                reinterpret_cast<const double*>(grad_output),
+                out_features,
+                static_cast<double>(0.0),
+                reinterpret_cast<double*>(grad_weight),
+                out_features
+            );
+
+            // Compute grad_bias: db = sum(dY)
+            kernel_calc_db<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(out_features)>>>(grad_bias, grad_output, batch_size, out_features);
+        } else {
+            throw std::runtime_error("fc_backward_op only supports float and double.");
+        }
     }
 };
 
@@ -932,6 +1106,14 @@ template struct eye_op<double, device::GPU>;
 template struct transpose_op<int, device::GPU>;
 template struct transpose_op<float, device::GPU>;
 template struct transpose_op<double, device::GPU>;
+
+template struct fc_forward_op<int, device::GPU>;
+template struct fc_forward_op<float, device::GPU>;
+template struct fc_forward_op<double, device::GPU>;
+
+template struct fc_backward_op<int, device::GPU>;
+template struct fc_backward_op<float, device::GPU>;
+template struct fc_backward_op<double, device::GPU>;
 
 template struct im2col_op<int, device::GPU>;
 template struct im2col_op<float, device::GPU>;

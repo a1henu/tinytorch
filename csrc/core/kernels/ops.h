@@ -85,7 +85,7 @@ struct pow_op {
 template <typename Tp, typename Device>
 struct matmul_op {
     /// @brief matmul operator for multi-device
-    ///        C = alpha * A * B + beta * C
+    ///        C = alpha * A(m, k) * B(k, n) + beta * C(m, n)
     ///
     /// Inputs:
     /// @param device : the type of device
@@ -177,6 +177,60 @@ struct transpose_op {
     /// @param m      : the number of rows of the input matrix
     /// @param n      : the number of columns of the output matrix
     void operator()(Device* device, const Tp* input, Tp* output, const int m, const int n);
+};
+
+template <typename Tp, typename Device>
+struct fc_forward_op {
+    /// @brief fully connected forward operator
+    ///
+    /// Inputs:
+    /// @param device       : the type of device
+    /// @param output       : the output array pointer
+    /// @param input        : the input array pointer
+    /// @param weight       : the weight array pointer
+    /// @param bias         : the bias array pointer
+    /// @param batch_size   : the batch size
+    /// @param in_features  : the number of input features
+    /// @param out_features : the number of output features
+    void operator()(
+        Device* device,
+        Tp* output,
+        const Tp* input,
+        const Tp* weight,
+        const Tp* bias,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    );
+};
+
+template <typename Tp, typename Device>
+struct fc_backward_op {
+    /// @brief fully connected backward operator
+    ///
+    /// Inputs:
+    /// @param device       : the type of device
+    /// @param grad_input   : gradient w.r.t input
+    /// @param grad_weight  : gradient w.r.t weight
+    /// @param grad_bias    : gradient w.r.t bias
+    /// @param grad_output  : gradient w.r.t output
+    /// @param input        : input data
+    /// @param weight       : weight data
+    /// @param batch_size   : batch size
+    /// @param in_features  : input features
+    /// @param out_features : output features
+    void operator()(
+        Device* device,
+        Tp* grad_input,
+        Tp* grad_weight,
+        Tp* grad_bias,
+        const Tp* grad_output,
+        const Tp* input,
+        const Tp* weight,
+        const int batch_size,
+        const int in_features,
+        const int out_features
+    );
 };
 
 template <typename Tp, typename Device>

@@ -98,7 +98,7 @@ if __name__ == "__main__":
     
     print("Training model with Adam...")
     start_time = time.time()
-    model = train(train_loader, test_loader, epochs=10, learning_rate=0.01, optimizer_class=Adam)
+    model = train(train_loader, test_loader, epochs=10, learning_rate=3e-4, optimizer_class=Adam)
     end_time = time.time()
     
     print(f"Training took {end_time - start_time:.2f} seconds")
