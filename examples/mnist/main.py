@@ -1,10 +1,12 @@
+import os
+
 from tinytorch import DeviceType, nn
 from tinytorch.optim import SGD, Adam
 
 from model import Model
 from train import train
-from eval import eval
-from utils import load_mnist
+from eval import evaluate
+from utils import load_mnist, save_model
 
 from argparse import ArgumentParser
 
@@ -33,3 +35,17 @@ if device == DeviceType.GPU:
 
 if args.mode == 'train':
     train(model, train_loader, criterion, args.epochs, Adam, args.learning_rate)
+    save_model(model, 'checkpoint/model.npz')
+elif args.mode == 'eval':
+    if os.path.exists('checkpoint/model.npz'):
+        model.load('checkpoint/model.npz')
+    else:
+        raise FileNotFoundError('Model checkpoint not found')
+    train_acc, train_loss = evaluate(model, train_loader, criterion)
+    test_acc, test_loss = evaluate(model, test_loader, criterion)
+
+    print("\nFinal Results:")
+    print(f"Train Accuracy: {train_acc:.4f}")
+    print(f"Test Accuracy: {test_acc:.4f}")
+else:
+    raise ValueError('Invalid mode')

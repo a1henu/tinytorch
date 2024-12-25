@@ -14,7 +14,7 @@ class MaxPool2d(Module):
     ) -> None:
         super().__init__()
         self.kernel_size = kernel_size
-        if self.stride is None: 
+        if stride is None: 
             self.stride = kernel_size
         else:
             self.stride = stride
