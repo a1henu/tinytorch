@@ -9,12 +9,15 @@ class MaxPool2d(Module):
     def __init__(
         self, 
         kernel_size: Tuple[int, int],
-        stride: Tuple[int, int] = (1, 1),
+        stride: Tuple[int, int] | None = None,
         padding: Tuple[int, int] = (0, 0),
     ) -> None:
         super().__init__()
         self.kernel_size = kernel_size
-        self.stride = stride
+        if self.stride is None: 
+            self.stride = kernel_size
+        else:
+            self.stride = stride
         self.padding = padding
     
     def forward(self, x: Tensor) -> Tensor:

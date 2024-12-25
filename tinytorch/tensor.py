@@ -149,6 +149,23 @@ class Tensor(Node):
         """
         return Tensor(self.get_cached_data().reshape(shape))
     
+    def flatten(self, start_idx: int = 0, end_idx: int = -1) -> Tensor:
+        """
+        Flatten the tensor from the start dimension to the end dimension.
+        
+        Parameters:
+            start (int): The start dimension to flatten. Default is 0.
+            end (int): The end dimension to flatten. Default is -1 (last dimension).
+        
+        Returns:
+            Tensor: The flattened tensor.
+        """
+        shape = list(self.shape)
+        if end_idx == -1:
+            end_idx = len(shape)
+        flattened_shape = shape[:start_idx] + [-1] + shape[end_idx:]
+        return self.reshape(flattened_shape)
+    
     def transpose(self) -> Tensor:
         """
         Transpose the tensor.
