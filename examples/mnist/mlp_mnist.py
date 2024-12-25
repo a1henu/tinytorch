@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import time
 
-from tinytorch import Tensor, nn
+from tinytorch import DeviceType, Tensor, nn
 from tinytorch.data import MNIST, DataLoader
 from tinytorch.optim import SGD
 
@@ -45,6 +45,8 @@ def train(
     optimizer_class=SGD
 ) -> SimpleMLP:
     model = SimpleMLP()
+    model.to_gpu()
+    
     optimizer = optimizer_class(model.parameters(), lr=learning_rate)
     criterion = nn.CrossEntropyLoss()
     
@@ -77,8 +79,8 @@ if __name__ == "__main__":
     train_dataset = MNIST(root="./data", train=True, download=True)
     test_dataset = MNIST(root="./data", train=False, download=True)
     
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, device=DeviceType.GPU)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, device=DeviceType.GPU)
     
     print("Training model with SGD...")
     start_time = time.time()

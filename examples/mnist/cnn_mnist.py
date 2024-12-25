@@ -112,6 +112,6 @@ if __name__ == "__main__":
     print(f"Test Accuracy: {test_acc:.4f}")
     
     print("Saving model...")
-    if os.path.exists("mnist_model.npz"):
-        os.remove("mnist_model.npz")
-    model.save("mnist_model.npz")
+    if os.path.exists("mnist_cnn_model.npz"):
+        os.remove("mnist_cnn_model.npz")
+    model.save("mnist_cnn_model.npz")

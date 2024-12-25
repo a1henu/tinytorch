@@ -15,29 +15,6 @@
 namespace ops {
 
 template <typename Tp>
-__device__ void 
-atomicAddWrapper(Tp* address, Tp val) {
-    atomicAdd(address, val);
-}
-
-template <>
-__device__ void 
-atomicAddWrapper<double>(double* address, double val) {
-    #if __CUDA_ARCH__ >= 600
-        atomicAdd(address, val);
-    #else
-        unsigned long long int* address_as_ull = (unsigned long long int*)address;
-        unsigned long long int old = *address_as_ull;
-        unsigned long long int assumed;
-        do {
-            assumed = old;
-            old = atomicCAS(address_as_ull, assumed,
-                           __double_as_longlong(val + __longlong_as_double(assumed)));
-        } while (assumed != old);
-    #endif
-}
-
-template <typename Tp>
 __global__ void compute_grad_bias_kernel(
     Tp* grad_bias,             // (C)
     const Tp* grad_output,     // (N, C, H, W)
@@ -164,13 +141,12 @@ kernel_bias_fc(Tp* output, const Tp* bias, int batch_size, int out_features) {
 template <typename Tp>
 __global__ void 
 kernel_calc_db(Tp* grad_bias, const Tp* grad_output, int batch_size, int out_features) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < out_features) {
+    CUDA_KERNEL_LOOP(i, out_features) {
         Tp sum = 0;
         for (int b = 0; b < batch_size; ++b) {
-            sum += grad_output[b * out_features + idx];
+            sum += grad_output[b * out_features + i];
         }
-        grad_bias[idx] = sum;
+        grad_bias[i] = sum;
     }
 }
 
@@ -243,10 +219,7 @@ __global__ void kernel_col2im(
         int w_pad = w * stride_w - pad_w + w_offset;
         
         if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width) {
-            atomicAddWrapper(
-                &data_im[(c_im * height + h_pad) * width + w_pad],
-                data_col[index]
-            );
+            data_im[(c_im * height + h_pad) * width + w_pad] += data_col[index];
         }
     }
 }
@@ -368,7 +341,7 @@ kernel_max_pool_backward(
             const int im_idx = b * channels * height * width +
                                c * height * width +
                                h_im * width + w_im;
-            atomicAddWrapper(&grad_im[im_idx], grad_out[out_idx]);
+            grad_im[im_idx] += grad_out[out_idx];
         }
     }
 }
@@ -605,7 +578,7 @@ struct fc_forward_op<Tp, device::GPU> {
         } else {
             throw std::runtime_error("fc_forward_op only supports float and double.");
         }
-        kernel_bias_fc<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(batch_size * out_features)>>>(output, bias, batch_size, out_features);
+        kernel_bias_fc<Tp><<<CUDA_GET_BLOCKS(batch_size * out_features), CUDA_K_THREADS>>>(output, bias, batch_size, out_features);
     }
 };
 
@@ -661,7 +634,7 @@ struct fc_backward_op<Tp, device::GPU> {
             );
 
             // Compute grad_bias: db = sum(dY)
-            kernel_calc_db<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(out_features)>>>(grad_bias, grad_output, batch_size, out_features);
+            kernel_calc_db<<<CUDA_GET_BLOCKS(out_features), CUDA_K_THREADS>>>(grad_bias, grad_output, batch_size, out_features);
         } else if constexpr (std::is_same<Tp, double>::value) {
             // Compute grad_input: dX = dY * W^T
             matmul_op<double, device::GPU>()(
@@ -700,7 +673,7 @@ struct fc_backward_op<Tp, device::GPU> {
             );
 
             // Compute grad_bias: db = sum(dY)
-            kernel_calc_db<Tp><<<CUDA_K_THREADS, CUDA_GET_BLOCKS(out_features)>>>(grad_bias, grad_output, batch_size, out_features);
+            kernel_calc_db<<<CUDA_GET_BLOCKS(out_features), CUDA_K_THREADS>>>(grad_bias, grad_output, batch_size, out_features);
         } else {
             throw std::runtime_error("fc_backward_op only supports float and double.");
         }

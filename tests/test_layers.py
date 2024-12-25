@@ -48,9 +48,9 @@ def _test_fc_forward_backward(
     b_tensor = TensorBase.from_numpy(b, device=device)
     
     # Create PyTorch tensors
-    x_torch = torch.tensor(x, requires_grad=True, device=device)
-    w_torch = torch.tensor(w, requires_grad=True, device=device)
-    b_torch = torch.tensor(b, requires_grad=True, device=device)
+    x_torch = torch.tensor(x, requires_grad=True)
+    w_torch = torch.tensor(w, requires_grad=True)
+    b_torch = torch.tensor(b, requires_grad=True)
     
     # Forward pass
     output = fc_forward(x_tensor, w_tensor, b_tensor)
@@ -67,7 +67,7 @@ def _test_fc_forward_backward(
     grad = np.random.randn(batch_size, out_features)
     grad_tensor = TensorBase.from_numpy(grad, device=device)
     
-    output_torch.backward(torch.tensor(grad, device=device))
+    output_torch.backward(torch.tensor(grad))
     grad_x, grad_w, grad_b = fc_backward(
         x_tensor, w_tensor, b_tensor, output, grad_tensor
     )
@@ -117,9 +117,9 @@ def _test_conv2d_forward_backward(
     b_tensor = TensorBase.from_numpy(b, device=device)
     
     # Create PyTorch tensors
-    x_torch = torch.tensor(x, requires_grad=True, device=device)
-    w_torch = torch.tensor(w, requires_grad=True, device=device)
-    b_torch = torch.tensor(b, requires_grad=True, device=device)
+    x_torch = torch.tensor(x, requires_grad=True)
+    w_torch = torch.tensor(w, requires_grad=True)
+    b_torch = torch.tensor(b, requires_grad=True)
     
     # Forward pass
     output = conv2d_forward(x_tensor, w_tensor, b_tensor, padding, stride)
@@ -137,7 +137,7 @@ def _test_conv2d_forward_backward(
     grad = np.random.randn(*output.shape)
     grad_tensor = TensorBase.from_numpy(grad, device=device)
     
-    output_torch.backward(torch.tensor(grad, device=device))
+    output_torch.backward(torch.tensor(grad))
     grad_x, grad_w, grad_b = conv2d_backward(
         x_tensor, w_tensor, grad_tensor,
         padding, stride
@@ -185,7 +185,7 @@ def _test_max_pool_forward_backward(
     # Initialize input
     x = np.random.randn(batch_size, channels, height, width)
     x_tensor = TensorBase.from_numpy(x, device=device)
-    x_torch = torch.tensor(x, requires_grad=True, device=device)
+    x_torch = torch.tensor(x, requires_grad=True)
     
     # Forward pass
     output, mask = max_pool2d_forward(
@@ -210,7 +210,7 @@ def _test_max_pool_forward_backward(
     grad = np.random.randn(*output.shape)
     grad_tensor = TensorBase.from_numpy(grad, device=device)
     
-    output_torch.backward(torch.tensor(grad, device=device))
+    output_torch.backward(torch.tensor(grad))
     grad_x = max_pool2d_backward(
         grad_tensor, mask,
         kernel_size, padding, stride,
@@ -246,8 +246,8 @@ def _test_softmax_cross_entropy(
     
     x_tensor = TensorBase.from_numpy(x, device=device)
     t_tensor = TensorBase.from_numpy(t, device=device)
-    x_torch = torch.tensor(x, requires_grad=True, device=device)
-    t_torch = torch.tensor(t, device=device)
+    x_torch = torch.tensor(x, requires_grad=True)
+    t_torch = torch.tensor(t)
     
     # Forward pass
     prob = softmax_forward(x_tensor)

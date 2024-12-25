@@ -48,18 +48,10 @@ kernel_mse_sum(
     size_t batch_size, 
     size_t num_classes
 ) {
-    CUDA_KERNEL_LOOP(i, batch_size * num_classes) {
+    for (size_t i = 0; i < batch_size * num_classes; i++) {
         *output += input[i];
     }
-}
-
-template <typename Tp>
-__global__ void
-kernel_mse_div(
-    Tp* input, 
-    size_t n
-) {
-    *input /= static_cast<Tp>(n);
+    *output /= static_cast<Tp>(batch_size * num_classes);
 }
 
 template <typename Tp>
@@ -95,12 +87,10 @@ struct mse_forward<Tp, device::GPU> {
         cudaDeviceSynchronize();
 
         cudaMemset(output, 0, sizeof(Tp));
-        kernel_mse_sum<<<CUDA_GET_BLOCKS(batch_size * num_classes), CUDA_K_THREADS>>>(
+        kernel_mse_sum<<<1, 1>>>(
             square_diff, output, batch_size, num_classes
         );
         cudaDeviceSynchronize();
-
-        kernel_mse_div<<<1, 1>>>(output, batch_size * num_classes);
         cudaFree(square_diff);
     }
 };

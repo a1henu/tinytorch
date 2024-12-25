@@ -6,7 +6,7 @@
  */
 
 #include <cmath>
-
+#include <iostream>
 #include "core/kernels/functions/mse.h"
 #include "error/error.h"
 
@@ -23,11 +23,9 @@ struct mse_forward<Tp, device::CPU> {
         size_t num_classes
     ) {
         *output = static_cast<Tp>(0);
-        for (size_t i = 0; i < batch_size; ++i) {
-            for (size_t j = 0; j < num_classes; ++j) {
-                Tp diff = input[i * num_classes + j] - target[i * num_classes + j];
-                *output += diff * diff;
-            }
+        for (size_t i = 0; i < batch_size * num_classes; ++i) {
+            Tp diff = input[i] - target[i];
+            *output += diff * diff;
         }
         *output /= (batch_size * num_classes);
     }

@@ -7,6 +7,7 @@ from .funcs import (
     conv2d_forward, conv2d_backward,
     max_pool2d_forward, max_pool2d_backward,
     softmax_forward,
+    mse_forward, mse_backward,
     cross_entropy_forward, cross_entropy_backward
 )
 from .funcs_autodiff import (
@@ -20,6 +21,7 @@ __all__ = [
     'conv2d_forward', 'conv2d_backward',
     'max_pool2d_forward', 'max_pool2d_backward',
     'softmax_forward',
+    'mse_forward', 'mse_backward',
     'cross_entropy_forward', 'cross_entropy_backward',
     'ReLU', 'Sigmoid', 'FC', 'Conv2d', 'MaxPool2d', 'Softmax', 'MSE', 'CrossEntropy'
 ]
