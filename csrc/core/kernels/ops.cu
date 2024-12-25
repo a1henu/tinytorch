@@ -9,8 +9,28 @@
 #include <cublas_v2.h>
 
 #include "core/kernels/ops.h"
-
 #include "macros.h"
+
+#if !defined (__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+
+#else
+__device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+#endif
 
 namespace ops {
 
@@ -219,7 +239,7 @@ __global__ void kernel_col2im(
         int w_pad = w * stride_w - pad_w + w_offset;
         
         if (h_pad >= 0 && h_pad < height && w_pad >= 0 && w_pad < width) {
-            data_im[(c_im * height + h_pad) * width + w_pad] += data_col[index];
+            atomicAdd(&data_im[(c_im * height + h_pad) * width + w_pad], data_col[index]);
         }
     }
 }
@@ -250,9 +270,9 @@ kernel_add_bias(
 template <typename Tp>
 __global__ void
 kernel_max_pool(
-    Tp* output,
-    Tp* mask,
-    const Tp* data_im,
+    Tp* img_out,
+    Tp* mask_out,
+    const Tp* img_in,
     const int batch_size,
     const int channels,
     const int height,
@@ -274,33 +294,33 @@ kernel_max_pool(
         const int i = (index / width_out) % height_out;
         const int j = index % width_out;
         
-        // get the pointer of the current channel
-        const Tp* img = data_im + c * height * width;
-        Tp* out = output + b * channels * height_out * width_out + c * height_out * width_out;
-        Tp* mask_out = mask + b * channels * height_out * width_out + c * height_out * width_out;
-        
-        // find the max value in the kernel window
-        Tp max_val = img[(i * stride_h - pad_h) * width + j * stride_w - pad_w];
-        Tp max_idx = 0;
-        
-        // iterate over the kernel window
-        for (int ii = 0; ii < kernel_h; ++ii) {
-            for (int jj = 0; jj < kernel_w; ++jj) {
-                const int h = i * stride_h + ii - pad_h;
-                const int w = j * stride_w + jj - pad_w;
-                
-                if (h >= 0 && h < height && w >= 0 && w < width) {
-                    Tp val = img[h * width + w];
-                    if (val > max_val) {
-                        max_val = val;
-                        max_idx = ii * kernel_w + jj;
+        if (i < height_out && j < width_out) {
+            const int batch_channel_offset = (b * channels + c);
+            const Tp* img = img_in + batch_channel_offset * height * width;
+            Tp* out = img_out + batch_channel_offset * height_out * width_out;
+            Tp* mask = mask_out + batch_channel_offset * height_out * width_out;
+
+            Tp max_val = img[(i * stride_h - pad_h) * width + j * stride_w - pad_w];
+            int max_idx = 0;
+
+            for (int ii = 0; ii < kernel_h; ++ii) {
+                for (int jj = 0; jj < kernel_w; ++jj) {
+                    int h = i * stride_h + ii - pad_h;
+                    int w = j * stride_w + jj - pad_w;
+
+                    if (h >= 0 && h < height && w >= 0 && w < width) {
+                        Tp val = img[h * width + w];
+                        if (val > max_val) {
+                            max_val = val;
+                            max_idx = ii * kernel_w + jj;
+                        }
                     }
                 }
             }
+
+            out[i * width_out + j] = max_val;
+            mask[i * width_out + j] = max_idx;
         }
-        
-        out[i * width_out + j] = max_val;
-        mask_out[i * width_out + j] = max_idx;
     }
 }
 
@@ -341,7 +361,7 @@ kernel_max_pool_backward(
             const int im_idx = b * channels * height * width +
                                c * height * width +
                                h_im * width + w_im;
-            grad_im[im_idx] += grad_out[out_idx];
+            atomicAdd(&grad_im[im_idx], grad_out[out_idx]);
         }
     }
 }
