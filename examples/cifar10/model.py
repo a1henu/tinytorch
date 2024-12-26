@@ -5,11 +5,11 @@ class Model(nn.Module):
     def __init__(self):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Conv2d(3, 6, kernel_size=(5, 5)),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Conv2d(3, 6, kernel_size=5),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.ReLU(),
-            nn.Conv2d(6, 16, kernel_size=(5, 5)),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Conv2d(6, 16, kernel_size=5),
+            nn.MaxPool2d(kernel_size=2, stride=2),
             nn.ReLU(),
             nn.Flatten(),
             nn.Linear(16 * 5 * 5, 256),
