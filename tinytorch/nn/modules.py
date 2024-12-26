@@ -9,6 +9,19 @@ class Module:
     def __init__(self):
         self._parameters: Dict[str, Tensor] = {}
         self._modules: Dict[str, Module] = {}
+        self._device: str = 'cpu'
+        
+        self.training: bool = True
+    
+    def train(self) -> None:
+        self.training = True
+        for module in self._modules.values():
+            module.train()
+    
+    def eval(self) -> None:
+        self.training = False
+        for module in self._modules.values():
+            module.eval()
 
     def forward(self, *inputs: Any) -> Any:
         raise NotImplementedError
@@ -47,6 +60,7 @@ class Module:
         """
         Move the module and its parameters to GPU.
         """
+        self._device = 'gpu'
         for name, param in self._parameters.items():
             param.to_gpu()
         for name, module in self._modules.items():
@@ -56,60 +70,72 @@ class Module:
         """
         Move the module and its parameters to CPU.
         """
+        self._device = 'cpu'
         for name, param in self._parameters.items():
             param.to_cpu()
         for name, module in self._modules.items():
             module.to_cpu()
-            
-    def save(self, filepath: str) -> None:
-        """
-        Save the module's parameters to a file.
-        """
-        data = {}
-        for name, param in self._parameters.items():
-            data[name] = param.to_numpy()
-        for name, module in self._modules.items():
-            module_data = module.save_to_dict()
-            for sub_name, sub_param in module_data.items():
-                data[f"{name}.{sub_name}"] = sub_param
-        
-        np.savez(filepath, **data)
 
-    def save_to_dict(self) -> Dict[str, Any]:
+    def save(self, save_path: str) -> None:
         """
-        Save the module's parameters to a dictionary.
-        """
-        data = {}
-        for name, param in self._parameters.items():
-            data[name] = param.to_numpy()
-        for name, module in self._modules.items():
-            module_data = module.save_to_dict()
-            for sub_name, sub_param in module_data.items():
-                data[f"{name}.{sub_name}"] = sub_param
-        return data
+        Save all parameters of the module to a single file.
 
-    def load(self, filepath: str) -> None:
+        Parameters:
+            save_path (str): Path to save the parameters to.
         """
-        Load the module's parameters from a file.
-        """
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"No such file: '{filepath}'")
-        
-        data = np.load(filepath)
-        self.load_from_dict(data)
+        save_data = {}
 
-    def load_from_dict(self, data: Dict[str, Any]) -> None:
-        """
-        Load the module's parameters from a dictionary.
-        """
+        # Save parameters
         for name, param in self._parameters.items():
-            if name not in data:
-                raise ValueError(f"Parameter '{name}' not found in saved data")
-            param_data = data[name]
-            if list(param_data.shape) != list(param.shape):
-                raise ValueError(f"Shape mismatch for parameter '{name}': expected {param.shape}, got {param_data.shape}")
-            param = Tensor.from_numpy(param_data)
+            save_data[f"parameters/{name}"] = param.to_numpy()
+
+        # Recursively save sub-modules
+        def save_submodule(sub_module: Module, prefix: str):
+            for name, param in sub_module._parameters.items():
+                save_data[f"{prefix}parameters/{name}"] = param.to_numpy()
+            for name, sub_sub_module in sub_module._modules.items():
+                save_submodule(sub_sub_module, f"{prefix}{name}/")
+
+        for name, sub_module in self._modules.items():
+            save_submodule(sub_module, f"modules/{name}/")
+
+        # Save to file
+        np.savez_compressed(save_path, **save_data)
+
+    def load(self, load_path: str) -> None:
+        """
+        Load all parameters into the module from a single file.
+
+        Parameters:
+            load_path (str): Path to load the parameters from.
+        """
+        if not os.path.exists(load_path):
+            raise FileNotFoundError(f"The file {load_path} does not exist.")
+
+        # Load data
+        load_data = np.load(load_path)
+
+        # Load parameters
+        for name in self._parameters.keys():
+            param_key = f"parameters/{name}"
+            if param_key in load_data:
+                self._parameters[name] = Tensor.from_numpy(load_data[param_key])
+
+        # Recursively load sub-modules
+        def load_submodule(sub_module: Module, prefix: str):
+            for name in sub_module._parameters.keys():
+                param_key = f"{prefix}parameters/{name}"
+                if param_key in load_data:
+                    sub_module._parameters[name] = Tensor.from_numpy(load_data[param_key])
+            for name, sub_sub_module in sub_module._modules.items():
+                load_submodule(sub_sub_module, f"{prefix}{name}/")
+
+        for name, sub_module in self._modules.items():
+            load_submodule(sub_module, f"modules/{name}/")   
         
-        for name, module in self._modules.items():
-            module_data = {k[len(name)+1:]: v for k, v in data.items() if k.startswith(f"{name}.")}
-            module.load_from_dict(module_data)
+        if self._device == 'gpu':
+            self.to_gpu()
+        elif self._device == 'cpu':
+            self.to_cpu()
+        else:
+            raise ValueError(f"Invalid device type: {self._device}")

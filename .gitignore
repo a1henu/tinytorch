@@ -42,7 +42,11 @@ Testing/
 
 # example data
 examples/mnist/data/
+examples/mnist/checkpoint/
 examples/cifar10/data/
+examples/cifar10/checkpoint/
+examples/imagenet/data/
+examples/imagenet/checkpoint/
 
 # pytest cache
 **/.pytest_cache/

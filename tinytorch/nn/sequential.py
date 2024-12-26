@@ -6,10 +6,12 @@ from ..tensor import Tensor
 class Sequential(Module):
     def __init__(self, *args: Module) -> None:
         super().__init__()
-        self.modules = args
+        self._modules_list = []
+        for idx, module in enumerate(args):
+            self.add_module(str(idx), module)
+            self._modules_list.append(module)
 
     def forward(self, x: Tensor) -> Tensor:
-        for module in self.modules:
+        for module in self._modules_list:
             x = module(x)
         return x
-    

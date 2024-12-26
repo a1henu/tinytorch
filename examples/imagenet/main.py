@@ -3,10 +3,10 @@ import os
 from tinytorch import DeviceType, nn
 from tinytorch.optim import SGD, Adam
 
-from model import Model
+from model import ResNet
 from train import train
 from eval import evaluate
-from utils import load_mnist, save_model
+from utils import load_cifar10, save_model
 
 from argparse import ArgumentParser
 
@@ -26,8 +26,8 @@ eval_parser.add_argument('--device', choices=['cpu', 'gpu'], default='cpu', help
 args = parser.parse_args()
 
 device = DeviceType.CPU if args.device == 'cpu' else DeviceType.GPU
-train_loader, test_loader = load_mnist(args.batch_size, device)
-model = Model()
+train_loader, test_loader = load_cifar10(args.batch_size, device)
+model = ResNet()
 criterion = nn.CrossEntropyLoss()
 
 if device == DeviceType.CPU:
