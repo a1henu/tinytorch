@@ -59,7 +59,7 @@ The usage of `tinytorch` is very simple, nearly the same as `PyTorch`. You can r
 
 ## Unit Test
 
-`tinytorch` is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest) to implement unit tests. For Python source code, tinytorch uses ...
+`tinytorch` is a C++ project binded with [pybind11](https://github.com/pybind/pybind11). For C++ source code, tinytorch uses [GoogleTest](https://github.com/google/googletest) to implement unit tests. For Python source code, tinytorch uses [pytest](https://github.com/pytest-dev/pytest) to implement unit tests.
 
 ### C++/CUDA Part
 
