@@ -35,6 +35,9 @@ class TinyImageNet(DataSet):
             
         self.data_dir = os.path.join(self.root, 'tiny-imagenet-200')
         
+        # Create class to index mapping
+        self.class_to_idx = self._create_class_to_idx()
+        
         if self.train:
             # Load training data
             self.images = []
@@ -48,9 +51,9 @@ class TinyImageNet(DataSet):
                     img = img.resize((64, 64))  # Ensure consistent size
                     img = np.array(img)
                     self.images.append(img)
-                    self.labels.append(class_name)
+                    self.labels.append(self.class_to_idx[class_name])
             self.images = np.array(self.images)
-            self.labels = np.array(self.labels)
+            self.labels = np.array(self.labels, dtype=np.float64)
         else:
             # Load validation data
             val_dir = os.path.join(self.data_dir, 'val')
@@ -65,9 +68,9 @@ class TinyImageNet(DataSet):
                     img = img.resize((64, 64))  # Ensure consistent size
                     img = np.array(img)
                     self.images.append(img)
-                    self.labels.append(class_name)
+                    self.labels.append(self.class_to_idx[class_name])
                 self.images = np.array(self.images)
-                self.labels = np.array(self.labels)
+                self.labels = np.array(self.labels, dtype=np.float64)
             
         # Reshape and normalize images
         self.images = self.images.reshape(-1, 3, 64, 64).astype(np.float64) / 255.0
@@ -88,6 +91,12 @@ class TinyImageNet(DataSet):
             print('Extracting...')
             with zipfile.ZipFile(filepath, 'r') as zip_ref:
                 zip_ref.extractall(self.root)
+                
+    def _create_class_to_idx(self) -> Dict[str, int]:
+        """Create a mapping from class names to indices"""
+        train_dir = os.path.join(self.data_dir, 'train')
+        class_names = sorted(os.listdir(train_dir))
+        return {class_name: idx for idx, class_name in enumerate(class_names)}
     
     def __getitem__(
         self, 
