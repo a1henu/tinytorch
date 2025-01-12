@@ -43,7 +43,7 @@ CUDA_BUILD=OFF pip install -v .[test]
 
 ## Usage
 
-**TODO**: Write usage instructions
+The usage of `tinytorch` is very simple, nearly the same as `PyTorch`. You can run the code in `examples` folder to see how to use it.
 
 ## Unit Test
 
