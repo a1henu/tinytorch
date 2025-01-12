@@ -27,6 +27,7 @@ brew install openblas
 And export the following environment variables:
 
 ```bash
+# take homebrew as an example
 export CPLUS_INCLUDE_PATH=/opt/homebrew/opt/openblas/include
 export LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
 export LD_LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
