@@ -19,6 +19,7 @@ We purpose to implement a tiny deep learning framework, and we will use it to tr
 Firstly, make sure you have installed `openblas`. If you haven't installed it, you can run the following command to install it:
 
 ```bash
+apt-get update
 apt-get install libopenblas-dev 
 # or if you are using brew
 brew install openblas
@@ -27,13 +28,23 @@ brew install openblas
 And export the following environment variables:
 
 ```bash
+# take apt-get as an example
+export CPLUS_INCLUDE_PATH=/usr/include/openblas
+export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
 # take homebrew as an example
 export CPLUS_INCLUDE_PATH=/opt/homebrew/opt/openblas/include
 export LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
 export LD_LIBRARY_PATH=/opt/homebrew/opt/openblas/lib
 ```
 
-Then, you can install `tinytorch` by running the following command:
+Then, you should clone the submodule `pybind11` by running the following command:
+
+```bash
+git submodule update --init --recursive
+```
+
+Finally, you can install `tinytorch` by running the following command:
 
 ```bash
 # if you want to build the CPU version and you have installed CUDA
