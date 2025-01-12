@@ -3,7 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 import urllib.request
 import zipfile
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 from PIL import Image
 from tinytorch.data import DataSet
 

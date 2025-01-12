@@ -15,7 +15,7 @@ subparsers = parser.add_subparsers(dest='mode', help='Choose mode: train or eval
 
 train_parser = subparsers.add_parser('train', help='Training mode')
 train_parser.add_argument('-b', '--batch_size', type=int, default=64, help='Batch size for training')
-train_parser.add_argument('-e', '--epochs', type=int, default=10, help='Number of epochs for training')
+train_parser.add_argument('-e', '--epochs', type=int, default=5, help='Number of epochs for training')
 train_parser.add_argument('-lr', '--learning_rate', type=float, default=3e-4, help='Learning rate for training')
 train_parser.add_argument('--device', choices=['cpu', 'gpu'], default='cpu', help='Device to use for training')
 
