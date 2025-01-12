@@ -4,7 +4,7 @@ This example demonstrates how to train and evaluate a neural network model on th
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.10+
 - NumPy
 - TinyTorch
 

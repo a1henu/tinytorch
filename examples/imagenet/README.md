@@ -1,6 +1,6 @@
-# TinyTorch MNIST Example
+# TinyTorch ImageNet Example
 
-This example demonstrates how to train and evaluate a neural network model on the MNIST dataset using TinyTorch.
+This example demonstrates how to train and evaluate a neural network model on the Stanford CS231n Tiny ImageNet dataset(http://cs231n.stanford.edu/tiny-imagenet-200.zip) using TinyTorch.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ This example demonstrates how to train and evaluate a neural network model on th
 1. Clone the repository:
     ```bash
     git clone https://github.com/a1henu/tinytorch.git
-    cd tinytorch/examples/mnist
+    cd tinytorch/examples/imagenet
     ```
 
 2. Install `tinytorch`, please refer to the [installation guide](../../README.md#installation).
