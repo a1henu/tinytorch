@@ -17,6 +17,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true  
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install libopenblas-dev 
+        export CPLUS_INCLUDE_PATH=/usr/include/openblas
+        export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+        export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
 
     - name: Build
       run: |
